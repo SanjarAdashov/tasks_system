@@ -141,6 +141,7 @@ export const DraftIssueProperties = observer(function DraftIssueProperties(props
       {/* state */}
       <div className="h-5" onClick={handleEventPropagation}>
         <StateDropdown
+          isForWorkItemCreation
           buttonContainerClassName="truncate max-w-40"
           value={issue.state_id}
           onChange={handleState}

@@ -29,6 +29,7 @@ export type TWorkItemStateDropdownBaseProps = TDropdownProps & {
   button?: ReactNode;
   dropdownArrow?: boolean;
   dropdownArrowClassName?: string;
+  disabledStateIds?: string[];
   filterAvailableStateIds?: boolean;
   getStateById: (stateId: string | null | undefined) => IState | undefined;
   iconSize?: string;
@@ -41,6 +42,7 @@ export type TWorkItemStateDropdownBaseProps = TDropdownProps & {
   renderByDefault?: boolean;
   showDefaultState?: boolean;
   stateIds: string[];
+  stateTransitionReasons?: Record<string, string>;
   value: string | undefined | null;
 };
 
@@ -56,6 +58,7 @@ export const WorkItemStateDropdownBase = observer(function WorkItemStateDropdown
     disabled = false,
     dropdownArrow = false,
     dropdownArrowClassName = "",
+    disabledStateIds = [],
     getStateById,
     hideIcon = false,
     iconSize = "size-4",
@@ -68,6 +71,7 @@ export const WorkItemStateDropdownBase = observer(function WorkItemStateDropdown
     showDefaultState = true,
     showTooltip = false,
     stateIds,
+    stateTransitionReasons = {},
     tabIndex,
     value,
   } = props;
@@ -113,6 +117,8 @@ export const WorkItemStateDropdownBase = observer(function WorkItemStateDropdown
   const options = statesList?.map((state) => ({
     value: state?.id,
     query: `${state?.name}`,
+    disabled: disabledStateIds.includes(state.id),
+    reason: stateTransitionReasons[state.id],
     content: (
       <div className="flex items-center gap-2">
         <StateGroupIcon

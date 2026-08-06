@@ -86,6 +86,7 @@ export const SubIssuesListItemProperties = observer(function SubIssuesListItemPr
       <WithDisplayPropertiesHOC displayProperties={displayProperties} displayPropertyKey="state">
         <div className="h-5 flex-shrink-0">
           <StateDropdown
+            issueId={issueId}
             value={issue.state_id}
             projectId={issue.project_id ?? undefined}
             onChange={(val) =>

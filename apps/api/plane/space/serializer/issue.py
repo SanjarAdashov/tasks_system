@@ -5,6 +5,7 @@
 # Django imports
 from django.utils import timezone
 from django.db import transaction
+from crum import get_current_user
 
 # Third Party imports
 from rest_framework import serializers
@@ -33,6 +34,7 @@ from plane.db.models import (
     CommentReaction,
     IssueVote,
     IssueRelation,
+    Project,
 )
 from plane.utils.content_validator import (
     validate_html_content,
@@ -45,6 +47,7 @@ from plane.utils.work_item_fields import (
     sync_issue_cycle_and_modules,
     validate_and_prepare_work_item_fields,
 )
+from plane.utils.state_transition_rules import enforce_state_transition
 
 
 class IssueStateFlatSerializer(BaseSerializer):
@@ -336,6 +339,14 @@ class IssueCreateSerializer(BaseSerializer):
             attrs=data,
             instance=self.instance,
             property_values=property_values,
+        )
+        request = self.context.get("request")
+        enforce_state_transition(
+            project=Project.objects.get(id=self.context["project_id"]),
+            actor=request.user if request else get_current_user(),
+            issue=self.instance,
+            attrs=data,
+            is_system=self.context.get("is_system_operation", False),
         )
         return data
 

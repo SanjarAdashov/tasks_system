@@ -30,6 +30,11 @@ import { IssueFormRoot } from "./form";
 import type { IssueFormProps } from "./form";
 import type { IssuesModalProps } from "./modal";
 
+const getStateTransitionErrorMessage = (error: any): string | undefined => {
+  const transitionError = error?.state_transition ?? error?.response?.data?.state_transition;
+  return Array.isArray(transitionError?.reasons) ? transitionError.reasons.join(" ") : undefined;
+};
+
 export const CreateUpdateIssueModalBase = observer(function CreateUpdateIssueModalBase(props: IssuesModalProps) {
   const {
     data,
@@ -203,7 +208,10 @@ export const CreateUpdateIssueModalBase = observer(function CreateUpdateIssueMod
       setToast({
         type: TOAST_TYPE.ERROR,
         title: t("error"),
-        message: error?.error ?? t(is_draft_issue ? "draft_creation_failed" : "issue_creation_failed"),
+        message:
+          getStateTransitionErrorMessage(error) ??
+          error?.error ??
+          t(is_draft_issue ? "draft_creation_failed" : "issue_creation_failed"),
       });
       throw error;
     }
@@ -235,7 +243,7 @@ export const CreateUpdateIssueModalBase = observer(function CreateUpdateIssueMod
       setToast({
         type: TOAST_TYPE.ERROR,
         title: t("error"),
-        message: error?.error ?? t("issue_could_not_be_updated"),
+        message: getStateTransitionErrorMessage(error) ?? error?.error ?? t("issue_could_not_be_updated"),
       });
     }
   };

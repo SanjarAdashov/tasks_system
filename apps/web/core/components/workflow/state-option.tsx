@@ -15,6 +15,8 @@ export type TStateOptionProps = {
     value: string | undefined;
     query: string;
     content: React.ReactNode;
+    disabled?: boolean;
+    reason?: string;
   };
   selectedValue: string | null | undefined;
   className?: string;
@@ -30,13 +32,23 @@ export const StateOption = observer(function StateOption(props: TStateOptionProp
     <Combobox.Option
       key={option.value}
       value={option.value}
+      disabled={option.disabled}
       className={({ active, selected }) =>
-        cn(`${className} ${active ? "bg-layer-transparent-hover" : ""} ${selected ? "text-primary" : "text-secondary"}`)
+        cn(
+          className,
+          active && !option.disabled && "bg-layer-transparent-hover",
+          selected ? "text-primary" : "text-secondary",
+          option.disabled && "cursor-not-allowed opacity-50"
+        )
       }
+      title={option.reason}
     >
       {({ selected }) => (
         <>
-          <span className="flex-grow truncate">{option.content}</span>
+          <span className="min-w-0 flex-grow">
+            <span className="block truncate">{option.content}</span>
+            {option.reason && <span className="mt-0.5 block truncate text-10 text-tertiary">{option.reason}</span>}
+          </span>
           {selected && <CheckIcon className="h-3.5 w-3.5 flex-shrink-0" />}
         </>
       )}

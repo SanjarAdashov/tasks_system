@@ -91,6 +91,15 @@ from .work_item_property import (
     get_default_work_item_field_configuration,
 )
 
+from .state_transition import (
+    ProjectStateTransitionAuditLog,
+    ProjectStateTransitionRule,
+    ProjectStateTransitionSettings,
+    StateTransitionAuditAction,
+    StateTransitionSourceType,
+    get_empty_transition_condition_tree,
+)
+
 from .favorite import UserFavorite
 
 from .issue_type import IssueType

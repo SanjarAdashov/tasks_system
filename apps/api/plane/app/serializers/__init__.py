@@ -50,6 +50,11 @@ from .work_item_property import (
     ProjectWorkItemPropertyOptionSerializer,
     ProjectWorkItemPropertySerializer,
 )
+from .state_transition import (
+    ProjectStateTransitionAuditLogSerializer,
+    ProjectStateTransitionRuleSerializer,
+    ProjectStateTransitionSettingsSerializer,
+)
 
 from .state import StateSerializer, StateLiteSerializer, StateOrderSerializer
 from .view import IssueViewSerializer, ViewIssueListSerializer

@@ -17,6 +17,7 @@ from django.utils import timezone
 from plane.bgtasks.issue_activities_task import issue_activity
 from plane.db.models import Issue, Project, State
 from plane.utils.exception_logger import log_exception
+from plane.utils.state_transition_rules import evaluate_state_transition
 
 
 @shared_task
@@ -117,14 +118,25 @@ def close_old_issues():
             # Check if Issues
             if issues:
                 if project.default_state is None:
-                    close_state = State.objects.filter(group="cancelled").first()
+                    close_state = State.objects.filter(project=project, group="cancelled").first()
                 else:
                     close_state = project.default_state
+                if close_state is None:
+                    continue
 
                 issues_to_update = []
                 for issue in issues:
-                    issue.state = close_state
-                    issues_to_update.append(issue)
+                    result = evaluate_state_transition(
+                        project=project,
+                        actor=project.created_by,
+                        issue=issue,
+                        target_state=close_state,
+                        is_system=True,
+                        log_denial=True,
+                    )
+                    if result.allowed:
+                        issue.state = close_state
+                        issues_to_update.append(issue)
 
                 # Bulk Update the issues and log the activity
                 if issues_to_update:

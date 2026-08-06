@@ -15,6 +15,13 @@ from .project.work_item_property import (
     ProjectWorkItemFieldConfigurationEndpoint,
     ProjectWorkItemPropertyViewSet,
 )
+from .project.state_transition import (
+    ProjectAvailableStateTransitionsEndpoint,
+    ProjectStateTransitionAuditLogViewSet,
+    ProjectStateTransitionPreviewEndpoint,
+    ProjectStateTransitionRuleViewSet,
+    ProjectStateTransitionSettingsEndpoint,
+)
 
 from .project.invite import (
     UserProjectInvitationsViewset,

@@ -15,6 +15,12 @@ import type {
   TProjectWorkItemFieldConfiguration,
   TProjectWorkItemProperty,
   TProjectWorkItemPropertyPayload,
+  TProjectStateTransitionRule,
+  TProjectStateTransitionRulePayload,
+  TProjectStateTransitionSettings,
+  TStateTransitionAuditLog,
+  TStateTransitionEvaluation,
+  TAvailableStateTransition,
   TProject,
   TPartialProject,
 } from "@plane/types";
@@ -186,6 +192,109 @@ export class ProjectService extends APIService {
       `/api/workspaces/${workspaceSlug}/projects/${projectId}/work-item-fields/properties/${propertyId}/`
     )
       .then(() => undefined)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async getStateTransitionSettings(workspaceSlug: string, projectId: string): Promise<TProjectStateTransitionSettings> {
+    return this.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/state-transitions/settings/`)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async updateStateTransitionSettings(
+    workspaceSlug: string,
+    projectId: string,
+    data: Pick<TProjectStateTransitionSettings, "strict_mode">
+  ): Promise<TProjectStateTransitionSettings> {
+    return this.patch(`/api/workspaces/${workspaceSlug}/projects/${projectId}/state-transitions/settings/`, data)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async getStateTransitionRules(workspaceSlug: string, projectId: string): Promise<TProjectStateTransitionRule[]> {
+    return this.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/state-transitions/rules/`)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async createStateTransitionRule(
+    workspaceSlug: string,
+    projectId: string,
+    data: TProjectStateTransitionRulePayload
+  ): Promise<TProjectStateTransitionRule> {
+    return this.post(`/api/workspaces/${workspaceSlug}/projects/${projectId}/state-transitions/rules/`, data)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async updateStateTransitionRule(
+    workspaceSlug: string,
+    projectId: string,
+    ruleId: string,
+    data: Partial<TProjectStateTransitionRulePayload>
+  ): Promise<TProjectStateTransitionRule> {
+    return this.patch(`/api/workspaces/${workspaceSlug}/projects/${projectId}/state-transitions/rules/${ruleId}/`, data)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async archiveStateTransitionRule(workspaceSlug: string, projectId: string, ruleId: string): Promise<void> {
+    return this.delete(`/api/workspaces/${workspaceSlug}/projects/${projectId}/state-transitions/rules/${ruleId}/`)
+      .then(() => undefined)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async getStateTransitionAuditLogs(workspaceSlug: string, projectId: string): Promise<TStateTransitionAuditLog[]> {
+    return this.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/state-transitions/audit-logs/`)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async previewStateTransition(
+    workspaceSlug: string,
+    projectId: string,
+    data: {
+      actor_id?: string;
+      issue_id?: string;
+      target_state_id: string;
+      is_creation?: boolean;
+      proposed_data?: Record<string, unknown>;
+    }
+  ): Promise<TStateTransitionEvaluation> {
+    return this.post(`/api/workspaces/${workspaceSlug}/projects/${projectId}/state-transitions/preview/`, data)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async getAvailableStateTransitions(
+    workspaceSlug: string,
+    projectId: string,
+    data: {
+      issue_id?: string;
+      is_creation?: boolean;
+      proposed_data?: Record<string, unknown>;
+    }
+  ): Promise<TAvailableStateTransition[]> {
+    return this.post(`/api/workspaces/${workspaceSlug}/projects/${projectId}/state-transitions/available/`, data)
+      .then((response) => response?.data)
       .catch((error) => {
         throw error?.response?.data;
       });

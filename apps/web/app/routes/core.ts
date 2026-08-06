@@ -333,6 +333,11 @@ export const coreRoutes: RouteConfigEntry[] = [
               ":workspaceSlug/settings/projects/:projectId/state-order",
               "./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/state-order/page.tsx"
             ),
+            // Project State transition rules
+            route(
+              ":workspaceSlug/settings/projects/:projectId/state-transitions",
+              "./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/state-transitions/page.tsx"
+            ),
             // Project Labels
             route(
               ":workspaceSlug/settings/projects/:projectId/labels",

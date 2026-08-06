@@ -93,6 +93,13 @@ export const PROJECT_SETTINGS: Record<TProjectSettingsTabs, TProjectSettingsItem
     access: [EUserProjectRoles.ADMIN],
     highlight: (pathname: string, baseUrl: string) => pathname === `${baseUrl}/state-order/`,
   },
+  state_transitions: {
+    key: "state_transitions",
+    i18n_label: "project_settings.state_transitions.label",
+    href: `/state-transitions`,
+    access: [EUserProjectRoles.ADMIN],
+    highlight: (pathname: string, baseUrl: string) => pathname === `${baseUrl}/state-transitions/`,
+  },
   labels: {
     key: "labels",
     i18n_label: "common.labels",
@@ -137,6 +144,7 @@ export const GROUPED_PROJECT_SETTINGS: Record<PROJECT_SETTINGS_CATEGORY, TProjec
   [PROJECT_SETTINGS_CATEGORY.WORK_STRUCTURE]: [
     PROJECT_SETTINGS["states"],
     PROJECT_SETTINGS["state_order"],
+    PROJECT_SETTINGS["state_transitions"],
     PROJECT_SETTINGS["labels"],
     PROJECT_SETTINGS["estimates"],
     PROJECT_SETTINGS["work_item_fields"],

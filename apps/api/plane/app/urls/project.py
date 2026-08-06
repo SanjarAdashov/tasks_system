@@ -20,6 +20,11 @@ from plane.app.views import (
     ProjectMemberPreferenceEndpoint,
     ProjectWorkItemFieldConfigurationEndpoint,
     ProjectWorkItemPropertyViewSet,
+    ProjectAvailableStateTransitionsEndpoint,
+    ProjectStateTransitionAuditLogViewSet,
+    ProjectStateTransitionPreviewEndpoint,
+    ProjectStateTransitionRuleViewSet,
+    ProjectStateTransitionSettingsEndpoint,
 )
 
 
@@ -156,5 +161,46 @@ urlpatterns = [
             }
         ),
         name="project-work-item-property-detail",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/state-transitions/settings/",
+        ProjectStateTransitionSettingsEndpoint.as_view(),
+        name="project-state-transition-settings",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/state-transitions/rules/",
+        ProjectStateTransitionRuleViewSet.as_view(
+            {
+                "get": "list",
+                "post": "create",
+            }
+        ),
+        name="project-state-transition-rule",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/state-transitions/rules/<uuid:pk>/",
+        ProjectStateTransitionRuleViewSet.as_view(
+            {
+                "get": "retrieve",
+                "patch": "partial_update",
+                "delete": "destroy",
+            }
+        ),
+        name="project-state-transition-rule-detail",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/state-transitions/audit-logs/",
+        ProjectStateTransitionAuditLogViewSet.as_view({"get": "list"}),
+        name="project-state-transition-audit-log",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/state-transitions/preview/",
+        ProjectStateTransitionPreviewEndpoint.as_view(),
+        name="project-state-transition-preview",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/state-transitions/available/",
+        ProjectAvailableStateTransitionsEndpoint.as_view(),
+        name="project-state-transition-available",
     ),
 ]

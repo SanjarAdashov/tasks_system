@@ -29,6 +29,7 @@ export type TProjectSettingsTabs =
   | "features_intake"
   | "states"
   | "state_order"
+  | "state_transitions"
   | "labels"
   | "estimates"
   | "work_item_fields"

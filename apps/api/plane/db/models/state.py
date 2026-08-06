@@ -4,8 +4,10 @@
 
 # Django imports
 from django.db import models
+from django.db import transaction
 from django.template.defaultfilters import slugify
 from django.db.models import Q
+from django.utils import timezone
 
 # Module imports
 from .project import ProjectBaseModel
@@ -138,3 +140,45 @@ class State(ProjectBaseModel):
                 self.sequence = 15000
 
         return super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        """
+        Archive workflow rules that reference this state before the state itself
+        is soft-deleted. Restoring a state intentionally does not restore rules.
+        """
+        from plane.db.models.state_transition import (
+            ProjectStateTransitionAuditLog,
+            ProjectStateTransitionRule,
+            StateTransitionAuditAction,
+        )
+
+        with transaction.atomic():
+            archived_at = timezone.now()
+            rules = list(
+                ProjectStateTransitionRule.objects.filter(
+                    Q(source_state_id=self.id) | Q(target_state_id=self.id),
+                    archived_at__isnull=True,
+                )
+            )
+            if rules:
+                ProjectStateTransitionRule.objects.filter(id__in=[rule.id for rule in rules]).update(
+                    archived_at=archived_at
+                )
+                ProjectStateTransitionAuditLog.objects.bulk_create(
+                    [
+                        ProjectStateTransitionAuditLog(
+                            workspace_id=rule.workspace_id,
+                            project_id=rule.project_id,
+                            action=StateTransitionAuditAction.CONFIGURATION_CHANGED,
+                            rule=rule,
+                            source_state_id=rule.source_state_id,
+                            target_state_id=rule.target_state_id,
+                            details={
+                                "operation": "rule_archived_with_state",
+                                "state_id": str(self.id),
+                            },
+                        )
+                        for rule in rules
+                    ]
+                )
+            return super().delete(*args, **kwargs)
