@@ -6,7 +6,6 @@
 
 import type { SetStateAction } from "react";
 import { observer } from "mobx-react";
-import { GripVertical } from "lucide-react";
 import { EIconSize, STATE_TRACKER_ELEMENTS } from "@plane/constants";
 // plane imports
 import { EditIcon, StateGroupIcon } from "@plane/propel/icons";
@@ -45,12 +44,6 @@ export const StateItemTitle = observer(function StateItemTitle(props: TStateItem
   return (
     <div className="flex w-full items-center justify-between gap-2">
       <div className="flex items-center gap-1 px-1">
-        {/* draggable indicator */}
-        {!disabled && stateCount != 1 && (
-          <div className="absolute -left-1.5 hidden h-3 w-3 flex-shrink-0 cursor-pointer items-center justify-center rounded-xs bg-surface-2 text-secondary transition-colors group-hover:flex hover:text-primary">
-            <GripVertical className="h-3 w-3" />
-          </div>
-        )}
         {/* state icon */}
         <div className="flex-shrink-0">
           <StateGroupIcon stateGroup={state.group} color={state.color} size={EIconSize.XL} percentage={percentage} />
@@ -67,7 +60,7 @@ export const StateItemTitle = observer(function StateItemTitle(props: TStateItem
           <div className="flex-shrink-0 text-11 transition-all">
             <StateMarksAsDefault
               stateId={state.id}
-              isDefault={state.default ? true : false}
+              isDefault={!!state.default}
               markStateAsDefaultCallback={props.stateOperationsCallbacks.markStateAsDefault}
             />
           </div>

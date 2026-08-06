@@ -7,6 +7,7 @@ from itertools import groupby
 from collections import defaultdict
 
 # Django imports
+from django.db import transaction
 from django.db.utils import IntegrityError
 
 # Third party imports
@@ -15,7 +16,7 @@ from rest_framework import status
 
 # Module imports
 from .. import BaseViewSet, BaseAPIView
-from plane.app.serializers import StateSerializer
+from plane.app.serializers import StateOrderSerializer, StateSerializer
 from plane.app.permissions import ROLE, allow_permission
 from plane.db.models import State, Issue
 from plane.utils.cache import invalidate_cache
@@ -60,6 +61,11 @@ class StateViewSet(BaseViewSet):
 
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
     def partial_update(self, request, slug, project_id, pk):
+        if "sequence" in request.data:
+            return Response(
+                {"sequence": "Use the project state order endpoint to change state order"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         try:
             state = State.objects.get(pk=pk, project_id=project_id, workspace__slug=slug)
             serializer = StateSerializer(state, data=request.data, partial=True)
@@ -103,6 +109,35 @@ class StateViewSet(BaseViewSet):
 
     @invalidate_cache(path="workspaces/:slug/states/", url_params=True, user=False)
     @allow_permission([ROLE.ADMIN])
+    def reorder(self, request, slug, project_id):
+        serializer = StateOrderSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        requested_ids = serializer.validated_data["state_ids"]
+
+        with transaction.atomic():
+            states = list(
+                State.objects.select_for_update()
+                .filter(workspace__slug=slug, project_id=project_id, is_triage=False)
+                .order_by("sequence", "created_at", "id")
+            )
+            states_by_id = {state.id: state for state in states}
+
+            if len(requested_ids) != len(states) or set(requested_ids) != set(states_by_id):
+                return Response(
+                    {"state_ids": "Provide every active project state exactly once"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            ordered_states = [states_by_id[state_id] for state_id in requested_ids]
+            for index, state in enumerate(ordered_states, start=1):
+                state.sequence = index * 10000
+
+            State.objects.bulk_update(ordered_states, ["sequence"])
+
+        return Response(StateSerializer(ordered_states, many=True).data, status=status.HTTP_200_OK)
+
+    @invalidate_cache(path="workspaces/:slug/states/", url_params=True, user=False)
+    @allow_permission([ROLE.ADMIN])
     def mark_as_default(self, request, slug, project_id, pk):
         # Select all the states which are marked as default
         _ = State.objects.filter(workspace__slug=slug, project_id=project_id, default=True).update(default=False)
@@ -129,7 +164,16 @@ class StateViewSet(BaseViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        state.delete()
+        with transaction.atomic():
+            state.delete()
+            remaining_states = list(
+                State.objects.select_for_update()
+                .filter(workspace__slug=slug, project_id=project_id, is_triage=False)
+                .order_by("sequence", "created_at", "id")
+            )
+            for index, remaining_state in enumerate(remaining_states, start=1):
+                remaining_state.sequence = index * 10000
+            State.objects.bulk_update(remaining_states, ["sequence"])
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

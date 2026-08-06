@@ -328,6 +328,11 @@ export const coreRoutes: RouteConfigEntry[] = [
               ":workspaceSlug/settings/projects/:projectId/states",
               "./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/states/page.tsx"
             ),
+            // Project State order
+            route(
+              ":workspaceSlug/settings/projects/:projectId/state-order",
+              "./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/state-order/page.tsx"
+            ),
             // Project Labels
             route(
               ":workspaceSlug/settings/projects/:projectId/labels",

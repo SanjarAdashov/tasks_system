@@ -49,6 +49,7 @@ export interface IStateStore {
   ) => Promise<IState | undefined>;
   deleteState: (workspaceSlug: string, projectId: string, stateId: string) => Promise<void>;
   markStateAsDefault: (workspaceSlug: string, projectId: string, stateId: string) => Promise<void>;
+  reorderStates: (workspaceSlug: string, projectId: string, stateIds: string[]) => Promise<IState[]>;
   moveStatePosition: (
     workspaceSlug: string,
     projectId: string,
@@ -88,6 +89,7 @@ export class StateStore implements IStateStore {
       deleteState: action,
       // state actions
       markStateAsDefault: action,
+      reorderStates: action,
       moveStatePosition: action,
     });
     this.stateService = new ProjectStateService();
@@ -340,6 +342,17 @@ export class StateStore implements IStateStore {
       });
       throw error;
     }
+  };
+
+  /**
+   * Atomically saves the complete project-wide state order.
+   */
+  reorderStates = async (workspaceSlug: string, projectId: string, stateIds: string[]) => {
+    const states = await this.stateService.reorderStates(workspaceSlug, projectId, stateIds);
+    runInAction(() => {
+      states.forEach((state) => set(this.stateMap, [state.id], state));
+    });
+    return states;
   };
 
   /**

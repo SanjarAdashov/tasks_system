@@ -50,6 +50,24 @@
         "description": "Please create a new state"
       }
     },
+    "state_order": {
+      "label": "State order",
+      "heading": "State order",
+      "description": "Set one project-wide state order used across work items, filters, views, analytics, and APIs.",
+      "help": "Drag states or use the arrow buttons. Categories are shown for reference and are not changed.",
+      "save": "Save order",
+      "reset": "Reset changes",
+      "saving": "Saving order...",
+      "success": "State order saved",
+      "error": "State order could not be saved. Refresh the page and try again.",
+      "groups": {
+        "backlog": "Backlog",
+        "unstarted": "Unstarted",
+        "started": "Started",
+        "completed": "Completed",
+        "cancelled": "Canceled"
+      }
+    },
     "labels": {
       "heading": "Labels",
       "description": "Create custom labels to categorize and organize your work items",

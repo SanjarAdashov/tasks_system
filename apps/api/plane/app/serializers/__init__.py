@@ -51,7 +51,7 @@ from .work_item_property import (
     ProjectWorkItemPropertySerializer,
 )
 
-from .state import StateSerializer, StateLiteSerializer
+from .state import StateSerializer, StateLiteSerializer, StateOrderSerializer
 from .view import IssueViewSerializer, ViewIssueListSerializer
 from .cycle import (
     CycleSerializer,

@@ -3,7 +3,7 @@
 # See the LICENSE file for details.
 
 # Django imports
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 
 # Third party imports
 from rest_framework import status
@@ -245,7 +245,16 @@ class StateDetailAPIEndpoint(BaseAPIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        state.delete()
+        with transaction.atomic():
+            state.delete()
+            remaining_states = list(
+                State.objects.select_for_update()
+                .filter(workspace__slug=slug, project_id=project_id, is_triage=False)
+                .order_by("sequence", "created_at", "id")
+            )
+            for index, remaining_state in enumerate(remaining_states, start=1):
+                remaining_state.sequence = index * 10000
+            State.objects.bulk_update(remaining_states, ["sequence"])
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @state_docs(

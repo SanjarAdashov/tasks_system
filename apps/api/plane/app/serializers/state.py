@@ -26,12 +26,21 @@ class StateSerializer(BaseSerializer):
             "sequence",
             "order",
         ]
-        read_only_fields = ["workspace", "project"]
+        read_only_fields = ["workspace", "project", "sequence"]
 
     def validate(self, attrs):
         if attrs.get("group") == StateGroup.TRIAGE.value:
             raise serializers.ValidationError("Cannot create triage state")
         return attrs
+
+
+class StateOrderSerializer(serializers.Serializer):
+    state_ids = serializers.ListField(child=serializers.UUIDField(), allow_empty=False)
+
+    def validate_state_ids(self, state_ids):
+        if len(state_ids) != len(set(state_ids)):
+            raise serializers.ValidationError("State IDs must be unique")
+        return state_ids
 
 
 class StateLiteSerializer(BaseSerializer):

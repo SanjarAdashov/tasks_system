@@ -15,6 +15,11 @@ urlpatterns = [
         name="project-states",
     ),
     path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/states/reorder/",
+        StateViewSet.as_view({"post": "reorder"}),
+        name="project-state-order",
+    ),
+    path(
         "workspaces/<str:slug>/projects/<uuid:project_id>/states/<uuid:pk>/",
         StateViewSet.as_view({"get": "retrieve", "patch": "partial_update", "delete": "destroy"}),
         name="project-state",

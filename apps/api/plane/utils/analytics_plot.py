@@ -20,7 +20,7 @@ from django.db.models.functions import (
 from django.utils import timezone
 
 # Module imports
-from plane.db.models import Issue, Project
+from plane.db.models import Issue, Project, State
 
 VALID_ANALYTICS_FIELDS = [
     "state_id",
@@ -61,11 +61,13 @@ def extract_axis(queryset, x_axis):
         return queryset.annotate(dimension=F(x_axis)), "dimension"
 
 
-def sort_data(data, temp_axis):
+def sort_data(data, temp_axis, state_order=None):
     # When the axis is in priority order by
     if temp_axis == "priority":
         order = ["low", "medium", "high", "urgent", "none"]
         return {key: data[key] for key in order if key in data}
+    elif temp_axis == "state_id" and state_order:
+        return dict(sorted(data.items(), key=lambda item: state_order.get(str(item[0]), len(state_order))))
     else:
         return dict(sorted(data.items(), key=lambda x: (x[0] == "none", x[0])))
 
@@ -80,6 +82,7 @@ def build_graph_plot(queryset, x_axis, y_axis, segment=None):
 
     # temp x_axis
     temp_axis = x_axis
+    temp_segment = segment
     # Extract the x_axis and queryset
     queryset, x_axis = extract_axis(queryset, x_axis)
     if x_axis == "dimension":
@@ -115,9 +118,28 @@ def build_graph_plot(queryset, x_axis, y_axis, segment=None):
         )
 
     result_values = list(queryset)
-    grouped_data = {str(key): list(items) for key, items in groupby(result_values, key=lambda x: x[str("dimension")])}
+    state_ids = set()
+    if temp_axis == "state_id":
+        state_ids.update(item.get("dimension") for item in result_values)
+    if temp_segment == "state_id":
+        state_ids.update(item.get("segment") for item in result_values)
 
-    return sort_data(grouped_data, temp_axis)
+    ordered_state_ids = State.objects.filter(id__in=[state_id for state_id in state_ids if state_id]).order_by(
+        "project_id", "sequence", "id"
+    )
+    state_order = {
+        str(state_id): index for index, state_id in enumerate(ordered_state_ids.values_list("id", flat=True))
+    }
+
+    if temp_axis == "state_id":
+        result_values.sort(key=lambda item: state_order.get(str(item.get("dimension")), len(state_order)))
+
+    grouped_data = {str(key): list(items) for key, items in groupby(result_values, key=lambda x: x[str("dimension")])}
+    if temp_segment == "state_id":
+        for items in grouped_data.values():
+            items.sort(key=lambda item: state_order.get(str(item.get("segment")), len(state_order)))
+
+    return sort_data(grouped_data, temp_axis, state_order)
 
 
 def burndown_plot(queryset, slug, project_id, plot_type, cycle_id=None, module_id=None):

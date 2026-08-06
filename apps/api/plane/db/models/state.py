@@ -11,6 +11,7 @@ from django.db.models import Q
 from .project import ProjectBaseModel
 from plane.db.mixins import SoftDeletionManager
 
+
 class StateGroup(models.TextChoices):
     BACKLOG = "backlog", "Backlog"
     UNSTARTED = "unstarted", "Unstarted"
@@ -116,11 +117,24 @@ class State(ProjectBaseModel):
 
     def save(self, *args, **kwargs):
         self.slug = slugify(self.name)
-        if self._state.adding:
+        is_restored = False
+        if not self._state.adding and self.deleted_at is None:
+            previous_deleted_at = (
+                State.all_state_objects.filter(pk=self.pk).values_list("deleted_at", flat=True).first()
+            )
+            is_restored = previous_deleted_at is not None
+
+        if self._state.adding or is_restored:
             # Get the maximum sequence value from the database
-            last_id = State.objects.filter(project=self.project).aggregate(largest=models.Max("sequence"))["largest"]
+            last_id = (
+                State.objects.filter(project_id=self.project_id)
+                .exclude(pk=self.pk)
+                .aggregate(largest=models.Max("sequence"))["largest"]
+            )
             # if last_id is not None
             if last_id is not None:
                 self.sequence = last_id + 15000
+            elif is_restored:
+                self.sequence = 15000
 
         return super().save(*args, **kwargs)

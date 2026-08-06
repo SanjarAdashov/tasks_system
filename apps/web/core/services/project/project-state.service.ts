@@ -40,6 +40,16 @@ export class ProjectStateService extends APIService {
       });
   }
 
+  async reorderStates(workspaceSlug: string, projectId: string, stateIds: string[]): Promise<IState[]> {
+    return this.post(`/api/workspaces/${workspaceSlug}/projects/${projectId}/states/reorder/`, {
+      state_ids: stateIds,
+    })
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response;
+      });
+  }
+
   async getIntakeState(workspaceSlug: string, projectId: string): Promise<IIntakeState> {
     return this.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/intake-state/`)
       .then((response) => response?.data)
