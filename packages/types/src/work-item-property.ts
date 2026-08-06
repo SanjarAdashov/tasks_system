@@ -42,7 +42,7 @@ export type TWorkItemPropertyType =
   | "SINGLE_SELECT"
   | "MULTI_SELECT";
 
-export type TWorkItemMultiSelectSource = "MANUAL" | "MEMBERS";
+export type TWorkItemSelectSource = "MANUAL" | "MEMBERS";
 
 export type TProjectWorkItemPropertyOption = {
   id: string;
@@ -61,7 +61,7 @@ export type TProjectWorkItemProperty = {
   name: string;
   description: string;
   property_type: TWorkItemPropertyType;
-  multi_select_source: TWorkItemMultiSelectSource;
+  select_source: TWorkItemSelectSource;
   is_required: boolean;
   default_value: TProjectWorkItemPropertyValue;
   sort_order: number;
@@ -75,7 +75,7 @@ export type TProjectWorkItemPropertyPayload = {
   name: string;
   description?: string;
   property_type: TWorkItemPropertyType;
-  multi_select_source?: TWorkItemMultiSelectSource;
+  select_source?: TWorkItemSelectSource;
   is_required?: boolean;
   default_value?: TProjectWorkItemPropertyValue;
   sort_order?: number;

@@ -6,8 +6,7 @@
 
 import type { TProjectWorkItemProperty, TProjectWorkItemPropertyValue } from "@plane/types";
 import { Input, TextArea, ToggleSwitch } from "@plane/ui";
-import { cn } from "@plane/utils";
-import { WorkItemMultiSelectInput } from "./multi-select-input";
+import { WorkItemMultiSelectInput, WorkItemSingleSelectInput } from "./multi-select-input";
 
 type Props = {
   property: TProjectWorkItemProperty;
@@ -23,11 +22,6 @@ export function WorkItemPropertyFieldInput(props: Props) {
   const { property, value, onChange, onBlur, disabled = false, hasError = false, compact = false } = props;
   const selectedIds = Array.isArray(value) ? value : typeof value === "string" ? [value] : [];
   const options = property.options.filter((option) => option.archived_at === null || selectedIds.includes(option.id));
-  const selectClassName = cn(
-    "w-full rounded-md border-[0.5px] bg-layer-2 text-13 outline-none disabled:cursor-not-allowed disabled:opacity-60",
-    hasError ? "border-danger-strong" : "border-subtle-1",
-    compact ? "px-2 py-1" : "px-3 py-2"
-  );
 
   if (property.property_type === "CHECKBOX") {
     return (
@@ -40,28 +34,28 @@ export function WorkItemPropertyFieldInput(props: Props) {
 
   if (property.property_type === "SINGLE_SELECT") {
     return (
-      <select
-        className={selectClassName}
-        value={typeof value === "string" ? value : ""}
-        onChange={(event) => onChange(event.target.value || null)}
-        onBlur={onBlur}
+      <WorkItemSingleSelectInput
+        source={property.select_source ?? "MANUAL"}
+        projectId={property.project}
+        manualOptions={options.map((option) => ({
+          id: option.id,
+          label: option.name,
+          archived: option.archived_at !== null,
+        }))}
+        value={typeof value === "string" ? value : null}
+        onChange={onChange}
+        onClose={onBlur}
         disabled={disabled}
-      >
-        <option value="">None</option>
-        {options.map((option) => (
-          <option key={option.id} value={option.id} disabled={option.archived_at !== null}>
-            {option.name}
-            {option.archived_at ? " (archived)" : ""}
-          </option>
-        ))}
-      </select>
+        hasError={hasError}
+        compact={compact}
+      />
     );
   }
 
   if (property.property_type === "MULTI_SELECT") {
     return (
       <WorkItemMultiSelectInput
-        source={property.multi_select_source ?? "MANUAL"}
+        source={property.select_source ?? "MANUAL"}
         projectId={property.project}
         manualOptions={options.map((option) => ({
           id: option.id,

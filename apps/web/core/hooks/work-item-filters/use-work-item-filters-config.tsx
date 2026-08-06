@@ -458,9 +458,8 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
           });
         }
 
-        const isMemberMultiSelect =
-          property.property_type === "MULTI_SELECT" && property.multi_select_source === "MEMBERS";
-        const collectionConfig = isMemberMultiSelect
+        const isMemberSelect = property.select_source === "MEMBERS";
+        const collectionConfig = isMemberSelect
           ? getMultiSelectConfig(
               {
                 items: (members ?? []).filter((member) => member.is_active !== false),

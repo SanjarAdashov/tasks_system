@@ -64,6 +64,62 @@ def project(workspace, create_user):
 @pytest.mark.contract
 @pytest.mark.django_db
 class TestWorkItemPropertyValues:
+    def test_member_single_select_accepts_active_members_and_preserves_history(
+        self,
+        session_client,
+        workspace,
+        project,
+    ):
+        member = User.objects.create_user(
+            email="single-property-member@plane.so",
+            username="single-property-member",
+            password="test-password",
+            display_name="Single Property Member",
+        )
+        ProjectMember.objects.create(
+            project=project,
+            member=member,
+            role=15,
+            is_active=True,
+        )
+        property_instance = ProjectWorkItemProperty.objects.create(
+            project=project,
+            name="Owner",
+            property_type="SINGLE_SELECT",
+            select_source="MEMBERS",
+        )
+
+        response = session_client.post(
+            _issue_url(workspace, project),
+            {
+                "name": "Active member",
+                "property_values": {str(property_instance.id): str(member.id)},
+            },
+            format="json",
+        )
+        assert response.status_code == status.HTTP_201_CREATED
+        issue_id = response.data["id"]
+
+        member.is_active = False
+        member.save(update_fields=["is_active"])
+
+        response = session_client.patch(
+            _issue_url(workspace, project, issue_id),
+            {"name": "Historical member preserved"},
+            format="json",
+        )
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+
+        response = session_client.post(
+            _issue_url(workspace, project),
+            {
+                "name": "Inactive member rejected",
+                "property_values": {str(property_instance.id): str(member.id)},
+            },
+            format="json",
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+
     def test_member_multi_select_accepts_active_members_and_preserves_history(
         self,
         session_client,
@@ -86,7 +142,7 @@ class TestWorkItemPropertyValues:
             project=project,
             name="Reviewers",
             property_type="MULTI_SELECT",
-            multi_select_source="MEMBERS",
+            select_source="MEMBERS",
         )
 
         response = session_client.post(

@@ -64,7 +64,7 @@ class WorkItemPropertyType(models.TextChoices):
     MULTI_SELECT = "MULTI_SELECT", "Multi select"
 
 
-class WorkItemMultiSelectSource(models.TextChoices):
+class WorkItemSelectSource(models.TextChoices):
     MANUAL = "MANUAL", "Manual list"
     MEMBERS = "MEMBERS", "Project members"
 
@@ -90,10 +90,10 @@ class ProjectWorkItemProperty(ProjectBaseModel):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     property_type = models.CharField(max_length=32, choices=WorkItemPropertyType.choices)
-    multi_select_source = models.CharField(
+    select_source = models.CharField(
         max_length=16,
-        choices=WorkItemMultiSelectSource.choices,
-        default=WorkItemMultiSelectSource.MANUAL,
+        choices=WorkItemSelectSource.choices,
+        default=WorkItemSelectSource.MANUAL,
     )
     is_required = models.BooleanField(default=False)
     default_value = models.JSONField(null=True, blank=True)

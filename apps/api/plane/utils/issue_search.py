@@ -10,7 +10,7 @@ from django.db.models import Q, TextField
 from django.db.models.functions import Cast
 
 # Module imports
-from plane.db.models import ProjectWorkItemPropertyOption, User, WorkItemMultiSelectSource
+from plane.db.models import ProjectWorkItemPropertyOption, User, WorkItemSelectSource
 
 
 def search_issues(query, queryset):
@@ -46,7 +46,11 @@ def search_issues(query, queryset):
     ]
     for member_id in matching_member_ids:
         q |= Q(
-            work_item_property_values__property__multi_select_source=WorkItemMultiSelectSource.MEMBERS,
+            work_item_property_values__property__select_source=WorkItemSelectSource.MEMBERS,
+            work_item_property_values__value=member_id,
+        )
+        q |= Q(
+            work_item_property_values__property__select_source=WorkItemSelectSource.MEMBERS,
             work_item_property_values__value__contains=[member_id],
         )
     return queryset.filter(q).distinct()

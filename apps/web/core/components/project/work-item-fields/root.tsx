@@ -250,7 +250,8 @@ export function WorkItemFieldsSettings({ workspaceSlug, projectId }: Props) {
                   </div>
                   <div className="mt-0.5 text-11 text-tertiary">
                     {PROPERTY_TYPE_LABELS[property.property_type]}
-                    {property.property_type === "MULTI_SELECT" && property.multi_select_source === "MEMBERS"
+                    {(property.property_type === "SINGLE_SELECT" || property.property_type === "MULTI_SELECT") &&
+                    property.select_source === "MEMBERS"
                       ? " · Project members"
                       : ""}
                     {property.description ? ` · ${property.description}` : ""}

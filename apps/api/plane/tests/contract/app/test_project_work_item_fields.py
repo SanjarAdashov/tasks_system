@@ -153,6 +153,29 @@ class TestProjectWorkItemFieldConfiguration:
 @pytest.mark.contract
 @pytest.mark.django_db
 class TestProjectWorkItemProperty:
+    def test_admin_can_create_project_member_single_select_without_options(
+        self,
+        session_client,
+        workspace,
+        project,
+        project_member,
+    ):
+        response = session_client.post(
+            _properties_url(workspace, project),
+            {
+                "name": "Owner",
+                "property_type": "SINGLE_SELECT",
+                "select_source": "MEMBERS",
+                "default_value": str(project_member.id),
+            },
+            format="json",
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        assert response.data["select_source"] == "MEMBERS"
+        assert response.data["default_value"] == str(project_member.id)
+        assert response.data["options"] == []
+
     def test_admin_can_create_project_member_multi_select_without_options(
         self,
         session_client,
@@ -165,14 +188,14 @@ class TestProjectWorkItemProperty:
             {
                 "name": "Reviewers",
                 "property_type": "MULTI_SELECT",
-                "multi_select_source": "MEMBERS",
+                "select_source": "MEMBERS",
                 "default_value": [str(project_member.id)],
             },
             format="json",
         )
 
         assert response.status_code == status.HTTP_201_CREATED
-        assert response.data["multi_select_source"] == "MEMBERS"
+        assert response.data["select_source"] == "MEMBERS"
         assert response.data["options"] == []
 
     def test_project_member_multi_select_rejects_manual_options(
@@ -186,7 +209,27 @@ class TestProjectWorkItemProperty:
             {
                 "name": "Invalid reviewers",
                 "property_type": "MULTI_SELECT",
-                "multi_select_source": "MEMBERS",
+                "select_source": "MEMBERS",
+                "options": [{"id": str(uuid4()), "name": "Manual value"}],
+            },
+            format="json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "options" in response.data
+
+    def test_project_member_single_select_rejects_manual_options(
+        self,
+        session_client,
+        workspace,
+        project,
+    ):
+        response = session_client.post(
+            _properties_url(workspace, project),
+            {
+                "name": "Invalid owner",
+                "property_type": "SINGLE_SELECT",
+                "select_source": "MEMBERS",
                 "options": [{"id": str(uuid4()), "name": "Manual value"}],
             },
             format="json",

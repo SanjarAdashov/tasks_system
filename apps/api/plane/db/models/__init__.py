@@ -85,7 +85,7 @@ from .work_item_property import (
     ProjectWorkItemFieldConfiguration,
     ProjectWorkItemProperty,
     ProjectWorkItemPropertyOption,
-    WorkItemMultiSelectSource,
+    WorkItemSelectSource,
     WorkItemPropertyType,
     WorkItemPropertyValue,
     get_default_work_item_field_configuration,

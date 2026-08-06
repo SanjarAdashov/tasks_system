@@ -36,7 +36,7 @@ const formatValue = (
   if (property.property_type === "SINGLE_SELECT" || property.property_type === "MULTI_SELECT") {
     const selectedIds = Array.isArray(value) ? value : [value];
     const optionNames = selectedIds.map((optionId) =>
-      property.property_type === "MULTI_SELECT" && property.multi_select_source === "MEMBERS"
+      property.select_source === "MEMBERS"
         ? (getMemberName(String(optionId)) ?? String(optionId))
         : (property.options.find((option) => option.id === optionId)?.name ?? String(optionId))
     );

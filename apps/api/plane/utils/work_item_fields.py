@@ -19,7 +19,7 @@ from plane.db.models import (
     ProjectWorkItemFieldConfiguration,
     ProjectWorkItemProperty,
     State,
-    WorkItemMultiSelectSource,
+    WorkItemSelectSource,
     WorkItemPropertyType,
     WorkItemPropertyValue,
     get_default_work_item_field_configuration,
@@ -92,15 +92,16 @@ def _validate_property_value(
             raise ValueError("Expected a boolean.")
         return value
 
-    if (
-        property_type == WorkItemPropertyType.MULTI_SELECT
-        and property_instance.multi_select_source == WorkItemMultiSelectSource.MEMBERS
-    ):
-        if not isinstance(value, list):
-            raise ValueError("Expected a list of project members.")
-        member_values = [_canonical_id(member_id) for member_id in value]
-        if len(member_values) != len(set(member_values)):
-            raise ValueError("Duplicate project members are not allowed.")
+    if property_type in SELECT_PROPERTY_TYPES and property_instance.select_source == WorkItemSelectSource.MEMBERS:
+        if property_type == WorkItemPropertyType.MULTI_SELECT:
+            if not isinstance(value, list):
+                raise ValueError("Expected a list of project members.")
+            member_values = [_canonical_id(member_id) for member_id in value]
+            if len(member_values) != len(set(member_values)):
+                raise ValueError("Duplicate project members are not allowed.")
+        else:
+            member_values = [_canonical_id(value)]
+
         active_member_ids = {
             str(member_id)
             for member_id in ProjectMember.objects.filter(
@@ -113,10 +114,13 @@ def _validate_property_value(
         }
         historical_member_ids = set()
         if historical_value is not None:
-            historical_member_ids = {_canonical_id(member_id) for member_id in historical_value}
+            if property_type == WorkItemPropertyType.MULTI_SELECT:
+                historical_member_ids = {_canonical_id(member_id) for member_id in historical_value}
+            else:
+                historical_member_ids = {_canonical_id(historical_value)}
         if not set(member_values).issubset(active_member_ids | historical_member_ids):
             raise ValueError("Expected active project members.")
-        return member_values
+        return member_values if property_type == WorkItemPropertyType.MULTI_SELECT else member_values[0]
 
     available_options = property_instance.options.all()
     if not allow_archived_options:
