@@ -41,6 +41,7 @@ from plane.db.models import (
     ProjectPage,
     WorkspaceMember,
 )
+from plane.utils.issue_search import search_issues
 
 
 class GlobalSearchEndpoint(BaseAPIView):
@@ -81,25 +82,15 @@ class GlobalSearchEndpoint(BaseAPIView):
         )
 
     def filter_issues(self, query, slug, project_id, workspace_search):
-        fields = ["name", "sequence_id", "project__identifier"]
-        q = Q()
-        if query:
-            for field in fields:
-                if field == "sequence_id":
-                    # Match whole integers only (exclude decimal numbers)
-                    sequences = re.findall(r"\b\d+\b", query)
-                    for sequence_id in sequences:
-                        q |= Q(**{"sequence_id": sequence_id})
-                else:
-                    q |= Q(**{f"{field}__icontains": query})
-
         issues = Issue.issue_objects.filter(
-            q,
             project__project_projectmember__member=self.request.user,
             project__project_projectmember__is_active=True,
             project__archived_at__isnull=True,
             workspace__slug=slug,
         )
+
+        if query:
+            issues = search_issues(query, issues)
 
         if workspace_search == "false" and project_id:
             issues = issues.filter(project_id=project_id)
@@ -385,39 +376,24 @@ class SearchEndpoint(BaseAPIView):
                     response_data["project"] = list(projects)
 
                 elif query_type == "issue":
-                    fields = ["name", "sequence_id", "project__identifier"]
-                    q = Q()
-
-                    if query:
-                        for field in fields:
-                            if field == "sequence_id":
-                                sequences = re.findall(r"\b\d+\b", query)
-                                for sequence_id in sequences:
-                                    q |= Q(**{"sequence_id": sequence_id})
-                            else:
-                                q |= Q(**{f"{field}__icontains": query})
-
-                    issues = (
-                        Issue.issue_objects.filter(
-                            q,
-                            project__project_projectmember__member=self.request.user,
-                            project__project_projectmember__is_active=True,
-                            workspace__slug=slug,
-                            project_id=project_id,
-                        )
-                        .order_by("-created_at")
-                        .distinct()
-                        .values(
-                            "name",
-                            "id",
-                            "sequence_id",
-                            "project__identifier",
-                            "project_id",
-                            "priority",
-                            "state_id",
-                            "type_id",
-                        )[:count]
+                    issues = Issue.issue_objects.filter(
+                        project__project_projectmember__member=self.request.user,
+                        project__project_projectmember__is_active=True,
+                        workspace__slug=slug,
+                        project_id=project_id,
                     )
+                    if query:
+                        issues = search_issues(query, issues)
+                    issues = issues.order_by("-created_at").values(
+                        "name",
+                        "id",
+                        "sequence_id",
+                        "project__identifier",
+                        "project_id",
+                        "priority",
+                        "state_id",
+                        "type_id",
+                    )[:count]
                     response_data["issue"] = list(issues)
 
                 elif query_type == "cycle":

@@ -13,6 +13,9 @@ import type {
   IInstanceConfiguration,
   IInstanceInfo,
   TPage,
+  IInstanceUser,
+  IInstanceUserAccessPayload,
+  IInstanceUserPagination,
 } from "@plane/types";
 // api service
 import { APIService } from "../api.service";
@@ -66,6 +69,45 @@ export class InstanceService extends APIService {
    */
   async admins(): Promise<IInstanceAdmin[]> {
     return this.get("/api/instances/admins/", { validateStatus: null })
+      .then((response) => response.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  /**
+   * Fetches users managed by the current instance administrator.
+   */
+  async users(search = "", cursor = ""): Promise<IInstanceUserPagination> {
+    return this.get("/api/instances/users/", {
+      params: {
+        per_page: 100,
+        search: search || undefined,
+        cursor: cursor || undefined,
+      },
+    })
+      .then((response) => response.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  /**
+   * Blocks a user without changing workspace or project membership.
+   */
+  async blockUser(userId: string, data: IInstanceUserAccessPayload): Promise<IInstanceUser> {
+    return this.post(`/api/instances/users/${userId}/block/`, data)
+      .then((response) => response.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  /**
+   * Restores sign-in access while preserving the user's existing role.
+   */
+  async unblockUser(userId: string, data: IInstanceUserAccessPayload): Promise<IInstanceUser> {
+    return this.post(`/api/instances/users/${userId}/unblock/`, data)
       .then((response) => response.data)
       .catch((error) => {
         throw error?.response?.data;

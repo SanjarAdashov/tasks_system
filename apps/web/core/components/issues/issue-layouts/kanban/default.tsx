@@ -26,6 +26,7 @@ import { KanbanColumnLoader } from "@/components/ui/loader/layouts/kanban-layout
 // hooks
 import { useKanbanView } from "@/hooks/store/use-kanban-view";
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
+import { useProjectWorkItemProperties } from "@/components/issues/work-item-properties/use-project-work-item-properties";
 // types
 // parent components
 import { useWorkFlowFDragNDrop } from "@/components/workflow";
@@ -100,6 +101,7 @@ export const KanBan = observer(function KanBan(props: IKanBan) {
   // i18n
   // store hooks
   const storeType = useIssueStoreType();
+  const customProperties = useProjectWorkItemProperties();
   const issueKanBanView = useKanbanView();
   // derived values
   const isDragDisabled = !issueKanBanView?.getCanUserDragDrop(group_by, sub_group_by);
@@ -111,6 +113,7 @@ export const KanBan = observer(function KanBan(props: IKanBan) {
     includeNone: true,
     isWorkspaceLevel: isWorkspaceLevel(storeType),
     isEpic: isEpic,
+    customProperties,
   });
 
   if (!list) return null;

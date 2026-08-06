@@ -5,7 +5,8 @@
  */
 
 import { useCallback, useMemo } from "react";
-import { AtSign, Briefcase } from "lucide-react";
+import { AtSign, Briefcase, ListChecks } from "lucide-react";
+import useSWR from "swr";
 // plane imports
 import { Logo } from "@plane/propel/emoji-icon-picker";
 import {
@@ -32,7 +33,9 @@ import type {
   IModule,
   IProject,
   TWorkItemFilterProperty,
+  TProjectWorkItemProperty,
 } from "@plane/types";
+import { COLLECTION_OPERATOR, EQUALITY_OPERATOR, FILTER_FIELD_TYPE } from "@plane/types";
 import { Avatar } from "@plane/ui";
 import {
   getAssigneeFilterConfig,
@@ -51,6 +54,11 @@ import {
   getSubscriberFilterConfig,
   getTargetDateFilterConfig,
   getUpdatedAtFilterConfig,
+  createFilterConfig,
+  createFilterFieldConfig,
+  getDatePropertyFilterConfig,
+  getMultiSelectConfig,
+  getSingleSelectConfig,
   isLoaderReady,
 } from "@plane/utils";
 // store hooks
@@ -62,6 +70,9 @@ import { useProject } from "@/hooks/store/use-project";
 import { useProjectState } from "@/hooks/store/use-project-state";
 // plane web imports
 import { useFiltersOperatorConfigs } from "@/hooks/rich-filters/use-filters-operator-configs";
+import { ProjectService } from "@/services/project";
+
+const projectService = new ProjectService();
 
 export type TWorkItemFiltersEntityProps = {
   workspaceSlug: string;
@@ -100,6 +111,10 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
   const { getUserDetails } = useMember();
   // derived values
   const operatorConfigs = useFiltersOperatorConfigs({ workspaceSlug });
+  const { data: customProperties } = useSWR(
+    projectId ? `ISSUE_CUSTOM_PROPERTIES_${workspaceSlug}_${projectId}` : null,
+    () => projectService.getWorkItemProperties(workspaceSlug, projectId as string)
+  );
   const filtersToShow = useMemo(() => new Set(allowedFilters), [allowedFilters]);
   const project = useMemo(() => getProjectById(projectId), [projectId, getProjectById]);
   const members: IUserLite[] | undefined = useMemo(
@@ -133,11 +148,14 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
   const projects = useMemo(
     () =>
       projectIds
-        ? (projectIds.map((projectId) => getProjectById(projectId)).filter((project) => project) as IProject[])
+        ? (projectIds.map((id) => getProjectById(id)).filter((projectDetails) => projectDetails) as IProject[])
         : [],
     [projectIds, getProjectById]
   );
-  const areAllConfigsInitialized = useMemo(() => isLoaderReady(projectLoader), [projectLoader]);
+  const areAllConfigsInitialized = useMemo(
+    () => isLoaderReady(projectLoader) && (!projectId || customProperties !== undefined),
+    [customProperties, projectId, projectLoader]
+  );
 
   /**
    * Checks if a filter is enabled based on the filters to show.
@@ -356,10 +374,121 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
         isEnabled: isFilterEnabled("project_id") && projects !== undefined,
         filterIcon: Briefcase,
         projects: projects,
-        getOptionIcon: (project) => <Logo logo={project.logo_props} size={12} />,
+        getOptionIcon: (projectDetails) => <Logo logo={projectDetails.logo_props} size={12} />,
         ...operatorConfigs,
       }),
     [isFilterEnabled, projects, operatorConfigs]
+  );
+
+  const customPropertyFilterConfigs = useMemo(
+    () =>
+      (customProperties ?? []).map((property: TProjectWorkItemProperty) => {
+        const key = `customproperty_${property.id}` as TWorkItemFilterProperty;
+        const commonConfig = {
+          id: key,
+          label: property.name,
+          icon: ListChecks,
+          isEnabled: true,
+          allowMultipleFilters: true,
+        };
+
+        if (property.property_type === "SHORT_TEXT" || property.property_type === "LONG_TEXT") {
+          return createFilterConfig<TWorkItemFilterProperty>({
+            ...commonConfig,
+            supportedOperatorConfigsMap: new Map([
+              [
+                EQUALITY_OPERATOR.CONTAINS,
+                createFilterFieldConfig<typeof FILTER_FIELD_TYPE.TEXT, string>({
+                  type: FILTER_FIELD_TYPE.TEXT,
+                  isOperatorEnabled: true,
+                  operatorLabel: "contains",
+                  placeholder: "Enter text",
+                }),
+              ],
+            ]),
+          });
+        }
+
+        if (property.property_type === "NUMBER") {
+          return createFilterConfig<TWorkItemFilterProperty>({
+            ...commonConfig,
+            supportedOperatorConfigsMap: new Map([
+              [
+                EQUALITY_OPERATOR.EXACT,
+                createFilterFieldConfig<typeof FILTER_FIELD_TYPE.NUMBER, number>({
+                  type: FILTER_FIELD_TYPE.NUMBER,
+                  isOperatorEnabled: true,
+                  placeholder: "Enter number",
+                }),
+              ],
+            ]),
+          });
+        }
+
+        if (property.property_type === "DATE") {
+          return getDatePropertyFilterConfig<TWorkItemFilterProperty>(key)({
+            isEnabled: true,
+            propertyDisplayName: property.name,
+            filterIcon: ListChecks,
+            ...operatorConfigs,
+          });
+        }
+
+        if (property.property_type === "CHECKBOX") {
+          const items = [
+            { id: "true", label: "Yes", value: "true" },
+            { id: "false", label: "No", value: "false" },
+          ];
+          return createFilterConfig<TWorkItemFilterProperty>({
+            ...commonConfig,
+            supportedOperatorConfigsMap: new Map([
+              [
+                EQUALITY_OPERATOR.EXACT,
+                getSingleSelectConfig(
+                  {
+                    items,
+                    getId: (item) => item.id,
+                    getLabel: (item) => item.label,
+                    getValue: (item) => item.value,
+                  },
+                  { isOperatorEnabled: true }
+                ),
+              ],
+            ]),
+          });
+        }
+
+        const options = property.options.filter((option) => !option.archived_at);
+        return createFilterConfig<TWorkItemFilterProperty>({
+          ...commonConfig,
+          supportedOperatorConfigsMap: new Map([
+            [
+              COLLECTION_OPERATOR.IN,
+              getMultiSelectConfig(
+                {
+                  items: options,
+                  getId: (option) => option.id,
+                  getLabel: (option) => option.name,
+                  getValue: (option) => option.id,
+                },
+                {
+                  isOperatorEnabled: true,
+                  singleValueOperator: EQUALITY_OPERATOR.EXACT,
+                }
+              ),
+            ],
+          ]),
+        });
+      }),
+    [customProperties, operatorConfigs]
+  );
+
+  const customPropertyFilterConfigMap = useMemo(
+    () =>
+      Object.fromEntries(
+        customPropertyFilterConfigs.map((config) => [config.id, config])
+      ) as TWorkItemFiltersConfig["configMap"],
+    [customPropertyFilterConfigs]
   );
 
   return {
@@ -380,6 +509,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
       updatedAtFilterConfig,
       createdByFilterConfig,
       subscriberFilterConfig,
+      ...customPropertyFilterConfigs,
     ],
     configMap: {
       project_id: projectFilterConfig,
@@ -397,6 +527,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
       target_date: targetDateFilterConfig,
       created_at: createdAtFilterConfig,
       updated_at: updatedAtFilterConfig,
+      ...customPropertyFilterConfigMap,
     },
     isFilterEnabled,
     members: members ?? [],

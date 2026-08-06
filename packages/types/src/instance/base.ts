@@ -80,6 +80,47 @@ export interface IInstanceAdmin {
   user_detail: IUserLite;
 }
 
+export type TInstanceUserStatus = "active" | "blocked" | "inactive";
+
+export interface IInstanceUser {
+  id: string;
+  email: string;
+  display_name: string;
+  first_name: string;
+  last_name: string;
+  avatar_url: string | null;
+  date_joined: string;
+  last_login_time: string | null;
+  is_active: boolean;
+  status: TInstanceUserStatus;
+  is_instance_admin: boolean;
+  blocked_at: string | null;
+  blocked_reason: string | null;
+  blocked_by: IUserLite | null;
+}
+
+export interface IInstanceUserStats {
+  total_users: number;
+  active_users: number;
+  blocked_users: number;
+}
+
+export interface IInstanceUserPagination {
+  count: number;
+  next_cursor: string;
+  next_page_results: boolean;
+  prev_cursor: string;
+  prev_page_results: boolean;
+  results: IInstanceUser[];
+  total_pages: number;
+  total_results: number;
+  extra_stats: IInstanceUserStats;
+}
+
+export interface IInstanceUserAccessPayload {
+  reason: string;
+}
+
 export type TInstanceConfigurationKeys =
   | TInstanceAIConfigurationKeys
   | TInstanceEmailConfigurationKeys

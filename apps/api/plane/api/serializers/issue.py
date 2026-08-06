@@ -5,7 +5,7 @@
 # Django imports
 from django.utils import timezone
 from lxml import html
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 
 #  Third party imports
 from rest_framework import serializers
@@ -16,6 +16,8 @@ from plane.db.models import (
     IssueType,
     IssueActivity,
     IssueAssignee,
+    CycleIssue,
+    ModuleIssue,
     FileAsset,
     IssueComment,
     IssueLabel,
@@ -30,6 +32,13 @@ from plane.db.models import (
 from plane.utils.content_validator import (
     validate_html_content,
     validate_binary_data,
+)
+from plane.utils.work_item_fields import (
+    MISSING,
+    persist_work_item_property_values,
+    serialize_work_item_property_values,
+    sync_issue_cycle_and_modules,
+    validate_and_prepare_work_item_fields,
 )
 
 from .base import BaseSerializer
@@ -66,6 +75,14 @@ class IssueSerializer(BaseSerializer):
     type_id = serializers.PrimaryKeyRelatedField(
         source="type", queryset=IssueType.objects.all(), required=False, allow_null=True
     )
+
+    cycle_id = serializers.UUIDField(write_only=True, required=False, allow_null=True)
+    module_ids = serializers.ListField(
+        child=serializers.UUIDField(),
+        write_only=True,
+        required=False,
+    )
+    property_values = serializers.JSONField(required=False, write_only=True)
 
     class Meta:
         model = Issue
@@ -108,6 +125,7 @@ class IssueSerializer(BaseSerializer):
             data["assignees"] = ProjectMember.objects.filter(
                 project_id=self.context.get("project_id"),
                 is_active=True,
+                member__is_active=True,
                 role__gte=15,
                 member_id__in=data["assignees"],
             ).values_list("member_id", flat=True)
@@ -146,11 +164,22 @@ class IssueSerializer(BaseSerializer):
         ):
             raise serializers.ValidationError("Estimate point is not valid please pass a valid estimate_point_id")
 
+        property_values = data.pop("property_values", MISSING)
+        data["property_values"] = validate_and_prepare_work_item_fields(
+            project_id=self.context["project_id"],
+            attrs=data,
+            instance=self.instance,
+            property_values=property_values,
+        )
         return data
 
+    @transaction.atomic
     def create(self, validated_data):
         assignees = validated_data.pop("assignees", None)
         labels = validated_data.pop("labels", None)
+        cycle_id = validated_data.pop("cycle_id", MISSING)
+        module_ids = validated_data.pop("module_ids", MISSING)
+        property_values = validated_data.pop("property_values")
 
         project_id = self.context["project_id"]
         workspace_id = self.context["workspace_id"]
@@ -197,6 +226,7 @@ class IssueSerializer(BaseSerializer):
                         project_id=project_id,
                         role__gte=15,
                         is_active=True,
+                        member__is_active=True,
                     ).exists()
                 ):
                     IssueAssignee.objects.create(
@@ -229,11 +259,24 @@ class IssueSerializer(BaseSerializer):
             except IntegrityError:
                 pass
 
+        sync_issue_cycle_and_modules(
+            issue=issue,
+            cycle_id=cycle_id,
+            module_ids=module_ids,
+        )
+        persist_work_item_property_values(
+            issue=issue,
+            property_values=property_values,
+        )
         return issue
 
+    @transaction.atomic
     def update(self, instance, validated_data):
         assignees = validated_data.pop("assignees", None)
         labels = validated_data.pop("labels", None)
+        cycle_id = validated_data.pop("cycle_id", MISSING)
+        module_ids = validated_data.pop("module_ids", MISSING)
+        property_values = validated_data.pop("property_values")
 
         # Related models
         project_id = instance.project_id
@@ -285,7 +328,17 @@ class IssueSerializer(BaseSerializer):
 
         # Time updation occues even when other related models are updated
         instance.updated_at = timezone.now()
-        return super().update(instance, validated_data)
+        instance = super().update(instance, validated_data)
+        sync_issue_cycle_and_modules(
+            issue=instance,
+            cycle_id=cycle_id,
+            module_ids=module_ids,
+        )
+        persist_work_item_property_values(
+            issue=instance,
+            property_values=property_values,
+        )
+        return instance
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -316,6 +369,9 @@ class IssueSerializer(BaseSerializer):
                 data["labels"] = [
                     str(label) for label in IssueLabel.objects.filter(issue=instance).values_list("label_id", flat=True)
                 ]
+        data["cycle_id"] = CycleIssue.objects.filter(issue=instance).values_list("cycle_id", flat=True).first()
+        data["module_ids"] = list(ModuleIssue.objects.filter(issue=instance).values_list("module_id", flat=True))
+        data["property_values"] = serialize_work_item_property_values(instance)
 
         return data
 

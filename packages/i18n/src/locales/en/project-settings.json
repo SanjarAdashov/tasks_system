@@ -1,5 +1,10 @@
 {
   "project_settings": {
+    "work_item_fields": {
+      "label": "Work item fields",
+      "heading": "Work item fields",
+      "description": "Choose the built-in fields shown when work items are created and define project-specific properties."
+    },
     "general": {
       "enter_project_id": "Enter project ID",
       "please_select_a_timezone": "Please select a timezone",

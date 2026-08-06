@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 
+from uuid import UUID
+
 from django.db.models import Case, CharField, Min, Value, When
 
 # Custom ordering for priority and state
@@ -16,65 +18,77 @@ STATE_ORDER = ["backlog", "unstarted", "started", "completed", "cancelled"]
 # (GHSA-2r95-c453-vxmr / GHSA-w45q-6m65-9498).
 # ---------------------------------------------------------------------------
 
-ISSUE_ORDER_BY_ALLOWLIST = frozenset({
-    "created_at",
-    "updated_at",
-    "sequence_id",
-    "sort_order",
-    "target_date",
-    "start_date",
-    "completed_at",
-    "archived_at",
-    "priority",
-    "state__name",
-    "state__group",
-    "assignees__first_name",
-    "labels__name",
-    "issue_module__module__name",
-})
+ISSUE_ORDER_BY_ALLOWLIST = frozenset(
+    {
+        "created_at",
+        "updated_at",
+        "sequence_id",
+        "sort_order",
+        "target_date",
+        "start_date",
+        "completed_at",
+        "archived_at",
+        "priority",
+        "state__name",
+        "state__group",
+        "assignees__first_name",
+        "labels__name",
+        "issue_module__module__name",
+    }
+)
 
 # IntakeIssue queryset — fields are prefixed with `issue__` for the join.
-INTAKE_ISSUE_ORDER_BY_ALLOWLIST = frozenset({
-    "issue__created_at",
-    "issue__updated_at",
-    "issue__sequence_id",
-    "issue__sort_order",
-    "issue__target_date",
-    "issue__start_date",
-    "issue__priority",
-    "issue__state__name",
-    "created_at",
-    "updated_at",
-    "status",
-})
+INTAKE_ISSUE_ORDER_BY_ALLOWLIST = frozenset(
+    {
+        "issue__created_at",
+        "issue__updated_at",
+        "issue__sequence_id",
+        "issue__sort_order",
+        "issue__target_date",
+        "issue__start_date",
+        "issue__priority",
+        "issue__state__name",
+        "created_at",
+        "updated_at",
+        "status",
+    }
+)
 
 # IssueActivity queryset (user activity, workspace member activity).
-ACTIVITY_ORDER_BY_ALLOWLIST = frozenset({
-    "created_at",
-    "updated_at",
-})
+ACTIVITY_ORDER_BY_ALLOWLIST = frozenset(
+    {
+        "created_at",
+        "updated_at",
+    }
+)
 
 # Project list queryset.
-PROJECT_ORDER_BY_ALLOWLIST = frozenset({
-    "created_at",
-    "updated_at",
-    "name",
-    "network",
-    "sort_order",
-})
+PROJECT_ORDER_BY_ALLOWLIST = frozenset(
+    {
+        "created_at",
+        "updated_at",
+        "name",
+        "network",
+        "sort_order",
+    }
+)
 
 # Saved view (IssueView) list queryset.
-VIEW_ORDER_BY_ALLOWLIST = frozenset({
-    "created_at",
-    "updated_at",
-    "name",
-})
+VIEW_ORDER_BY_ALLOWLIST = frozenset(
+    {
+        "created_at",
+        "updated_at",
+        "name",
+    }
+)
 
 # Notification queryset.
-NOTIFICATION_ORDER_BY_ALLOWLIST = frozenset({
-    "created_at",
-    "updated_at",
-})
+NOTIFICATION_ORDER_BY_ALLOWLIST = frozenset(
+    {
+        "created_at",
+        "updated_at",
+    }
+)
 
 # ---------------------------------------------------------------------------
 # group_by / sub_group_by allowlist for Issue querysets — used by
@@ -83,40 +97,60 @@ NOTIFICATION_ORDER_BY_ALLOWLIST = frozenset({
 # Window partition_by. Prevents unauthenticated ORM field-name injection via
 # user-supplied query params (GHSA-wwgj-929g-42cm).
 # ---------------------------------------------------------------------------
-ISSUE_GROUP_BY_ALLOWLIST = frozenset({
-    "state_id",
-    "state__group",
-    "priority",
-    "labels__id",
-    "assignees__id",
-    "issue_module__module_id",
-    "cycle_id",
-    "project_id",
-    "created_by",
-    "target_date",
-    "start_date",
-})
+ISSUE_GROUP_BY_ALLOWLIST = frozenset(
+    {
+        "state_id",
+        "state__group",
+        "priority",
+        "labels__id",
+        "assignees__id",
+        "issue_module__module_id",
+        "cycle_id",
+        "project_id",
+        "created_by",
+        "target_date",
+        "start_date",
+    }
+)
+
+
+def is_allowed_issue_group_by(field_name):
+    if field_name in ISSUE_GROUP_BY_ALLOWLIST:
+        return True
+    if not isinstance(field_name, str) or not field_name.startswith("customproperty_"):
+        return False
+    try:
+        UUID(field_name.removeprefix("customproperty_"))
+        return True
+    except (TypeError, ValueError):
+        return False
+
 
 # Cycle list queryset.
-CYCLE_ORDER_BY_ALLOWLIST = frozenset({
-    "created_at",
-    "updated_at",
-    "name",
-    "start_date",
-    "end_date",
-    "sort_order",
-})
+CYCLE_ORDER_BY_ALLOWLIST = frozenset(
+    {
+        "created_at",
+        "updated_at",
+        "name",
+        "start_date",
+        "end_date",
+        "sort_order",
+    }
+)
 
 # Module list queryset.
-MODULE_ORDER_BY_ALLOWLIST = frozenset({
-    "created_at",
-    "updated_at",
-    "name",
-    "start_date",
-    "target_date",
-    "status",
-    "sort_order",
-})
+MODULE_ORDER_BY_ALLOWLIST = frozenset(
+    {
+        "created_at",
+        "updated_at",
+        "name",
+        "start_date",
+        "target_date",
+        "status",
+        "sort_order",
+    }
+)
+
 
 def sanitize_order_by(value, allowed_fields, default="-created_at"):
     """Return a safe ordering string derived from *value*.

@@ -62,7 +62,7 @@ from .project import (
 from .session import Session
 from .social_connection import SocialLoginConnection
 from .state import State, StateGroup, DEFAULT_STATES
-from .user import Account, Profile, User, BotTypeEnum
+from .user import Account, Profile, User, UserAccessLog, BotTypeEnum
 from .view import IssueView
 from .webhook import Webhook, WebhookLog
 from .workspace import (
@@ -75,6 +75,19 @@ from .workspace import (
     WorkspaceUserLink,
     WorkspaceHomePreference,
     WorkspaceUserPreference,
+)
+
+from .work_item_property import (
+    BUILT_IN_WORK_ITEM_FIELD_KEYS,
+    HIDEABLE_WORK_ITEM_FIELD_KEYS,
+    LOCKED_REQUIRED_WORK_ITEM_FIELD_KEYS,
+    LOCKED_VISIBLE_WORK_ITEM_FIELD_KEYS,
+    ProjectWorkItemFieldConfiguration,
+    ProjectWorkItemProperty,
+    ProjectWorkItemPropertyOption,
+    WorkItemPropertyType,
+    WorkItemPropertyValue,
+    get_default_work_item_field_configuration,
 )
 
 from .favorite import UserFavorite

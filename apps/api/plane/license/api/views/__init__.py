@@ -26,3 +26,10 @@ from .workspace import (
     InstanceWorkSpaceAvailabilityCheckEndpoint,
     InstanceWorkSpaceEndpoint,
 )
+
+
+from .user_access import (
+    InstanceUserEndpoint,
+    InstanceUserBlockEndpoint,
+    InstanceUserUnblockEndpoint,
+)

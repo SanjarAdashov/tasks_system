@@ -239,16 +239,16 @@ class CycleIssueViewSet(BaseViewSet):
         # Scope to workspace+project to prevent cross-tenant IDOR: without this
         # scope, foreign-tenant CycleIssue rows matched by issue_id would be
         # reassigned to the caller's cycle (GHSA-4w5x-wc9w-f47x).
-        cycle_issues = list(
+        all_cycle_issues = list(
             CycleIssue.objects.filter(
-                ~Q(cycle_id=cycle_id),
                 issue_id__in=issues,
                 workspace__slug=slug,
                 project_id=project_id,
             )
         )
-        existing_issues = [str(cycle_issue.issue_id) for cycle_issue in cycle_issues]
+        existing_issues = [str(cycle_issue.issue_id) for cycle_issue in all_cycle_issues]
         new_issues = list(set(issues) - set(existing_issues))
+        cycle_issues = [cycle_issue for cycle_issue in all_cycle_issues if str(cycle_issue.cycle_id) != str(cycle_id)]
 
         # Scope to workspace+project to prevent cross-tenant IDOR
         new_issues = list(

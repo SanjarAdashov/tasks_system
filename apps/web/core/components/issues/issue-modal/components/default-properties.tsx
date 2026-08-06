@@ -12,7 +12,7 @@ import { ETabIndices, EUserPermissions, EUserPermissionsLevel } from "@plane/con
 import { useTranslation } from "@plane/i18n";
 import { ParentPropertyIcon } from "@plane/propel/icons";
 // types
-import type { ISearchIssueResponse, TIssue } from "@plane/types";
+import type { ISearchIssueResponse, TIssue, TWorkItemBuiltInFieldKey } from "@plane/types";
 // ui
 import { CustomMenu } from "@plane/ui";
 import { getDate, renderFormattedPayloadDate, getTabIndex } from "@plane/utils";
@@ -45,6 +45,7 @@ type TIssueDefaultPropertiesProps = {
   isDraft: boolean;
   handleFormChange: () => void;
   setSelectedParentIssue: (issue: ISearchIssueResponse) => void;
+  hiddenFieldKeys?: TWorkItemBuiltInFieldKey[];
 };
 
 export const IssueDefaultProperties = observer(function IssueDefaultProperties(props: TIssueDefaultPropertiesProps) {
@@ -60,6 +61,7 @@ export const IssueDefaultProperties = observer(function IssueDefaultProperties(p
     isDraft,
     handleFormChange,
     setSelectedParentIssue,
+    hiddenFieldKeys = [],
   } = props;
   // states
   const [parentIssueListModalOpen, setParentIssueListModalOpen] = useState(false);
@@ -82,6 +84,8 @@ export const IssueDefaultProperties = observer(function IssueDefaultProperties(p
 
   const maxDate = getDate(targetDate);
   maxDate?.setDate(maxDate.getDate());
+
+  const shouldShow = (fieldKey: TWorkItemBuiltInFieldKey) => Boolean(id) || !hiddenFieldKeys.includes(fieldKey);
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -160,45 +164,49 @@ export const IssueDefaultProperties = observer(function IssueDefaultProperties(p
           </div>
         )}
       />
-      <Controller
-        control={control}
-        name="start_date"
-        render={({ field: { value, onChange } }) => (
-          <div className="h-7">
-            <DateDropdown
-              value={value}
-              onChange={(date) => {
-                onChange(date ? renderFormattedPayloadDate(date) : null);
-                handleFormChange();
-              }}
-              buttonVariant="border-with-text"
-              maxDate={maxDate ?? undefined}
-              placeholder={t("start_date")}
-              tabIndex={getIndex("start_date")}
-            />
-          </div>
-        )}
-      />
-      <Controller
-        control={control}
-        name="target_date"
-        render={({ field: { value, onChange } }) => (
-          <div className="h-7">
-            <DateDropdown
-              value={value}
-              onChange={(date) => {
-                onChange(date ? renderFormattedPayloadDate(date) : null);
-                handleFormChange();
-              }}
-              buttonVariant="border-with-text"
-              minDate={minDate ?? undefined}
-              placeholder={t("due_date")}
-              tabIndex={getIndex("target_date")}
-            />
-          </div>
-        )}
-      />
-      {projectDetails?.cycle_view && (
+      {shouldShow("start_date") && (
+        <Controller
+          control={control}
+          name="start_date"
+          render={({ field: { value, onChange } }) => (
+            <div className="h-7">
+              <DateDropdown
+                value={value}
+                onChange={(date) => {
+                  onChange(date ? renderFormattedPayloadDate(date) : null);
+                  handleFormChange();
+                }}
+                buttonVariant="border-with-text"
+                maxDate={maxDate ?? undefined}
+                placeholder={t("start_date")}
+                tabIndex={getIndex("start_date")}
+              />
+            </div>
+          )}
+        />
+      )}
+      {shouldShow("target_date") && (
+        <Controller
+          control={control}
+          name="target_date"
+          render={({ field: { value, onChange } }) => (
+            <div className="h-7">
+              <DateDropdown
+                value={value}
+                onChange={(date) => {
+                  onChange(date ? renderFormattedPayloadDate(date) : null);
+                  handleFormChange();
+                }}
+                buttonVariant="border-with-text"
+                minDate={minDate ?? undefined}
+                placeholder={t("due_date")}
+                tabIndex={getIndex("target_date")}
+              />
+            </div>
+          )}
+        />
+      )}
+      {shouldShow("cycle") && projectDetails?.cycle_view && (
         <Controller
           control={control}
           name="cycle_id"
@@ -219,7 +227,7 @@ export const IssueDefaultProperties = observer(function IssueDefaultProperties(p
           )}
         />
       )}
-      {projectDetails?.module_view && workspaceSlug && (
+      {shouldShow("module") && projectDetails?.module_view && workspaceSlug && (
         <Controller
           control={control}
           name="module_ids"
@@ -242,7 +250,7 @@ export const IssueDefaultProperties = observer(function IssueDefaultProperties(p
           )}
         />
       )}
-      {projectId && areEstimateEnabledByProjectId(projectId) && (
+      {shouldShow("estimate") && projectId && areEstimateEnabledByProjectId(projectId) && (
         <Controller
           control={control}
           name="estimate_point"
@@ -263,62 +271,64 @@ export const IssueDefaultProperties = observer(function IssueDefaultProperties(p
           )}
         />
       )}
-      <div className="h-7">
-        {parentId ? (
-          <CustomMenu
-            customButton={
-              <button
-                type="button"
-                className="flex h-full cursor-pointer items-center justify-between gap-1 rounded-sm border-[0.5px] border-strong px-2 py-0.5 text-caption-sm-regular hover:bg-layer-1"
-              >
-                {selectedParentIssue?.project_id && (
-                  <IssueIdentifier
-                    projectId={selectedParentIssue.project_id}
-                    issueTypeId={selectedParentIssue.type_id}
-                    projectIdentifier={selectedParentIssue?.project__identifier}
-                    issueSequenceId={selectedParentIssue.sequence_id}
-                    size="xs"
-                  />
-                )}
-              </button>
-            }
-            placement="bottom-start"
-            className="h-full w-full"
-            customButtonClassName="h-full"
-            tabIndex={getIndex("parent_id")}
-          >
-            <>
-              <CustomMenu.MenuItem className="!p-1" onClick={() => setParentIssueListModalOpen(true)}>
-                {t("change_parent_issue")}
-              </CustomMenu.MenuItem>
-              <Controller
-                control={control}
-                name="parent_id"
-                render={({ field: { onChange } }) => (
-                  <CustomMenu.MenuItem
-                    className="!p-1"
-                    onClick={() => {
-                      onChange(null);
-                      handleFormChange();
-                    }}
-                  >
-                    {t("remove_parent_issue")}
-                  </CustomMenu.MenuItem>
-                )}
-              />
-            </>
-          </CustomMenu>
-        ) : (
-          <button
-            type="button"
-            className="flex h-full cursor-pointer items-center justify-between gap-1 rounded-sm border-[0.5px] border-strong px-2 py-0.5 text-caption-sm-regular hover:bg-layer-1"
-            onClick={() => setParentIssueListModalOpen(true)}
-          >
-            <ParentPropertyIcon className="h-3 w-3 flex-shrink-0" />
-            <span className="whitespace-nowrap">{t("add_parent")}</span>
-          </button>
-        )}
-      </div>
+      {shouldShow("parent") && (
+        <div className="h-7">
+          {parentId ? (
+            <CustomMenu
+              customButton={
+                <button
+                  type="button"
+                  className="flex h-full cursor-pointer items-center justify-between gap-1 rounded-sm border-[0.5px] border-strong px-2 py-0.5 text-caption-sm-regular hover:bg-layer-1"
+                >
+                  {selectedParentIssue?.project_id && (
+                    <IssueIdentifier
+                      projectId={selectedParentIssue.project_id}
+                      issueTypeId={selectedParentIssue.type_id}
+                      projectIdentifier={selectedParentIssue?.project__identifier}
+                      issueSequenceId={selectedParentIssue.sequence_id}
+                      size="xs"
+                    />
+                  )}
+                </button>
+              }
+              placement="bottom-start"
+              className="h-full w-full"
+              customButtonClassName="h-full"
+              tabIndex={getIndex("parent_id")}
+            >
+              <>
+                <CustomMenu.MenuItem className="!p-1" onClick={() => setParentIssueListModalOpen(true)}>
+                  {t("change_parent_issue")}
+                </CustomMenu.MenuItem>
+                <Controller
+                  control={control}
+                  name="parent_id"
+                  render={({ field: { onChange } }) => (
+                    <CustomMenu.MenuItem
+                      className="!p-1"
+                      onClick={() => {
+                        onChange(null);
+                        handleFormChange();
+                      }}
+                    >
+                      {t("remove_parent_issue")}
+                    </CustomMenu.MenuItem>
+                  )}
+                />
+              </>
+            </CustomMenu>
+          ) : (
+            <button
+              type="button"
+              className="flex h-full cursor-pointer items-center justify-between gap-1 rounded-sm border-[0.5px] border-strong px-2 py-0.5 text-caption-sm-regular hover:bg-layer-1"
+              onClick={() => setParentIssueListModalOpen(true)}
+            >
+              <ParentPropertyIcon className="h-3 w-3 flex-shrink-0" />
+              <span className="whitespace-nowrap">{t("add_parent")}</span>
+            </button>
+          )}
+        </div>
+      )}
       <Controller
         control={control}
         name="parent_id"

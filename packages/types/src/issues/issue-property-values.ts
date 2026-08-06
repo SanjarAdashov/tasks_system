@@ -4,5 +4,7 @@
  * See the LICENSE file for details.
  */
 
-export type TIssuePropertyValues = Record<string, unknown>;
+import type { TProjectWorkItemPropertyValue } from "../work-item-property";
+
+export type TIssuePropertyValues = Record<string, TProjectWorkItemPropertyValue>;
 export type TIssuePropertyValueErrors = Record<string, unknown>;

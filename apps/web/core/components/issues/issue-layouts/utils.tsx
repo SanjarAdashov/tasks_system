@@ -10,7 +10,7 @@ import { extractInstruction } from "@atlaskit/pragmatic-drag-and-drop-hitbox/tre
 import { clone, isNil, pull, uniq, concat } from "lodash-es";
 import scrollIntoView from "smooth-scroll-into-view-if-needed";
 import type { FC } from "react";
-import { CalendarDays, LayersIcon, Paperclip } from "lucide-react";
+import { CalendarDays, LayersIcon, ListChecks, Paperclip } from "lucide-react";
 // plane types
 import { EIconSize, ISSUE_PRIORITIES, STATE_GROUPS } from "@plane/constants";
 import { Logo } from "@plane/propel/emoji-icon-picker";
@@ -44,6 +44,7 @@ import type {
   IIssueDisplayFilterOptions,
   TGetColumns,
   TSpreadsheetColumn,
+  TProjectWorkItemProperty,
 } from "@plane/types";
 import { EIssuesStoreType } from "@plane/types";
 // plane ui
@@ -110,6 +111,7 @@ type TGetGroupByColumns = {
   isWorkspaceLevel: boolean;
   isEpic?: boolean;
   projectId?: string;
+  customProperties?: TProjectWorkItemProperty[];
 };
 
 // NOTE: Type of groupBy is different compared to what's being passed from the components.
@@ -121,6 +123,7 @@ export const getGroupByColumns = ({
   isWorkspaceLevel,
   isEpic = false,
   projectId,
+  customProperties = [],
 }: TGetGroupByColumns): IGroupByColumn[] | undefined => {
   // If no groupBy is specified and includeNone is true, return "All Issues" group
   if (!groupBy && includeNone) {
@@ -137,9 +140,46 @@ export const getGroupByColumns = ({
   // Return undefined if no valid groupBy
   if (!groupBy) return undefined;
 
+  if (groupBy.startsWith("customproperty_")) {
+    const propertyId = groupBy.replace("customproperty_", "");
+    const property = customProperties.find((item) => item.id === propertyId);
+    if (!property || !["SINGLE_SELECT", "CHECKBOX"].includes(property.property_type)) return undefined;
+    const columns: IGroupByColumn[] =
+      property.property_type === "CHECKBOX"
+        ? [
+            {
+              id: "True",
+              name: "Yes",
+              icon: <ListChecks className="size-3.5" />,
+              payload: { property_values: { [property.id]: true } },
+            },
+            {
+              id: "False",
+              name: "No",
+              icon: <ListChecks className="size-3.5" />,
+              payload: { property_values: { [property.id]: false } },
+            },
+          ]
+        : property.options
+            .filter((option) => !option.archived_at)
+            .map((option) => ({
+              id: option.id,
+              name: option.name,
+              icon: <ListChecks className="size-3.5" />,
+              payload: { property_values: { [property.id]: option.id } },
+            }));
+    columns.push({
+      id: "None",
+      name: "None",
+      icon: <ListChecks className="size-3.5" />,
+      payload: { property_values: { [property.id]: null } },
+    });
+    return columns;
+  }
+
   // Map of group by options to their corresponding column getter functions
   const groupByColumnMap: Record<
-    GroupByColumnTypes,
+    Exclude<GroupByColumnTypes, `customproperty_${string}`>,
     ({ isWorkspaceLevel, projectId }: TGetColumns) => IGroupByColumn[] | undefined
   > = {
     project: getProjectColumns,
@@ -155,7 +195,10 @@ export const getGroupByColumns = ({
   };
 
   // Get and return the columns for the specified group by option
-  return groupByColumnMap[groupBy]?.({ isWorkspaceLevel, projectId });
+  return groupByColumnMap[groupBy as Exclude<GroupByColumnTypes, `customproperty_${string}`>]?.({
+    isWorkspaceLevel,
+    projectId,
+  });
 };
 
 const getProjectColumns = (): IGroupByColumn[] | undefined => {
@@ -574,41 +617,74 @@ export const handleGroupDragDrop = async (
 
   // update updatedIssue values based on the source and destination groupIds
   if (source.groupId && destination.groupId && source.groupId !== destination.groupId && groupBy) {
-    const groupKey = ISSUE_FILTER_DEFAULT_DATA[groupBy];
-    let groupValue: any = clone(sourceIssue[groupKey]);
+    if (groupBy.startsWith("customproperty_")) {
+      const propertyId = groupBy.replace("customproperty_", "");
+      const groupValue =
+        destination.groupId === "None"
+          ? null
+          : destination.groupId === "True"
+            ? true
+            : destination.groupId === "False"
+              ? false
+              : destination.groupId;
+      issueUpdates[groupBy] = { ADD: getGroupId(destination.groupId), REMOVE: getGroupId(source.groupId) };
+      updatedIssue = { ...updatedIssue, property_values: { [propertyId]: groupValue } };
+    } else {
+      const groupKey = ISSUE_FILTER_DEFAULT_DATA[groupBy];
+      if (!groupKey) return;
+      let groupValue: any = clone(sourceIssue[groupKey]);
 
-    // If groupValues is an array, remove source groupId and add destination groupId
-    if (Array.isArray(groupValue)) {
-      pull(groupValue, source.groupId);
-      if (destination.groupId !== "None") groupValue = uniq(concat(groupValue, [destination.groupId]));
-    } // else just update the groupValue based on destination groupId
-    else {
-      groupValue = destination.groupId === "None" ? null : destination.groupId;
+      // If groupValues is an array, remove source groupId and add destination groupId
+      if (Array.isArray(groupValue)) {
+        pull(groupValue, source.groupId);
+        if (destination.groupId !== "None") groupValue = uniq(concat(groupValue, [destination.groupId]));
+      } // else just update the groupValue based on destination groupId
+      else {
+        groupValue = destination.groupId === "None" ? null : destination.groupId;
+      }
+
+      // keep track of updates on what was added and what was removed
+      issueUpdates[groupKey] = { ADD: getGroupId(destination.groupId), REMOVE: getGroupId(source.groupId) };
+      updatedIssue = { ...updatedIssue, [groupKey]: groupValue };
     }
-
-    // keep track of updates on what was added and what was removed
-    issueUpdates[groupKey] = { ADD: getGroupId(destination.groupId), REMOVE: getGroupId(source.groupId) };
-    updatedIssue = { ...updatedIssue, [groupKey]: groupValue };
   }
 
   // do the same for subgroup
   // update updatedIssue values based on the source and destination subGroupIds
   if (subGroupBy && source.subGroupId && destination.subGroupId && source.subGroupId !== destination.subGroupId) {
-    const subGroupKey = ISSUE_FILTER_DEFAULT_DATA[subGroupBy];
-    let subGroupValue: any = clone(sourceIssue[subGroupKey]);
+    if (subGroupBy.startsWith("customproperty_")) {
+      const propertyId = subGroupBy.replace("customproperty_", "");
+      const groupValue =
+        destination.subGroupId === "None"
+          ? null
+          : destination.subGroupId === "True"
+            ? true
+            : destination.subGroupId === "False"
+              ? false
+              : destination.subGroupId;
+      issueUpdates[subGroupBy] = { ADD: getGroupId(destination.subGroupId), REMOVE: getGroupId(source.subGroupId) };
+      updatedIssue = {
+        ...updatedIssue,
+        property_values: { ...updatedIssue.property_values, [propertyId]: groupValue },
+      };
+    } else {
+      const subGroupKey = ISSUE_FILTER_DEFAULT_DATA[subGroupBy];
+      if (!subGroupKey) return;
+      let subGroupValue: any = clone(sourceIssue[subGroupKey]);
 
-    // If subGroupValue is an array, remove source subGroupId and add destination subGroupId
-    if (Array.isArray(subGroupValue)) {
-      pull(subGroupValue, source.subGroupId);
-      if (destination.subGroupId !== "None") subGroupValue = uniq(concat(subGroupValue, [destination.subGroupId]));
-    } // else just update the subGroupValue based on destination subGroupId
-    else {
-      subGroupValue = destination.subGroupId === "None" ? null : destination.subGroupId;
+      // If subGroupValue is an array, remove source subGroupId and add destination subGroupId
+      if (Array.isArray(subGroupValue)) {
+        pull(subGroupValue, source.subGroupId);
+        if (destination.subGroupId !== "None") subGroupValue = uniq(concat(subGroupValue, [destination.subGroupId]));
+      } // else just update the subGroupValue based on destination subGroupId
+      else {
+        subGroupValue = destination.subGroupId === "None" ? null : destination.subGroupId;
+      }
+
+      // keep track of updates on what was added and what was removed
+      issueUpdates[subGroupKey] = { ADD: getGroupId(destination.subGroupId), REMOVE: getGroupId(source.subGroupId) };
+      updatedIssue = { ...updatedIssue, [subGroupKey]: subGroupValue };
     }
-
-    // keep track of updates on what was added and what was removed
-    issueUpdates[subGroupKey] = { ADD: getGroupId(destination.subGroupId), REMOVE: getGroupId(source.subGroupId) };
-    updatedIssue = { ...updatedIssue, [subGroupKey]: subGroupValue };
   }
 
   if (updatedIssue && sourceIssue?.project_id) {

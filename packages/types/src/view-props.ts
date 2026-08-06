@@ -11,6 +11,8 @@ import type { CompleteOrEmpty } from "./utils";
 
 export type TIssueLayouts = "list" | "kanban" | "calendar" | "spreadsheet" | "gantt_chart";
 
+export type TCustomWorkItemGroupByOption = `customproperty_${string}`;
+
 export type TIssueGroupByOptions =
   | "state"
   | "priority"
@@ -23,6 +25,7 @@ export type TIssueGroupByOptions =
   | "module"
   | "target_date"
   | "team_project"
+  | TCustomWorkItemGroupByOption
   | null;
 
 export type TIssueOrderByOptions =
@@ -110,7 +113,8 @@ export const WORK_ITEM_FILTER_PROPERTY_KEYS = [
   "created_at",
   "updated_at",
 ] as const;
-export type TWorkItemFilterProperty = (typeof WORK_ITEM_FILTER_PROPERTY_KEYS)[number];
+export type TCustomWorkItemFilterProperty = `customproperty_${string}`;
+export type TWorkItemFilterProperty = (typeof WORK_ITEM_FILTER_PROPERTY_KEYS)[number] | TCustomWorkItemFilterProperty;
 
 export type TWorkItemFilterConditionKey = `${TWorkItemFilterProperty}__${TSupportedOperators}`;
 

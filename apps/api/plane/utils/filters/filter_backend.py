@@ -4,9 +4,14 @@
 
 # Python imports
 import json
+import re
+from datetime import date
+from uuid import UUID
 
 # Django imports
-from django.db.models import Q
+from django.db.models import DateField, Exists, FloatField, OuterRef, Q
+from django.db.models.expressions import RawSQL
+from django.db.models.functions import Cast
 from django.http import QueryDict
 
 # Third party imports
@@ -14,7 +19,21 @@ from django_filters.utils import translate_validation
 from rest_framework import filters
 from rest_framework.exceptions import ValidationError as DRFValidationError
 
+from plane.db.models import ProjectWorkItemProperty, WorkItemPropertyValue, WorkItemPropertyType
 from plane.utils.exception_logger import log_exception
+
+
+CUSTOM_PROPERTY_FILTER_PATTERN = re.compile(r"^customproperty_([0-9a-fA-F-]{36})__(exact|in|range|icontains|isnull)$")
+
+CUSTOM_PROPERTY_LOOKUPS = {
+    WorkItemPropertyType.SHORT_TEXT: {"exact", "icontains", "isnull"},
+    WorkItemPropertyType.LONG_TEXT: {"exact", "icontains", "isnull"},
+    WorkItemPropertyType.NUMBER: {"exact", "in", "range", "isnull"},
+    WorkItemPropertyType.DATE: {"exact", "in", "range", "isnull"},
+    WorkItemPropertyType.CHECKBOX: {"exact", "isnull"},
+    WorkItemPropertyType.SINGLE_SELECT: {"exact", "in", "isnull"},
+    WorkItemPropertyType.MULTI_SELECT: {"exact", "in", "isnull"},
+}
 
 
 class ComplexFilterBackend(filters.BaseFilterBackend):
@@ -115,6 +134,30 @@ class ComplexFilterBackend(filters.BaseFilterBackend):
 
         # Check if all fields are allowed
         for field in fields:
+            custom_property_filter = self._parse_custom_property_filter(field)
+            if custom_property_filter:
+                property_id, lookup = custom_property_filter
+                property_instance = self._get_custom_property(property_id, view)
+                if lookup not in CUSTOM_PROPERTY_LOOKUPS[property_instance.property_type]:
+                    raise DRFValidationError(
+                        {
+                            "message": (
+                                f"Lookup '{lookup}' is not supported for custom property type "
+                                f"'{property_instance.property_type}'"
+                            ),
+                            "code": "invalid_custom_property_lookup",
+                        }
+                    )
+                continue
+
+            if isinstance(field, str) and field.startswith("customproperty_"):
+                raise DRFValidationError(
+                    {
+                        "message": f"Invalid custom property filter field '{field}'",
+                        "code": "invalid_custom_property_filter",
+                    }
+                )
+
             # Field keys must match FilterSet filter names (including any lookups)
             # Example: 'sequence_id__gte' should be declared in base_filters
             # Special-case __range: require the '<base>__range' filter itself
@@ -244,6 +287,21 @@ class ComplexFilterBackend(filters.BaseFilterBackend):
         if not leaf_conditions:
             return Q()
 
+        custom_conditions = {}
+        standard_conditions = {}
+        for key, value in leaf_conditions.items():
+            if self._parse_custom_property_filter(key):
+                custom_conditions[key] = value
+            else:
+                standard_conditions[key] = value
+
+        combined_q = Q()
+        for key, value in custom_conditions.items():
+            combined_q &= self._build_custom_property_q(key, value, view)
+
+        if not standard_conditions:
+            return combined_q
+
         # Get the filterset class from the view
         filterset_class = getattr(view, "filterset_class", None)
         if not filterset_class:
@@ -255,7 +313,7 @@ class ComplexFilterBackend(filters.BaseFilterBackend):
             )
 
         # Apply preprocessing hook
-        processed_conditions = self._preprocess_leaf_conditions(leaf_conditions, view, queryset)
+        processed_conditions = self._preprocess_leaf_conditions(standard_conditions, view, queryset)
 
         # Build a QueryDict from the leaf conditions
         qd = QueryDict(mutable=True)
@@ -293,7 +351,148 @@ class ComplexFilterBackend(filters.BaseFilterBackend):
                 }
             )
 
-        return fs.build_combined_q()
+        return combined_q & fs.build_combined_q()
+
+    def _parse_custom_property_filter(self, field_name):
+        if not isinstance(field_name, str):
+            return None
+        match = CUSTOM_PROPERTY_FILTER_PATTERN.fullmatch(field_name)
+        if not match:
+            return None
+        try:
+            return str(UUID(match.group(1))), match.group(2)
+        except ValueError:
+            return None
+
+    def _get_custom_property(self, property_id, view):
+        cache = getattr(view, "_custom_property_filter_cache", None)
+        if cache is None:
+            cache = {}
+            setattr(view, "_custom_property_filter_cache", cache)
+        if property_id in cache:
+            return cache[property_id]
+
+        properties = ProjectWorkItemProperty.objects.filter(
+            id=property_id,
+            archived_at__isnull=True,
+            deleted_at__isnull=True,
+        )
+        slug = getattr(view, "kwargs", {}).get("slug")
+        project_id = getattr(view, "kwargs", {}).get("project_id")
+        if slug:
+            properties = properties.filter(workspace__slug=slug)
+        if project_id:
+            properties = properties.filter(project_id=project_id)
+
+        property_instance = properties.only("id", "property_type").first()
+        if not property_instance:
+            raise DRFValidationError(
+                {
+                    "message": f"Custom property '{property_id}' is not available for this endpoint",
+                    "code": "invalid_custom_property",
+                }
+            )
+        cache[property_id] = property_instance
+        return property_instance
+
+    def _build_custom_property_q(self, field_name, raw_value, view):
+        property_id, lookup = self._parse_custom_property_filter(field_name)
+        property_instance = self._get_custom_property(property_id, view)
+        value_queryset = WorkItemPropertyValue.objects.filter(
+            issue_id=OuterRef("pk"),
+            property_id=property_id,
+            deleted_at__isnull=True,
+        )
+
+        if lookup == "isnull":
+            is_null = self._coerce_boolean(raw_value)
+            populated_value_exists = Exists(value_queryset.exclude(value=None))
+            return ~Q(populated_value_exists) if is_null else Q(populated_value_exists)
+
+        if property_instance.property_type == WorkItemPropertyType.MULTI_SELECT:
+            values = self._as_list(raw_value) if lookup == "in" else [raw_value]
+            multi_value_q = Q()
+            for value in values:
+                multi_value_q |= Q(value__contains=[str(value)])
+            return Q(Exists(value_queryset.filter(multi_value_q)))
+
+        if lookup == "icontains":
+            value_queryset = value_queryset.annotate(
+                custom_scalar=RawSQL("value #>> '{}'", ()),
+            ).filter(custom_scalar__icontains=str(raw_value))
+            return Q(Exists(value_queryset))
+
+        if lookup == "range":
+            values = self._as_list(raw_value)
+            if len(values) != 2:
+                raise DRFValidationError(
+                    {
+                        "message": f"Range filter '{field_name}' requires exactly two values",
+                        "code": "invalid_custom_property_range",
+                    }
+                )
+            coerced_values = [self._coerce_property_value(property_instance.property_type, value) for value in values]
+            scalar_text = RawSQL("value #>> '{}'", ())
+            if property_instance.property_type == WorkItemPropertyType.NUMBER:
+                value_queryset = value_queryset.annotate(custom_scalar=Cast(scalar_text, FloatField()))
+            elif property_instance.property_type == WorkItemPropertyType.DATE:
+                value_queryset = value_queryset.annotate(custom_scalar=Cast(scalar_text, DateField()))
+                coerced_values = [date.fromisoformat(value) for value in coerced_values]
+            return Q(Exists(value_queryset.filter(custom_scalar__range=coerced_values)))
+
+        if lookup == "in":
+            values = [
+                self._coerce_property_value(property_instance.property_type, value)
+                for value in self._as_list(raw_value)
+            ]
+            return Q(Exists(value_queryset.filter(value__in=values)))
+
+        value = self._coerce_property_value(property_instance.property_type, raw_value)
+        return Q(Exists(value_queryset.filter(value=value)))
+
+    def _as_list(self, value):
+        if isinstance(value, (list, tuple)):
+            return list(value)
+        if isinstance(value, str):
+            return [item.strip() for item in value.split(",") if item.strip()]
+        return [value]
+
+    def _coerce_property_value(self, property_type, value):
+        if property_type == WorkItemPropertyType.NUMBER:
+            try:
+                return float(value)
+            except (TypeError, ValueError):
+                raise DRFValidationError(
+                    {
+                        "message": f"'{value}' is not a valid number",
+                        "code": "invalid_custom_property_number",
+                    }
+                )
+        if property_type == WorkItemPropertyType.CHECKBOX:
+            return self._coerce_boolean(value)
+        if property_type == WorkItemPropertyType.DATE:
+            try:
+                return date.fromisoformat(str(value)).isoformat()
+            except ValueError:
+                raise DRFValidationError(
+                    {
+                        "message": f"'{value}' is not a valid ISO date",
+                        "code": "invalid_custom_property_date",
+                    }
+                )
+        return str(value)
+
+    def _coerce_boolean(self, value):
+        if value in (True, 1, "1", "true", "True"):
+            return True
+        if value in (False, 0, "0", "false", "False"):
+            return False
+        raise DRFValidationError(
+            {
+                "message": f"'{value}' is not a valid boolean",
+                "code": "invalid_custom_property_boolean",
+            }
+        )
 
     def _get_max_depth(self, view):
         """Return the maximum allowed nesting depth for complex filters.

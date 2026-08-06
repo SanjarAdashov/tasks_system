@@ -112,7 +112,7 @@ export interface IBaseIssuesStore {
 }
 
 // This constant maps the group by keys to the respective issue property that the key relies on
-export const ISSUE_GROUP_BY_KEY: Record<TIssueDisplayFilterOptions, keyof TIssue> = {
+export const ISSUE_GROUP_BY_KEY = {
   project: "project_id",
   state: "state_id",
   "state_detail.group": "state_id", // state_detail.group is only being used for state_group display,
@@ -124,9 +124,9 @@ export const ISSUE_GROUP_BY_KEY: Record<TIssueDisplayFilterOptions, keyof TIssue
   cycle: "cycle_id",
   module: "module_ids",
   team_project: "project_id",
-};
+} as Record<TIssueDisplayFilterOptions, keyof TIssue>;
 
-export const ISSUE_FILTER_DEFAULT_DATA: Record<TIssueDisplayFilterOptions, keyof TIssue> = {
+export const ISSUE_FILTER_DEFAULT_DATA = {
   project: "project_id",
   cycle: "cycle_id",
   module: "module_ids",
@@ -138,7 +138,7 @@ export const ISSUE_FILTER_DEFAULT_DATA: Record<TIssueDisplayFilterOptions, keyof
   assignees: "assignee_ids",
   target_date: "target_date",
   team_project: "project_id",
-};
+} as Record<TIssueDisplayFilterOptions, keyof TIssue>;
 
 // This constant maps the order by keys to the respective issue property that the key relies on
 const ISSUE_ORDERBY_KEY: Record<TIssueOrderByOptions, keyof TIssue> = {

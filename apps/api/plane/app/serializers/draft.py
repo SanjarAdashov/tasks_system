@@ -28,6 +28,7 @@ from plane.utils.content_validator import (
     validate_binary_data,
 )
 from plane.app.permissions import ROLE
+from plane.utils.work_item_fields import MISSING, validate_draft_property_values
 
 
 class DraftIssueCreateSerializer(BaseSerializer):
@@ -96,6 +97,7 @@ class DraftIssueCreateSerializer(BaseSerializer):
                 project_id=self.context["project_id"],
                 role__gte=ROLE.MEMBER.value,
                 is_active=True,
+                member__is_active=True,
                 member_id__in=attrs["assignee_ids"],
             ).values_list("member_id", flat=True)
 
@@ -136,6 +138,12 @@ class DraftIssueCreateSerializer(BaseSerializer):
             ).exists()
         ):
             raise serializers.ValidationError("Estimate point is not valid please pass a valid estimate_point_id")
+
+        if "property_values" in attrs:
+            attrs["property_values"] = validate_draft_property_values(
+                project_id=self.context.get("project_id"),
+                property_values=attrs.get("property_values", MISSING),
+            )
 
         return attrs
 
@@ -330,6 +338,7 @@ class DraftIssueSerializer(BaseSerializer):
             "updated_by",
             "type_id",
             "description_html",
+            "property_values",
         ]
         read_only_fields = fields
 

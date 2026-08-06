@@ -17,10 +17,10 @@ class IssueExportSerializer(IssueSerializer):
     """
 
     identifier = serializers.SerializerMethodField()
-    project_name = serializers.CharField(source='project.name', read_only=True, default="")
-    project_identifier = serializers.CharField(source='project.identifier', read_only=True, default="")
-    state_name = serializers.CharField(source='state.name', read_only=True, default="")
-    created_by_name = serializers.CharField(source='created_by.full_name', read_only=True, default="")
+    project_name = serializers.CharField(source="project.name", read_only=True, default="")
+    project_identifier = serializers.CharField(source="project.identifier", read_only=True, default="")
+    state_name = serializers.CharField(source="state.name", read_only=True, default="")
+    created_by_name = serializers.CharField(source="created_by.full_name", read_only=True, default="")
 
     assignees = serializers.SerializerMethodField()
     parent = serializers.SerializerMethodField()
@@ -32,6 +32,7 @@ class IssueExportSerializer(IssueSerializer):
     links = serializers.SerializerMethodField()
     relations = serializers.SerializerMethodField()
     subscribers = serializers.SerializerMethodField()
+    custom_properties = serializers.SerializerMethodField()
 
     class Meta(IssueSerializer.Meta):
         fields = [
@@ -63,6 +64,7 @@ class IssueExportSerializer(IssueSerializer):
             "link_count",
             "attachment_count",
             "is_draft",
+            "custom_properties",
         ]
 
     def get_identifier(self, obj):
@@ -81,11 +83,7 @@ class IssueExportSerializer(IssueSerializer):
         return f"{obj.parent.project.identifier}-{obj.parent.sequence_id}"
 
     def get_labels(self, obj):
-        return [
-            il.label.name
-            for il in obj.label_issue.all()
-            if il.deleted_at is None
-        ]
+        return [il.label.name for il in obj.label_issue.all() if il.deleted_at is None]
 
     def get_cycles(self, obj):
         return [ic.cycle.name for ic in obj.issue_cycle.all()]
@@ -96,8 +94,22 @@ class IssueExportSerializer(IssueSerializer):
     def get_estimate(self, obj):
         """Return estimate point value."""
         if obj.estimate_point:
-            return obj.estimate_point.value if hasattr(obj.estimate_point, 'value') else str(obj.estimate_point)
+            return obj.estimate_point.value if hasattr(obj.estimate_point, "value") else str(obj.estimate_point)
         return ""
+
+    def get_custom_properties(self, obj):
+        exported = {}
+        for stored_value in obj.work_item_property_values.all():
+            property_instance = stored_value.property
+            value = stored_value.value
+            if property_instance.property_type in {"SINGLE_SELECT", "MULTI_SELECT"}:
+                option_names = {str(option.id): option.name for option in property_instance.options.all()}
+                if isinstance(value, list):
+                    value = [option_names.get(str(option_id), str(option_id)) for option_id in value]
+                elif value is not None:
+                    value = option_names.get(str(value), str(value))
+            exported[property_instance.name] = value
+        return exported
 
     def get_links(self, obj):
         """Return list of issue links with titles."""
@@ -116,20 +128,24 @@ class IssueExportSerializer(IssueSerializer):
         # Outgoing relations (this issue relates to others)
         for rel in obj.issue_relation.all():
             if rel.related_issue:
-                relations.append({
-                    "type": rel.relation_type if hasattr(rel, 'relation_type') else "related",
-                    "issue": f"{rel.related_issue.project.identifier}-{rel.related_issue.sequence_id}",
-                    "direction": "outgoing"
-                })
+                relations.append(
+                    {
+                        "type": rel.relation_type if hasattr(rel, "relation_type") else "related",
+                        "issue": f"{rel.related_issue.project.identifier}-{rel.related_issue.sequence_id}",
+                        "direction": "outgoing",
+                    }
+                )
 
         # Incoming relations (other issues relate to this one)
         for rel in obj.issue_related.all():
             if rel.issue:
-                relations.append({
-                    "type": rel.relation_type if hasattr(rel, 'relation_type') else "related",
-                    "issue": f"{rel.issue.project.identifier}-{rel.issue.sequence_id}",
-                    "direction": "incoming"
-                })
+                relations.append(
+                    {
+                        "type": rel.relation_type if hasattr(rel, "relation_type") else "related",
+                        "issue": f"{rel.issue.project.identifier}-{rel.issue.sequence_id}",
+                        "direction": "incoming",
+                    }
+                )
 
         return relations
 
@@ -137,7 +153,7 @@ class IssueExportSerializer(IssueSerializer):
         """Return list of comments with author and timestamp."""
         return [
             {
-                "comment": comment.comment_stripped if hasattr(comment, 'comment_stripped') else comment.comment_html,
+                "comment": comment.comment_stripped if hasattr(comment, "comment_stripped") else comment.comment_html,
                 "created_by": comment.actor.full_name if comment.actor else "",
                 "created_at": comment.created_at.strftime("%Y-%m-%d %H:%M:%S") if comment.created_at else "",
             }

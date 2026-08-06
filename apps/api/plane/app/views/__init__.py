@@ -11,6 +11,11 @@ from .project.base import (
     ProjectArchiveUnarchiveEndpoint,
 )
 
+from .project.work_item_property import (
+    ProjectWorkItemFieldConfigurationEndpoint,
+    ProjectWorkItemPropertyViewSet,
+)
+
 from .project.invite import (
     UserProjectInvitationsViewset,
     ProjectInvitationsViewset,

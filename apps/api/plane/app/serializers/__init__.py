@@ -45,6 +45,12 @@ from .project import (
     ProjectMemberRoleSerializer,
     ProjectMemberPreferenceSerializer,
 )
+from .work_item_property import (
+    ProjectWorkItemFieldConfigurationSerializer,
+    ProjectWorkItemPropertyOptionSerializer,
+    ProjectWorkItemPropertySerializer,
+)
+
 from .state import StateSerializer, StateLiteSerializer
 from .view import IssueViewSerializer, ViewIssueListSerializer
 from .cycle import (

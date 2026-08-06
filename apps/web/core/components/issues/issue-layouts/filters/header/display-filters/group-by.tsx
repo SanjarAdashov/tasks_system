@@ -12,6 +12,7 @@ import type { IIssueDisplayFilterOptions, TIssueGroupByOptions } from "@plane/ty
 import { useGroupByOptions } from "../../../utils";
 // components
 import { FilterHeader, FilterOption } from "@/components/issues/issue-layouts/filters";
+import { useProjectWorkItemProperties } from "@/components/issues/work-item-properties/use-project-work-item-properties";
 
 type Props = {
   displayFilters: IIssueDisplayFilterOptions | undefined;
@@ -25,6 +26,9 @@ export const FilterGroupBy = observer(function FilterGroupBy(props: Props) {
   // hooks
   const { t } = useTranslation();
   const [previewEnabled, setPreviewEnabled] = useState(true);
+  const customProperties = useProjectWorkItemProperties().filter((property) =>
+    ["SINGLE_SELECT", "CHECKBOX"].includes(property.property_type)
+  );
 
   const selectedGroupBy = displayFilters?.group_by ?? null;
   const selectedSubGroupBy = displayFilters?.sub_group_by ?? null;
@@ -55,6 +59,19 @@ export const FilterGroupBy = observer(function FilterGroupBy(props: Props) {
                 isChecked={selectedGroupBy === groupBy?.key}
                 onClick={() => handleUpdate(groupBy.key)}
                 title={t(groupBy.titleTranslationKey)}
+                multiple={false}
+              />
+            );
+          })}
+          {customProperties.map((property) => {
+            const key = `customproperty_${property.id}` as TIssueGroupByOptions;
+            if (selectedSubGroupBy === key || ignoreGroupedFilters.includes(key)) return null;
+            return (
+              <FilterOption
+                key={key}
+                isChecked={selectedGroupBy === key}
+                onClick={() => handleUpdate(key)}
+                title={property.name}
                 multiple={false}
               />
             );

@@ -8,6 +8,7 @@ import type { TFilterValue } from "../expression";
 import type {
   TDateFilterFieldConfig,
   TDateRangeFilterFieldConfig,
+  TNumberFilterFieldConfig,
   TSingleSelectFilterFieldConfig,
   TMultiSelectFilterFieldConfig,
 } from "../field-types";
@@ -16,7 +17,8 @@ import type { CORE_COLLECTION_OPERATOR, CORE_COMPARISON_OPERATOR, CORE_EQUALITY_
 // ----------------------------- EXACT Operator -----------------------------
 export type TCoreExactOperatorConfigs =
   | TSingleSelectFilterFieldConfig<TFilterValue>
-  | TDateFilterFieldConfig<TFilterValue>;
+  | TDateFilterFieldConfig<TFilterValue>
+  | TNumberFilterFieldConfig<TFilterValue>;
 
 // ----------------------------- IN Operator -----------------------------
 export type TCoreInOperatorConfigs = TMultiSelectFilterFieldConfig<TFilterValue>;

@@ -75,7 +75,10 @@ class ModuleCreateSerializer(BaseSerializer):
 
         if data.get("members", []):
             data["members"] = ProjectMember.objects.filter(
-                project_id=self.context.get("project_id"), member_id__in=data["members"]
+                project_id=self.context.get("project_id"),
+                is_active=True,
+                member__is_active=True,
+                member_id__in=data["members"],
             ).values_list("member_id", flat=True)
 
         return data

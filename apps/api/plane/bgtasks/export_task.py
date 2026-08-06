@@ -166,6 +166,7 @@ def issue_export_task(
                 "issue_module__module",
                 "assignees",
                 "issue_link",
+                "work_item_property_values__property__options",
                 Prefetch(
                     "issue_subscribers",
                     queryset=IssueSubscriber.objects.select_related("subscriber"),

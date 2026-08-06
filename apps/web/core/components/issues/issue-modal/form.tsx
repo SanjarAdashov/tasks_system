@@ -7,10 +7,11 @@
  * See the LICENSE file for details.
  */
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import { FormProvider, useForm } from "react-hook-form";
+import useSWR from "swr";
 // editor
 import { ETabIndices, DEFAULT_WORK_ITEM_FORM_VALUES } from "@plane/constants";
 import type { EditorRefApi } from "@plane/editor";
@@ -18,7 +19,13 @@ import type { EditorRefApi } from "@plane/editor";
 import { useTranslation } from "@plane/i18n";
 import { Button } from "@plane/propel/button";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
-import type { TIssue, TWorkspaceDraftIssue } from "@plane/types";
+import type {
+  TIssue,
+  TIssuePropertyValues,
+  TProjectWorkItemPropertyValue,
+  TWorkItemBuiltInFieldKey,
+  TWorkspaceDraftIssue,
+} from "@plane/types";
 // hooks
 import { ToggleSwitch } from "@plane/ui";
 import {
@@ -36,6 +43,7 @@ import {
   IssueProjectSelect,
   IssueTitleInput,
 } from "@/components/issues/issue-modal/components";
+import { buildDefaultPropertyValues, WorkItemPropertyFormFields } from "@/components/issues/work-item-properties";
 // helpers
 // hooks
 import { useIssueModal } from "@/hooks/context/use-issue-modal";
@@ -45,6 +53,7 @@ import { useProjectState } from "@/hooks/store/use-project-state";
 import { useWorkspaceDraftIssues } from "@/hooks/store/workspace-draft";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 import { useProjectIssueProperties } from "@/hooks/use-project-issue-properties";
+import { ProjectService } from "@/services/project";
 
 export interface IssueFormProps {
   data?: Partial<TIssue>;
@@ -70,6 +79,13 @@ export interface IssueFormProps {
   showActionButtons?: boolean;
   dataResetProperties?: any[];
 }
+
+const isEmptyRequiredValue = (value: unknown) => {
+  if (value === null || value === undefined) return true;
+  if (typeof value === "string") return value.trim() === "";
+  if (Array.isArray(value)) return value.length === 0;
+  return false;
+};
 
 export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormProps) {
   const { t } = useTranslation();
@@ -98,6 +114,8 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
   // states
   const [gptAssistantModal, setGptAssistantModal] = useState(false);
   const [isMoving, setIsMoving] = useState<boolean>(false);
+  const [propertyValues, setPropertyValues] = useState<TIssuePropertyValues>({});
+  const [propertyErrors, setPropertyErrors] = useState<Record<string, string>>({});
 
   // refs
   const editorRef = useRef<EditorRefApi>(null);
@@ -118,8 +136,6 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
     setSelectedParentIssue,
     getIssueTypeIdOnProjectChange,
     getActiveAdditionalPropertiesLength,
-    handlePropertyValuesValidation,
-    handleCreateUpdatePropertyValues,
     handleTemplateChange,
   } = useIssueModal();
   const { isMobile } = usePlatformOS();
@@ -130,6 +146,7 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
   } = useIssueDetail();
   const { fetchCycles } = useProjectIssueProperties();
   const { getStateById } = useProjectState();
+  const projectService = useMemo(() => new ProjectService(), []);
 
   // form info
   const methods = useForm<TIssue>({
@@ -148,13 +165,26 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
   } = methods;
 
   const projectId = watch("project_id");
-  const activeAdditionalPropertiesLength = getActiveAdditionalPropertiesLength({
-    projectId: projectId,
-    workspaceSlug: workspaceSlug?.toString(),
-    watch: watch,
-  });
+  const workspaceSlugString = workspaceSlug?.toString();
+  const { data: fieldConfiguration, isLoading: isFieldConfigurationLoading } = useSWR(
+    workspaceSlugString && projectId ? `WORK_ITEM_FIELD_CONFIGURATION_${workspaceSlugString}_${projectId}` : null,
+    () => projectService.getWorkItemFieldConfiguration(workspaceSlugString!, projectId!)
+  );
+  const { data: customProperties = [], isLoading: areCustomPropertiesLoading } = useSWR(
+    workspaceSlugString && projectId ? `WORK_ITEM_PROPERTIES_${workspaceSlugString}_${projectId}` : null,
+    () => projectService.getWorkItemProperties(workspaceSlugString!, projectId!)
+  );
+  const hiddenFieldKeys = Object.entries(fieldConfiguration?.built_in_fields ?? {})
+    .filter(([, settings]) => !settings.visible)
+    .map(([fieldKey]) => fieldKey as TWorkItemBuiltInFieldKey);
+  const activeAdditionalPropertiesLength =
+    getActiveAdditionalPropertiesLength({
+      projectId,
+      workspaceSlug: workspaceSlugString,
+      watch,
+    }) + customProperties.length;
 
-  const isDisabled = isSubmitting || isApplyingTemplate;
+  const isDisabled = isSubmitting || isApplyingTemplate || isFieldConfigurationLoading || areCustomPropertiesLoading;
 
   const { getIndex } = getTabIndex(ETabIndices.ISSUE_FORM, isMobile);
 
@@ -183,6 +213,12 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [...dataResetProperties]);
 
+  useEffect(() => {
+    const sourceValues = data?.project_id === projectId ? data.property_values : {};
+    setPropertyValues(buildDefaultPropertyValues(customProperties, sourceValues));
+    setPropertyErrors({});
+  }, [customProperties, data?.id, data?.project_id, data?.property_values, projectId]);
+
   // Update the issue type id when the project id changes
   useEffect(() => {
     const issueTypeId = watch("type_id");
@@ -208,6 +244,53 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workItemTemplateId]);
 
+  const validateRequiredFields = (formData: Partial<TIssue>) => {
+    const nextPropertyErrors: Record<string, string> = {};
+    customProperties.forEach((property) => {
+      if (property.is_required && isEmptyRequiredValue(propertyValues[property.id])) {
+        nextPropertyErrors[property.id] = "This property is required.";
+      }
+    });
+    setPropertyErrors(nextPropertyErrors);
+
+    const builtInValues: Record<TWorkItemBuiltInFieldKey, unknown> = {
+      project: formData.project_id,
+      title: formData.name,
+      description: formData.description_html
+        ?.replace(/<[^>]*>/g, "")
+        .replaceAll("&nbsp;", " ")
+        .trim(),
+      state: formData.state_id,
+      priority: formData.priority === "none" ? null : formData.priority,
+      assignees: formData.assignee_ids,
+      labels: formData.label_ids,
+      start_date: formData.start_date,
+      target_date: formData.target_date,
+      cycle: formData.cycle_id,
+      module: formData.module_ids,
+      estimate: formData.estimate_point,
+      parent: formData.parent_id,
+    };
+    const missingBuiltInField = Object.entries(fieldConfiguration?.built_in_fields ?? {}).find(
+      ([fieldKey, settings]) =>
+        settings.visible &&
+        settings.required &&
+        isEmptyRequiredValue(builtInValues[fieldKey as TWorkItemBuiltInFieldKey])
+    );
+
+    if (missingBuiltInField || Object.keys(nextPropertyErrors).length > 0) {
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: t("error"),
+        message: missingBuiltInField
+          ? `The required field "${missingBuiltInField[0]}" is empty.`
+          : "Fill in all required custom properties.",
+      });
+      return false;
+    }
+    return true;
+  };
+
   const handleFormSubmit = async (formData: Partial<TIssue>, is_draft_issue = false) => {
     // Check if the editor is ready to discard
     if (!editorRef.current?.isEditorReadyToDiscard()) {
@@ -219,23 +302,21 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
       return;
     }
 
-    // check for required properties validation
-    if (
-      !handlePropertyValuesValidation({
-        projectId: projectId,
-        workspaceSlug: workspaceSlug?.toString(),
-        watch: watch,
-      })
-    )
-      return;
+    if (!is_draft_issue && !isDraft && !validateRequiredFields(formData)) return;
+
+    const formDataWithProperties: Partial<TIssue> = {
+      ...formData,
+      property_values: propertyValues,
+    };
 
     const submitData = !data?.id
-      ? formData
+      ? formDataWithProperties
       : {
-          ...getChangedIssuefields(formData, dirtyFields as { [key: string]: boolean | undefined }),
+          ...getChangedIssuefields(formDataWithProperties, dirtyFields as { [key: string]: boolean | undefined }),
           project_id: getValues<"project_id">("project_id"),
           id: data.id,
-          description_html: formData.description_html ?? "<p></p>",
+          description_html: formDataWithProperties.description_html ?? "<p></p>",
+          property_values: propertyValues,
           type_id: getValues<"type_id">("type_id"),
         };
 
@@ -259,6 +340,13 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
             type_id: getValues<"type_id">("type_id"),
             description_html: data?.description_html ?? "<p></p>",
           });
+          setPropertyValues(
+            buildDefaultPropertyValues(
+              customProperties,
+              isCreateMoreToggleEnabled && data?.property_values ? data.property_values : {}
+            )
+          );
+          setPropertyErrors({});
           editorRef?.current?.clearEditor();
         }
       })
@@ -269,19 +357,14 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
 
   const handleMoveToProjects = async () => {
     if (!data?.id || !data?.project_id || !data) return;
+    const formValues = getValues();
+    if (!validateRequiredFields(formValues)) return;
     setIsMoving(true);
     try {
-      await handleCreateUpdatePropertyValues({
-        issueId: data.id,
-        issueTypeId: data.type_id,
-        projectId: data.project_id,
-        workspaceSlug: workspaceSlug?.toString(),
-        isDraft: true,
-      });
-
       await moveIssue(workspaceSlug.toString(), data.id, {
         ...data,
-        ...getValues(),
+        ...formValues,
+        property_values: propertyValues,
       } as TWorkspaceDraftIssue);
     } catch {
       setToast({
@@ -300,8 +383,22 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
   const handleFormChange = () => {
     if (!onChange) return;
 
-    if (isDirty && condition) onChange(watch());
+    if (isDirty && condition) onChange({ ...watch(), property_values: propertyValues });
     else onChange(null);
+  };
+
+  const handlePropertyValueChange = (propertyId: string, value: TProjectWorkItemPropertyValue) => {
+    setPropertyValues((currentValues) => {
+      const nextValues = { ...currentValues, [propertyId]: value };
+      if (onChange && condition) onChange({ ...watch(), property_values: nextValues });
+      return nextValues;
+    });
+    setPropertyErrors((currentErrors) => {
+      if (!currentErrors[propertyId]) return currentErrors;
+      const nextErrors = { ...currentErrors };
+      delete nextErrors[propertyId];
+      return nextErrors;
+    });
   };
 
   // executing this useEffect when the parent_id coming from the component prop
@@ -328,7 +425,7 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
   useEffect(() => {
     if (!onChange) return;
 
-    if (isDirty && condition) onChange(watch());
+    if (isDirty && condition) onChange({ ...watch(), property_values: propertyValues });
     else onChange(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDirty]);
@@ -418,6 +515,15 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
                   onClose={onClose}
                 />
               </div>
+              <div className="px-5">
+                <WorkItemPropertyFormFields
+                  properties={customProperties}
+                  values={propertyValues}
+                  errors={propertyErrors}
+                  isLoading={isFieldConfigurationLoading || areCustomPropertiesLoading}
+                  onChange={handlePropertyValueChange}
+                />
+              </div>
             </div>
             <div
               className={cn(
@@ -438,6 +544,7 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
                   isDraft={isDraft}
                   handleFormChange={handleFormChange}
                   setSelectedParentIssue={setSelectedParentIssue}
+                  hiddenFieldKeys={hiddenFieldKeys}
                 />
               </div>
               {showActionButtons && (

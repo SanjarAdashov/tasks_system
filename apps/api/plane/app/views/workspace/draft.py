@@ -146,6 +146,7 @@ class WorkspaceDraftIssueViewSet(BaseViewSet):
                     "updated_by",
                     "type_id",
                     "description_html",
+                    "property_values",
                 )
                 .first()
             )
@@ -212,8 +213,12 @@ class WorkspaceDraftIssueViewSet(BaseViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        issue_data = request.data.copy()
+        if "property_values" not in issue_data:
+            issue_data["property_values"] = draft_issue.property_values
+
         serializer = IssueCreateSerializer(
-            data=request.data,
+            data=issue_data,
             context={
                 "project_id": draft_issue.project_id,
                 "workspace_id": draft_issue.project.workspace_id,
@@ -226,7 +231,7 @@ class WorkspaceDraftIssueViewSet(BaseViewSet):
 
             issue_activity.delay(
                 type="issue.activity.created",
-                requested_data=json.dumps(self.request.data, cls=DjangoJSONEncoder),
+                requested_data=json.dumps(issue_data, cls=DjangoJSONEncoder),
                 actor_id=str(request.user.id),
                 issue_id=str(serializer.data.get("id", None)),
                 project_id=str(draft_issue.project_id),

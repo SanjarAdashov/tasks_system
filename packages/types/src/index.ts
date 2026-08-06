@@ -57,6 +57,7 @@ export * from "./webhook";
 export * from "./workspace";
 export * from "./workspace-draft-issues/base";
 export * from "./workspace-notifications";
+export * from "./work-item-property";
 export * from "./workspace-views";
 export * from "./base-layouts";
 export * from "./pagination";

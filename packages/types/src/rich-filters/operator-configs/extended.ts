@@ -4,6 +4,10 @@
  * See the LICENSE file for details.
  */
 
+import type { TFilterValue } from "../expression";
+import type { TTextFilterFieldConfig } from "../field-types";
+import { EXTENDED_EQUALITY_OPERATOR } from "../operators";
+
 // ----------------------------- EXACT Operator -----------------------------
 export type TExtendedExactOperatorConfigs = never;
 
@@ -14,4 +18,6 @@ export type TExtendedInOperatorConfigs = never;
 export type TExtendedRangeOperatorConfigs = never;
 
 // ----------------------------- Extended Operator Specific Configs -----------------------------
-export type TExtendedOperatorSpecificConfigs = unknown;
+export type TExtendedOperatorSpecificConfigs = {
+  [EXTENDED_EQUALITY_OPERATOR.CONTAINS]: TTextFilterFieldConfig<TFilterValue>;
+};

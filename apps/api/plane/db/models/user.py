@@ -99,6 +99,17 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_email_verified = models.BooleanField(default=False)
     is_password_autoset = models.BooleanField(default=False)
     is_password_reset_required = models.BooleanField(default=False)
+    # Reversible instance-level access block. This is intentionally separate
+    # from workspace/project membership roles and from account deactivation.
+    blocked_at = models.DateTimeField(null=True, blank=True)
+    blocked_by = models.ForeignKey(
+        "self",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="blocked_users",
+    )
+    blocked_reason = models.TextField(null=True, blank=True)
     # random token generated
     token = models.CharField(max_length=64, blank=True)
 
@@ -195,6 +206,34 @@ class User(AbstractBaseUser, PermissionsMixin):
             if len(email.split("@")) == 2
             else "".join(random.choice(string.ascii_letters) for _ in range(6))
         )
+
+
+class UserAccessLog(TimeAuditModel):
+    class Action(models.TextChoices):
+        BLOCKED = "BLOCKED", "Blocked"
+        UNBLOCKED = "UNBLOCKED", "Unblocked"
+
+    id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False, db_index=True, primary_key=True)
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="access_logs",
+    )
+    actor = models.ForeignKey(
+        User,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="user_access_actions_performed",
+    )
+    action = models.CharField(max_length=20, choices=Action.choices)
+    reason = models.TextField(blank=True)
+
+    class Meta:
+        verbose_name = "User Access Log"
+        verbose_name_plural = "User Access Logs"
+        db_table = "user_access_logs"
+        ordering = ("-created_at",)
 
 
 class Profile(TimeAuditModel):

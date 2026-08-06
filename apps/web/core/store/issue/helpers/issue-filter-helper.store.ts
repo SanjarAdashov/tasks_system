@@ -95,9 +95,15 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
     acceptableParamsByLayout: TIssueParams[]
   ): Partial<Record<TIssueParams, string | boolean>> => {
     const computedDisplayFilters: Partial<Record<TIssueParams, undefined | string[] | boolean | string>> = {
-      group_by: displayFilters?.group_by ? EIssueGroupByToServerOptions[displayFilters.group_by] : undefined,
+      group_by: displayFilters?.group_by
+        ? displayFilters.group_by.startsWith("customproperty_")
+          ? displayFilters.group_by
+          : EIssueGroupByToServerOptions[displayFilters.group_by as keyof typeof EIssueGroupByToServerOptions]
+        : undefined,
       sub_group_by: displayFilters?.sub_group_by
-        ? EIssueGroupByToServerOptions[displayFilters.sub_group_by]
+        ? displayFilters.sub_group_by.startsWith("customproperty_")
+          ? displayFilters.sub_group_by
+          : EIssueGroupByToServerOptions[displayFilters.sub_group_by as keyof typeof EIssueGroupByToServerOptions]
         : undefined,
       order_by: displayFilters?.order_by || undefined,
       sub_issue: displayFilters?.sub_issue ?? true,
@@ -329,8 +335,18 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
       delete paginationParams["group_by"];
 
       if (groupBy) {
-        const groupByFilterOption = EServerGroupByToFilterOptions[groupBy];
-        paginationParams[groupByFilterOption] = groupId;
+        if (groupBy.startsWith("customproperty_")) {
+          const currentFilters = JSON.parse(String(paginationParams.filters ?? "{}"));
+          const condition = {
+            [`${groupBy}__${groupId === "None" ? "isnull" : "exact"}`]: groupId === "None" ? true : groupId,
+          };
+          paginationParams.filters = JSON.stringify(
+            Object.keys(currentFilters).length ? { and: [currentFilters, condition] } : condition
+          );
+        } else {
+          const groupByFilterOption = EServerGroupByToFilterOptions[groupBy];
+          paginationParams[groupByFilterOption] = groupId;
+        }
       }
     }
 
@@ -340,8 +356,18 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
       delete paginationParams["sub_group_by"];
 
       if (subGroupBy) {
-        const subGroupByFilterOption = EServerGroupByToFilterOptions[subGroupBy];
-        paginationParams[subGroupByFilterOption] = subGroupId;
+        if (subGroupBy.startsWith("customproperty_")) {
+          const currentFilters = JSON.parse(String(paginationParams.filters ?? "{}"));
+          const condition = {
+            [`${subGroupBy}__${subGroupId === "None" ? "isnull" : "exact"}`]: subGroupId === "None" ? true : subGroupId,
+          };
+          paginationParams.filters = JSON.stringify(
+            Object.keys(currentFilters).length ? { and: [currentFilters, condition] } : condition
+          );
+        } else {
+          const subGroupByFilterOption = EServerGroupByToFilterOptions[subGroupBy];
+          paginationParams[subGroupByFilterOption] = subGroupId;
+        }
       }
     }
 

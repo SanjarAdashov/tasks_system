@@ -6,7 +6,7 @@
 from django.utils import timezone
 from django.core.validators import URLValidator
 from django.core.exceptions import ValidationError
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 
 # Third Party imports
 from rest_framework import serializers
@@ -46,6 +46,13 @@ from plane.db.models import (
 from plane.utils.content_validator import (
     validate_html_content,
     validate_binary_data,
+)
+from plane.utils.work_item_fields import (
+    MISSING,
+    persist_work_item_property_values,
+    serialize_work_item_property_values,
+    sync_issue_cycle_and_modules,
+    validate_and_prepare_work_item_fields,
 )
 
 
@@ -99,6 +106,13 @@ class IssueCreateSerializer(BaseSerializer):
     )
     project_id = serializers.UUIDField(source="project.id", read_only=True)
     workspace_id = serializers.UUIDField(source="workspace.id", read_only=True)
+    cycle_id = serializers.UUIDField(write_only=True, required=False, allow_null=True)
+    module_ids = serializers.ListField(
+        child=serializers.UUIDField(),
+        write_only=True,
+        required=False,
+    )
+    property_values = serializers.JSONField(required=False, write_only=True)
 
     class Meta:
         model = Issue
@@ -119,6 +133,9 @@ class IssueCreateSerializer(BaseSerializer):
         data["assignee_ids"] = assignee_ids if assignee_ids else []
         label_ids = self.initial_data.get("label_ids")
         data["label_ids"] = label_ids if label_ids else []
+        data["cycle_id"] = CycleIssue.objects.filter(issue=instance).values_list("cycle_id", flat=True).first()
+        data["module_ids"] = list(ModuleIssue.objects.filter(issue=instance).values_list("module_id", flat=True))
+        data["property_values"] = serialize_work_item_property_values(instance)
         return data
 
     def validate(self, attrs):
@@ -151,6 +168,7 @@ class IssueCreateSerializer(BaseSerializer):
             attrs["assignee_ids"] = ProjectMember.objects.filter(
                 project_id=self.context["project_id"],
                 role__gte=15,
+                member__is_active=True,
                 is_active=True,
                 member_id__in=attrs["assignee_ids"],
             ).values_list("member_id", flat=True)
@@ -194,11 +212,22 @@ class IssueCreateSerializer(BaseSerializer):
         ):
             raise serializers.ValidationError("Estimate point is not valid please pass a valid estimate_point_id")
 
+        property_values = attrs.pop("property_values", MISSING)
+        attrs["property_values"] = validate_and_prepare_work_item_fields(
+            project_id=self.context["project_id"],
+            attrs=attrs,
+            instance=self.instance,
+            property_values=property_values,
+        )
         return attrs
 
+    @transaction.atomic
     def create(self, validated_data):
         assignees = validated_data.pop("assignee_ids", None)
         labels = validated_data.pop("label_ids", None)
+        cycle_id = validated_data.pop("cycle_id", MISSING)
+        module_ids = validated_data.pop("module_ids", MISSING)
+        property_values = validated_data.pop("property_values")
 
         project_id = self.context["project_id"]
         workspace_id = self.context["workspace_id"]
@@ -238,6 +267,7 @@ class IssueCreateSerializer(BaseSerializer):
                     project_id=project_id,
                     role__gte=15,
                     is_active=True,
+                    member__is_active=True,
                 ).exists()
             ):
                 try:
@@ -271,11 +301,24 @@ class IssueCreateSerializer(BaseSerializer):
             except IntegrityError:
                 pass
 
+        sync_issue_cycle_and_modules(
+            issue=issue,
+            cycle_id=cycle_id,
+            module_ids=module_ids,
+        )
+        persist_work_item_property_values(
+            issue=issue,
+            property_values=property_values,
+        )
         return issue
 
+    @transaction.atomic
     def update(self, instance, validated_data):
         assignees = validated_data.pop("assignee_ids", None)
         labels = validated_data.pop("label_ids", None)
+        cycle_id = validated_data.pop("cycle_id", MISSING)
+        module_ids = validated_data.pop("module_ids", MISSING)
+        property_values = validated_data.pop("property_values")
 
         # Related models
         project_id = instance.project_id
@@ -327,7 +370,17 @@ class IssueCreateSerializer(BaseSerializer):
 
         # Time updation occues even when other related models are updated
         instance.updated_at = timezone.now()
-        return super().update(instance, validated_data)
+        instance = super().update(instance, validated_data)
+        sync_issue_cycle_and_modules(
+            issue=instance,
+            cycle_id=cycle_id,
+            module_ids=module_ids,
+        )
+        persist_work_item_property_values(
+            issue=instance,
+            property_values=property_values,
+        )
+        return instance
 
 
 class IssueActivitySerializer(BaseSerializer):
@@ -780,6 +833,7 @@ class IssueSerializer(DynamicBaseSerializer):
     sub_issues_count = serializers.IntegerField(read_only=True)
     attachment_count = serializers.IntegerField(read_only=True)
     link_count = serializers.IntegerField(read_only=True)
+    property_values = serializers.SerializerMethodField()
 
     class Meta:
         model = Issue
@@ -809,8 +863,12 @@ class IssueSerializer(DynamicBaseSerializer):
             "link_count",
             "is_draft",
             "archived_at",
+            "property_values",
         ]
         read_only_fields = fields
+
+    def get_property_values(self, obj):
+        return serialize_work_item_property_values(obj)
 
     def validate(self, data):
         if (
@@ -867,6 +925,7 @@ class IssueListDetailSerializer(serializers.Serializer):
             "sub_issues_count": instance.sub_issues_count,
             "attachment_count": instance.attachment_count,
             "link_count": instance.link_count,
+            "property_values": serialize_work_item_property_values(instance),
         }
 
         # Handle expanded fields only when requested - using direct field access

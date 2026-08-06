@@ -39,6 +39,8 @@ export const MemberDropdown = observer(function MemberDropdown(props: TMemberDro
       ? getProjectMemberIds(projectId, false)
       : workspaceMemberIds;
 
+  const activeMemberIds = memberIds?.filter((memberId) => getUserDetails(memberId)?.is_active !== false);
+
   const onDropdownOpen = () => {
     if (!memberIds && projectId && workspaceSlug) fetchProjectMembers(workspaceSlug.toString(), projectId);
   };
@@ -47,7 +49,7 @@ export const MemberDropdown = observer(function MemberDropdown(props: TMemberDro
     <MemberDropdownBase
       {...props}
       getUserDetails={getUserDetails}
-      memberIds={memberIds ?? []}
+      memberIds={activeMemberIds ?? []}
       onDropdownOpen={onDropdownOpen}
     />
   );

@@ -12,10 +12,14 @@ import type {
   TProjectAnalyticsCount,
   TProjectAnalyticsCountParams,
   TProjectIssuesSearchParams,
+  TProjectWorkItemFieldConfiguration,
+  TProjectWorkItemProperty,
+  TProjectWorkItemPropertyPayload,
+  TProject,
+  TPartialProject,
 } from "@plane/types";
 // helpers
 // plane web types
-import type { TProject, TPartialProject } from "@plane/types";
 // services
 import { APIService } from "@/services/api.service";
 
@@ -113,6 +117,75 @@ export class ProjectService extends APIService {
   ): Promise<IProjectUserPropertiesResponse> {
     return this.patch(`/api/workspaces/${workspaceSlug}/projects/${projectId}/user-properties/`, data)
       .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async getWorkItemFieldConfiguration(
+    workspaceSlug: string,
+    projectId: string
+  ): Promise<TProjectWorkItemFieldConfiguration> {
+    return this.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/work-item-fields/configuration/`)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async updateWorkItemFieldConfiguration(
+    workspaceSlug: string,
+    projectId: string,
+    data: Pick<TProjectWorkItemFieldConfiguration, "built_in_fields">
+  ): Promise<TProjectWorkItemFieldConfiguration> {
+    return this.patch(`/api/workspaces/${workspaceSlug}/projects/${projectId}/work-item-fields/configuration/`, data)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async getWorkItemProperties(workspaceSlug: string, projectId: string): Promise<TProjectWorkItemProperty[]> {
+    return this.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/work-item-fields/properties/`)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async createWorkItemProperty(
+    workspaceSlug: string,
+    projectId: string,
+    data: TProjectWorkItemPropertyPayload
+  ): Promise<TProjectWorkItemProperty> {
+    return this.post(`/api/workspaces/${workspaceSlug}/projects/${projectId}/work-item-fields/properties/`, data)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async updateWorkItemProperty(
+    workspaceSlug: string,
+    projectId: string,
+    propertyId: string,
+    data: Partial<TProjectWorkItemPropertyPayload>
+  ): Promise<TProjectWorkItemProperty> {
+    return this.patch(
+      `/api/workspaces/${workspaceSlug}/projects/${projectId}/work-item-fields/properties/${propertyId}/`,
+      data
+    )
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async archiveWorkItemProperty(workspaceSlug: string, projectId: string, propertyId: string): Promise<void> {
+    return this.delete(
+      `/api/workspaces/${workspaceSlug}/projects/${projectId}/work-item-fields/properties/${propertyId}/`
+    )
+      .then(() => undefined)
       .catch((error) => {
         throw error?.response?.data;
       });
