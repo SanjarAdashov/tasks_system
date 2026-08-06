@@ -128,6 +128,27 @@ class TestWorkItemPropertyValues:
             == 10
         )
 
+    def test_create_accepts_null_module_ids_from_default_web_form(
+        self,
+        session_client,
+        workspace,
+        project,
+    ):
+        response = session_client.post(
+            _issue_url(workspace, project),
+            {
+                "name": "No module selected",
+                "cycle_id": None,
+                "module_ids": None,
+                "property_values": {},
+            },
+            format="json",
+        )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        assert response.data["module_ids"] == []
+        assert ModuleIssue.objects.filter(issue_id=response.data["id"]).exists() is False
+
     def test_invalid_property_type_is_rejected_atomically(
         self,
         session_client,

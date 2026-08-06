@@ -80,6 +80,7 @@ class IssueSerializer(BaseSerializer):
     module_ids = serializers.ListField(
         child=serializers.UUIDField(),
         write_only=True,
+        allow_null=True,
         required=False,
     )
     property_values = serializers.JSONField(required=False, write_only=True)
