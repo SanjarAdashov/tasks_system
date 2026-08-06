@@ -7,6 +7,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Archive, ChevronRight, Pencil, Plus, Trash2 } from "lucide-react";
 import useSWR from "swr";
+import { v4 as uuidv4 } from "uuid";
 import { useTranslation } from "@plane/i18n";
 import { setToast, TOAST_TYPE } from "@plane/propel/toast";
 import type {
@@ -31,14 +32,14 @@ type Props = {
 type TTab = "rules" | "audit" | "preview";
 
 const EMPTY_TREE = (): TStateTransitionConditionGroup => ({
-  id: crypto.randomUUID(),
+  id: uuidv4(),
   kind: "group",
   operator: "AND",
   children: [],
 });
 
 const NEW_CONDITION = (): TStateTransitionCondition => ({
-  id: crypto.randomUUID(),
+  id: uuidv4(),
   kind: "condition",
   field: "description",
   operator: "IS_SET",
@@ -89,10 +90,10 @@ const BUILT_IN_FIELDS = [
 ] as const;
 
 const ensureNodeIds = (node: TStateTransitionConditionNode): TStateTransitionConditionNode => {
-  if (node.kind === "condition") return { ...node, id: node.id || crypto.randomUUID() };
+  if (node.kind === "condition") return { ...node, id: node.id || uuidv4() };
   return {
     ...node,
-    id: node.id || crypto.randomUUID(),
+    id: node.id || uuidv4(),
     children: node.children.map(ensureNodeIds),
   };
 };

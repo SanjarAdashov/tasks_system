@@ -72,8 +72,16 @@ From the repository root:
 
 ```bash
 docker compose -p plane-tests -f docker-compose-test.yml run --rm api-tests \
-  pytest plane/tests/contract/app/test_project_state_transitions.py -q
+  pytest \
+    plane/tests/contract/app/test_project_state_transitions.py \
+    plane/tests/contract/app/test_project_state_transition_scenarios.py \
+    -q
 ```
+
+The scenario matrix covers all condition operators, nested `AND`/`OR` groups,
+system and custom fields, actor/role/assignee/creator checks, member-backed
+properties, attachments/comments/subtasks/dependencies, reverse transitions,
+creation rules, strict mode, bypasses, and invalid condition schemas.
 
 The combined regression also includes:
 
@@ -81,10 +89,18 @@ The combined regression also includes:
 - `test_project_work_item_fields.py`
 - `test_work_item_property_values.py`
 - `test_work_item_property_surfaces.py`
+- `contract/license/test_user_access.py`
 
 Before release, also run Django `check`, `makemigrations --check --dry-run`,
 targeted Ruff checks, shared TypeScript checks, web TypeScript checks, Oxfmt,
 Oxlint, and `git diff --check`.
+
+The 2026-08-06 release-candidate verification passed all 107 combined contract
+tests. Authenticated LAN browser checks covered rule creation, exact denial
+messages, successful transitions after required fields were supplied, audit-log
+rendering, the admin preview, and manual/member-backed select-property forms.
+Workflow and custom-property editors use UUID generation that is compatible
+with trusted HTTP LAN access as well as HTTPS.
 
 ## Release and rollback
 

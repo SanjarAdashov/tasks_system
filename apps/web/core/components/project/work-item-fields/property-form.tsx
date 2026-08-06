@@ -6,6 +6,7 @@
 
 import { useMemo, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
+import { v4 as uuidv4 } from "uuid";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import type {
   TProjectWorkItemProperty,
@@ -131,7 +132,7 @@ export function WorkItemPropertyForm(props: Props) {
       options: [
         ...current.options,
         {
-          id: crypto.randomUUID(),
+          id: uuidv4(),
           name: "",
           sort_order: (current.options.length + 1) * 100,
           persisted: false,
