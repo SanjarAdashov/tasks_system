@@ -16,6 +16,8 @@ from plane.db.models import (
     ProjectWorkItemFieldConfiguration,
     ProjectWorkItemProperty,
     ProjectWorkItemPropertyOption,
+    ProjectMember,
+    WorkItemMultiSelectSource,
     WorkItemPropertyType,
     get_default_work_item_field_configuration,
 )
@@ -125,6 +127,7 @@ class ProjectWorkItemPropertySerializer(BaseSerializer):
             "name",
             "description",
             "property_type",
+            "multi_select_source",
             "is_required",
             "default_value",
             "sort_order",
@@ -167,16 +170,38 @@ class ProjectWorkItemPropertySerializer(BaseSerializer):
         if self.instance and property_type != self.instance.property_type:
             raise serializers.ValidationError({"property_type": "Property type cannot be changed after creation."})
 
+        multi_select_source = attrs.get(
+            "multi_select_source",
+            self.instance.multi_select_source if self.instance else WorkItemMultiSelectSource.MANUAL,
+        )
+        if self.instance and multi_select_source != self.instance.multi_select_source:
+            raise serializers.ValidationError(
+                {"multi_select_source": "Multi-select source cannot be changed after creation."}
+            )
+        if (
+            property_type != WorkItemPropertyType.MULTI_SELECT
+            and multi_select_source != WorkItemMultiSelectSource.MANUAL
+        ):
+            raise serializers.ValidationError(
+                {"multi_select_source": "Only multi-select properties can use project members."}
+            )
+
         options = attrs.get("options")
         if options is not None:
             for option in options:
                 option.setdefault("id", uuid4())
 
+        is_member_select = (
+            property_type == WorkItemPropertyType.MULTI_SELECT
+            and multi_select_source == WorkItemMultiSelectSource.MEMBERS
+        )
         if property_type not in SELECT_PROPERTY_TYPES and options:
             raise serializers.ValidationError({"options": "Options are only supported by select properties."})
+        if is_member_select and options:
+            raise serializers.ValidationError({"options": "Project-member multi-selects do not use manual options."})
 
         active_option_ids = self._future_active_option_ids(options)
-        if property_type in SELECT_PROPERTY_TYPES and not active_option_ids:
+        if property_type in SELECT_PROPERTY_TYPES and not is_member_select and not active_option_ids:
             raise serializers.ValidationError({"options": "Select properties require at least one active option."})
 
         default_value = attrs.get(
@@ -185,6 +210,7 @@ class ProjectWorkItemPropertySerializer(BaseSerializer):
         )
         self._validate_default_value(
             property_type=property_type,
+            multi_select_source=multi_select_source,
             default_value=default_value,
             active_option_ids=active_option_ids,
         )
@@ -217,6 +243,7 @@ class ProjectWorkItemPropertySerializer(BaseSerializer):
         self,
         *,
         property_type,
+        multi_select_source,
         default_value,
         active_option_ids,
     ):
@@ -261,6 +288,22 @@ class ProjectWorkItemPropertySerializer(BaseSerializer):
             default_ids = [str(option_id) for option_id in default_value]
             if len(default_ids) != len(set(default_ids)):
                 raise serializers.ValidationError({"default_value": "Multi-select defaults cannot contain duplicates."})
+            if multi_select_source == WorkItemMultiSelectSource.MEMBERS:
+                active_member_ids = {
+                    str(member_id)
+                    for member_id in ProjectMember.objects.filter(
+                        project=self.context["project"],
+                        is_active=True,
+                        role__gte=15,
+                        member__is_active=True,
+                        member_id__in=default_ids,
+                    ).values_list("member_id", flat=True)
+                }
+                if not set(default_ids).issubset(active_member_ids):
+                    raise serializers.ValidationError(
+                        {"default_value": "Defaults must reference active project members."}
+                    )
+                return
             if not set(default_ids).issubset(active_option_ids):
                 raise serializers.ValidationError({"default_value": "Defaults must reference active options."})
 

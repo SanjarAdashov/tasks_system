@@ -7,6 +7,7 @@ from rest_framework import serializers
 
 # Module imports
 from plane.app.serializers import IssueSerializer
+from plane.db.models import User, WorkItemMultiSelectSource
 
 
 class IssueExportSerializer(IssueSerializer):
@@ -102,7 +103,16 @@ class IssueExportSerializer(IssueSerializer):
         for stored_value in obj.work_item_property_values.all():
             property_instance = stored_value.property
             value = stored_value.value
-            if property_instance.property_type in {"SINGLE_SELECT", "MULTI_SELECT"}:
+            if (
+                property_instance.property_type == "MULTI_SELECT"
+                and property_instance.multi_select_source == WorkItemMultiSelectSource.MEMBERS
+            ):
+                member_names = {
+                    str(member["id"]): member["display_name"]
+                    for member in User.objects.filter(id__in=value or []).values("id", "display_name")
+                }
+                value = [member_names.get(str(member_id), str(member_id)) for member_id in value or []]
+            elif property_instance.property_type in {"SINGLE_SELECT", "MULTI_SELECT"}:
                 option_names = {str(option.id): option.name for option in property_instance.options.all()}
                 if isinstance(value, list):
                     value = [option_names.get(str(option_id), str(option_id)) for option_id in value]

@@ -19,6 +19,7 @@ from plane.db.models import (
     ProjectWorkItemFieldConfiguration,
     ProjectWorkItemProperty,
     State,
+    WorkItemMultiSelectSource,
     WorkItemPropertyType,
     WorkItemPropertyValue,
     get_default_work_item_field_configuration,
@@ -51,7 +52,13 @@ def _is_empty(value, *, property_type=None):
     return False
 
 
-def _validate_property_value(property_instance, value, *, allow_archived_options):
+def _validate_property_value(
+    property_instance,
+    value,
+    *,
+    allow_archived_options,
+    historical_value=None,
+):
     if value is None:
         return None
 
@@ -84,6 +91,32 @@ def _validate_property_value(property_instance, value, *, allow_archived_options
         if not isinstance(value, bool):
             raise ValueError("Expected a boolean.")
         return value
+
+    if (
+        property_type == WorkItemPropertyType.MULTI_SELECT
+        and property_instance.multi_select_source == WorkItemMultiSelectSource.MEMBERS
+    ):
+        if not isinstance(value, list):
+            raise ValueError("Expected a list of project members.")
+        member_values = [_canonical_id(member_id) for member_id in value]
+        if len(member_values) != len(set(member_values)):
+            raise ValueError("Duplicate project members are not allowed.")
+        active_member_ids = {
+            str(member_id)
+            for member_id in ProjectMember.objects.filter(
+                project=property_instance.project,
+                is_active=True,
+                role__gte=15,
+                member__is_active=True,
+                member_id__in=member_values,
+            ).values_list("member_id", flat=True)
+        }
+        historical_member_ids = set()
+        if historical_value is not None:
+            historical_member_ids = {_canonical_id(member_id) for member_id in historical_value}
+        if not set(member_values).issubset(active_member_ids | historical_member_ids):
+            raise ValueError("Expected active project members.")
+        return member_values
 
     available_options = property_instance.options.all()
     if not allow_archived_options:
@@ -363,6 +396,7 @@ def validate_and_prepare_work_item_fields(
                 property_instance,
                 value,
                 allow_archived_options=allow_archived_options,
+                historical_value=current_values.get(property_id),
             )
         except ValueError as error:
             property_errors[property_id] = str(error)

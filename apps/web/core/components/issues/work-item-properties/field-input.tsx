@@ -4,16 +4,16 @@
  * See the LICENSE file for details.
  */
 
-import type { FocusEventHandler } from "react";
 import type { TProjectWorkItemProperty, TProjectWorkItemPropertyValue } from "@plane/types";
 import { Input, TextArea, ToggleSwitch } from "@plane/ui";
 import { cn } from "@plane/utils";
+import { WorkItemMultiSelectInput } from "./multi-select-input";
 
 type Props = {
   property: TProjectWorkItemProperty;
   value: TProjectWorkItemPropertyValue | undefined;
   onChange: (value: TProjectWorkItemPropertyValue) => void;
-  onBlur?: FocusEventHandler<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>;
+  onBlur?: () => void;
   disabled?: boolean;
   hasError?: boolean;
   compact?: boolean;
@@ -60,21 +60,21 @@ export function WorkItemPropertyFieldInput(props: Props) {
 
   if (property.property_type === "MULTI_SELECT") {
     return (
-      <select
-        multiple
-        className={cn(selectClassName, compact ? "min-h-16" : "min-h-24")}
+      <WorkItemMultiSelectInput
+        source={property.multi_select_source ?? "MANUAL"}
+        projectId={property.project}
+        manualOptions={options.map((option) => ({
+          id: option.id,
+          label: option.name,
+          archived: option.archived_at !== null,
+        }))}
         value={Array.isArray(value) ? value : []}
-        onChange={(event) => onChange(Array.from(event.target.selectedOptions, (option) => option.value))}
-        onBlur={onBlur}
+        onChange={onChange}
+        onClose={onBlur}
         disabled={disabled}
-      >
-        {options.map((option) => (
-          <option key={option.id} value={option.id} disabled={option.archived_at !== null}>
-            {option.name}
-            {option.archived_at ? " (archived)" : ""}
-          </option>
-        ))}
-      </select>
+        hasError={hasError}
+        compact={compact}
+      />
     );
   }
 

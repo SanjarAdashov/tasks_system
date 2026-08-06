@@ -458,29 +458,39 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
           });
         }
 
-        const options = property.options.filter((option) => !option.archived_at);
+        const isMemberMultiSelect =
+          property.property_type === "MULTI_SELECT" && property.multi_select_source === "MEMBERS";
+        const collectionConfig = isMemberMultiSelect
+          ? getMultiSelectConfig(
+              {
+                items: (members ?? []).filter((member) => member.is_active !== false),
+                getId: (member) => member.id,
+                getLabel: (member) => member.display_name,
+                getValue: (member) => member.id,
+              },
+              {
+                isOperatorEnabled: true,
+                singleValueOperator: EQUALITY_OPERATOR.EXACT,
+              }
+            )
+          : getMultiSelectConfig(
+              {
+                items: property.options.filter((option) => !option.archived_at),
+                getId: (option) => option.id,
+                getLabel: (option) => option.name,
+                getValue: (option) => option.id,
+              },
+              {
+                isOperatorEnabled: true,
+                singleValueOperator: EQUALITY_OPERATOR.EXACT,
+              }
+            );
         return createFilterConfig<TWorkItemFilterProperty>({
           ...commonConfig,
-          supportedOperatorConfigsMap: new Map([
-            [
-              COLLECTION_OPERATOR.IN,
-              getMultiSelectConfig(
-                {
-                  items: options,
-                  getId: (option) => option.id,
-                  getLabel: (option) => option.name,
-                  getValue: (option) => option.id,
-                },
-                {
-                  isOperatorEnabled: true,
-                  singleValueOperator: EQUALITY_OPERATOR.EXACT,
-                }
-              ),
-            ],
-          ]),
+          supportedOperatorConfigsMap: new Map([[COLLECTION_OPERATOR.IN, collectionConfig]]),
         });
       }),
-    [customProperties, operatorConfigs]
+    [customProperties, members, operatorConfigs]
   );
 
   const customPropertyFilterConfigMap = useMemo(

@@ -64,6 +64,11 @@ class WorkItemPropertyType(models.TextChoices):
     MULTI_SELECT = "MULTI_SELECT", "Multi select"
 
 
+class WorkItemMultiSelectSource(models.TextChoices):
+    MANUAL = "MANUAL", "Manual list"
+    MEMBERS = "MEMBERS", "Project members"
+
+
 class ProjectWorkItemFieldConfiguration(ProjectBaseModel):
     built_in_fields = models.JSONField(default=get_default_work_item_field_configuration)
 
@@ -85,6 +90,11 @@ class ProjectWorkItemProperty(ProjectBaseModel):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     property_type = models.CharField(max_length=32, choices=WorkItemPropertyType.choices)
+    multi_select_source = models.CharField(
+        max_length=16,
+        choices=WorkItemMultiSelectSource.choices,
+        default=WorkItemMultiSelectSource.MANUAL,
+    )
     is_required = models.BooleanField(default=False)
     default_value = models.JSONField(null=True, blank=True)
     sort_order = models.FloatField(default=65535)

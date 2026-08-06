@@ -15,6 +15,7 @@ from plane.db.models import (
     ProjectWorkItemProperty,
     ProjectWorkItemPropertyOption,
     State,
+    User,
     WorkItemPropertyValue,
 )
 from plane.utils.porters.serializers.issue import IssueExportSerializer
@@ -47,6 +48,46 @@ def project(workspace, create_user):
 @pytest.mark.contract
 @pytest.mark.django_db
 class TestWorkItemPropertySurfaces:
+    def test_member_multi_select_search_and_export_use_current_display_name(
+        self,
+        session_client,
+        workspace,
+        project,
+    ):
+        member = User.objects.create_user(
+            email="dynamic-member@plane.so",
+            username="dynamic-member",
+            password="test-password",
+            display_name="Initial Member Name",
+        )
+        ProjectMember.objects.create(project=project, member=member, role=15, is_active=True)
+        property_instance = ProjectWorkItemProperty.objects.create(
+            project=project,
+            name="Reviewers",
+            property_type="MULTI_SELECT",
+            multi_select_source="MEMBERS",
+        )
+        issue = Issue.objects.create(project=project, name="Dynamic member item")
+        WorkItemPropertyValue.objects.create(
+            issue=issue,
+            property=property_instance,
+            project=project,
+            value=[str(member.id)],
+        )
+
+        member.display_name = "Renamed Member"
+        member.save(update_fields=["display_name"])
+
+        response = session_client.get(
+            f"/api/workspaces/{workspace.slug}/projects/{project.id}/search-issues/",
+            {"search": "Renamed Member"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        assert {str(item["id"]) for item in response.data} == {str(issue.id)}
+
+        issue = Issue.objects.filter(id=issue.id).prefetch_related("work_item_property_values__property__options").get()
+        assert IssueExportSerializer(issue).data["custom_properties"] == {"Reviewers": ["Renamed Member"]}
+
     def test_issue_list_includes_property_values(self, session_client, workspace, project):
         property_instance = ProjectWorkItemProperty.objects.create(
             project=project,

@@ -11,10 +11,12 @@ import type {
   TProjectWorkItemProperty,
   TProjectWorkItemPropertyPayload,
   TProjectWorkItemPropertyValue,
+  TWorkItemMultiSelectSource,
   TWorkItemPropertyType,
 } from "@plane/types";
 import { Button, Input, TextArea, ToggleSwitch } from "@plane/ui";
 import { ProjectService } from "@/services/project";
+import { WorkItemMultiSelectInput } from "@/components/issues/work-item-properties";
 import { PROPERTY_TYPE_LABELS } from "./constants";
 
 type TEditorOption = {
@@ -29,6 +31,7 @@ type TEditorState = {
   name: string;
   description: string;
   property_type: TWorkItemPropertyType;
+  multi_select_source: TWorkItemMultiSelectSource;
   is_required: boolean;
   has_default: boolean;
   default_value: TProjectWorkItemPropertyValue;
@@ -49,6 +52,7 @@ const createEmptyEditor = (): TEditorState => ({
   name: "",
   description: "",
   property_type: "SHORT_TEXT",
+  multi_select_source: "MANUAL",
   is_required: false,
   has_default: false,
   default_value: null,
@@ -62,6 +66,7 @@ const createEditorFromProperty = (property?: TProjectWorkItemProperty): TEditorS
     name: property.name,
     description: property.description,
     property_type: property.property_type,
+    multi_select_source: property.multi_select_source ?? "MANUAL",
     is_required: property.is_required,
     has_default: property.default_value !== null,
     default_value: property.default_value,
@@ -94,17 +99,29 @@ export function WorkItemPropertyForm(props: Props) {
 
   const activeOptions = editor.options.filter((option) => !option.is_archived);
   const isSelect = SELECT_TYPES.has(editor.property_type);
+  const isMemberMultiSelect = editor.property_type === "MULTI_SELECT" && editor.multi_select_source === "MEMBERS";
+  const requiresManualOptions = isSelect && !isMemberMultiSelect;
   const hasValidOptions =
-    !isSelect || (activeOptions.length > 0 && activeOptions.every((option) => option.name.trim()));
+    !requiresManualOptions || (activeOptions.length > 0 && activeOptions.every((option) => option.name.trim()));
   const canSubmit = editor.name.trim().length > 0 && hasValidOptions;
 
   const updateType = (propertyType: TWorkItemPropertyType) => {
     setEditor((current) => ({
       ...current,
       property_type: propertyType,
+      multi_select_source: propertyType === "MULTI_SELECT" ? current.multi_select_source : "MANUAL",
       has_default: false,
       default_value: null,
       options: SELECT_TYPES.has(propertyType) ? current.options : [],
+    }));
+  };
+
+  const updateMultiSelectSource = (source: TWorkItemMultiSelectSource) => {
+    setEditor((current) => ({
+      ...current,
+      multi_select_source: source,
+      has_default: false,
+      default_value: null,
     }));
   };
 
@@ -155,16 +172,6 @@ export function WorkItemPropertyForm(props: Props) {
     });
   };
 
-  const toggleMultiSelectDefault = (id: string, checked: boolean) => {
-    setEditor((current) => {
-      const currentValue = Array.isArray(current.default_value) ? current.default_value : [];
-      return {
-        ...current,
-        default_value: checked ? [...currentValue, id] : currentValue.filter((optionId) => optionId !== id),
-      };
-    });
-  };
-
   const normalizedDefaultValue = (): TProjectWorkItemPropertyValue => {
     if (!editor.has_default) return null;
     if (editor.property_type === "NUMBER") {
@@ -186,9 +193,10 @@ export function WorkItemPropertyForm(props: Props) {
       name: editor.name.trim(),
       description: editor.description.trim(),
       property_type: editor.property_type,
+      multi_select_source: editor.multi_select_source,
       is_required: editor.is_required,
       default_value: normalizedDefaultValue(),
-      options: isSelect
+      options: requiresManualOptions
         ? editor.options.map(({ id, name, sort_order, is_archived }) => ({
             id,
             name: name.trim(),
@@ -254,18 +262,14 @@ export function WorkItemPropertyForm(props: Props) {
     if (editor.property_type === "MULTI_SELECT") {
       const selectedValues = Array.isArray(editor.default_value) ? editor.default_value : [];
       return (
-        <div className="flex flex-col gap-2 rounded-md border border-subtle p-3">
-          {activeOptions.map((option) => (
-            <label key={option.id} className="flex items-center gap-2 text-13 text-secondary">
-              <input
-                type="checkbox"
-                checked={selectedValues.includes(option.id)}
-                onChange={(event) => toggleMultiSelectDefault(option.id, event.target.checked)}
-              />
-              {option.name || "Untitled option"}
-            </label>
-          ))}
-        </div>
+        <WorkItemMultiSelectInput
+          source={editor.multi_select_source}
+          projectId={projectId}
+          manualOptions={activeOptions.map((option) => ({ id: option.id, label: option.name || "Untitled option" }))}
+          value={selectedValues}
+          onChange={(defaultValue) => setEditor((current) => ({ ...current, default_value: defaultValue }))}
+          placeholder={editor.multi_select_source === "MEMBERS" ? "Select project members" : "Select options"}
+        />
       );
     }
 
@@ -331,6 +335,24 @@ export function WorkItemPropertyForm(props: Props) {
         </label>
       </div>
 
+      {editor.property_type === "MULTI_SELECT" && (
+        <label className="mt-5 flex flex-col gap-1.5 text-12 font-medium text-secondary">
+          Multi-select source
+          <select
+            className="rounded-md border-[0.5px] border-subtle-1 bg-layer-2 px-3 py-2 text-13 outline-none disabled:cursor-not-allowed disabled:opacity-60"
+            value={editor.multi_select_source}
+            disabled={Boolean(property)}
+            onChange={(event) => updateMultiSelectSource(event.target.value as TWorkItemMultiSelectSource)}
+          >
+            <option value="MANUAL">Manual list</option>
+            <option value="MEMBERS">Project members</option>
+          </select>
+          <span className="font-normal text-11 text-tertiary">
+            Project members are loaded dynamically and always use their current profile names.
+          </span>
+        </label>
+      )}
+
       <label
         htmlFor="work-item-property-description"
         className="mt-5 flex flex-col gap-1.5 text-12 font-medium text-secondary"
@@ -355,7 +377,7 @@ export function WorkItemPropertyForm(props: Props) {
         />
       </div>
 
-      {isSelect && (
+      {requiresManualOptions && (
         <div className="mt-5">
           <div className="mb-2 flex items-center justify-between">
             <div>
@@ -403,7 +425,7 @@ export function WorkItemPropertyForm(props: Props) {
           </div>
           <ToggleSwitch
             value={editor.has_default}
-            disabled={isSelect && activeOptions.length === 0}
+            disabled={requiresManualOptions && activeOptions.length === 0}
             onChange={(value) =>
               setEditor((current) => ({
                 ...current,
