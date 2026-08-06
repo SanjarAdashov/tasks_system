@@ -1,0 +1,64 @@
+name: Build custom Plane images
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.component }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - component: backend
+            context: ./apps/api
+            dockerfile: ./apps/api/Dockerfile.api
+            image: ghcr.io/sanjaradashov/tasks-system-backend
+          - component: frontend
+            context: .
+            dockerfile: ./apps/web/Dockerfile.web
+            image: ghcr.io/sanjaradashov/tasks-system-frontend
+          - component: admin
+            context: .
+            dockerfile: ./apps/admin/Dockerfile.admin
+            image: ghcr.io/sanjaradashov/tasks-system-admin
+          - component: space
+            context: .
+            dockerfile: ./apps/space/Dockerfile.space
+            image: ghcr.io/sanjaradashov/tasks-system-space
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v7
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ matrix.image }}:v1.4.0-custom
+            ${{ matrix.image }}:${{ github.sha }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+            org.opencontainers.image.version=v1.4.0-custom
+          cache-from: type=gha,scope=${{ matrix.component }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.component }}
