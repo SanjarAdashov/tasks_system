@@ -5,6 +5,48 @@
       "heading": "Work item fields",
       "description": "Choose the built-in fields shown when work items are created and define project-specific properties."
     },
+    "attachments": {
+      "label": "File uploads",
+      "heading": "File upload limits",
+      "description": "Control which file categories can be uploaded and their maximum size for this project.",
+      "help": "Limits apply to new uploads only. Existing files remain available. Choose Unlimited to remove the project limit or Disabled to prevent new uploads in a category.",
+      "save": "Save limits",
+      "reset": "Reset changes",
+      "limit_in_mib": "Maximum size in MiB",
+      "modes": {
+        "limited": "Size limit",
+        "unlimited": "Unlimited",
+        "disabled": "Disabled"
+      },
+      "mode_help": {
+        "unlimited": "No project size limit",
+        "disabled": "New uploads are blocked"
+      },
+      "categories": {
+        "images": "Images",
+        "images_help": "JPEG, PNG, WebP, GIF, BMP and other image formats.",
+        "video": "Video",
+        "video_help": "MP4, WebM and other browser-supported video formats.",
+        "audio": "Audio",
+        "audio_help": "MP3, WAV, OGG and other audio formats.",
+        "pdf": "PDF documents",
+        "pdf_help": "PDF files available for secure in-app preview.",
+        "documents": "Documents",
+        "documents_help": "Office documents, text, CSV and similar files.",
+        "archives": "Archives",
+        "archives_help": "ZIP, RAR, 7z, TAR and compressed packages.",
+        "other": "Other files",
+        "other_help": "Every file type that does not match another category."
+      },
+      "toast": {
+        "success_title": "File limits saved",
+        "success_message": "New uploads will use the updated project limits.",
+        "error_title": "File limits could not be saved",
+        "error_message": "Review the values and try again.",
+        "invalid_title": "Enter a valid file limit",
+        "invalid_message": "Every size limit must be greater than zero."
+      }
+    },
     "general": {
       "enter_project_id": "Enter project ID",
       "please_select_a_timezone": "Please select a timezone",

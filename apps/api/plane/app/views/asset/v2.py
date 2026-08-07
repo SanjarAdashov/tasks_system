@@ -26,6 +26,11 @@ from plane.utils.cache import invalidate_cache_directly
 from plane.utils.path_validator import sanitize_filename
 from plane.bgtasks.storage_metadata_task import get_asset_object_metadata
 from plane.throttles.asset import AssetRateThrottle
+from plane.utils.attachments import (
+    get_attachment_disposition,
+    validate_attachment_size,
+    validate_project_attachment_size,
+)
 
 
 class UserAssetsV2Endpoint(BaseAPIView):
@@ -112,11 +117,8 @@ class UserAssetsV2Endpoint(BaseAPIView):
         # get the asset key
         name = sanitize_filename(request.data.get("name")) or "unnamed"
         type = request.data.get("type", "image/jpeg")
-        size = int(request.data.get("size", settings.FILE_SIZE_LIMIT))
+        size = validate_attachment_size(request.data.get("size"))
         entity_type = request.data.get("entity_type", False)
-
-        # Check if the file size is within the limit
-        size_limit = min(size, settings.FILE_SIZE_LIMIT)
 
         #  Check if the entity type is allowed
         if not entity_type or entity_type not in ["USER_AVATAR", "USER_COVER"]:
@@ -147,9 +149,9 @@ class UserAssetsV2Endpoint(BaseAPIView):
 
         # Create a File Asset
         asset = FileAsset.objects.create(
-            attributes={"name": name, "type": type, "size": size_limit},
+            attributes={"name": name, "type": type, "size": size},
             asset=asset_key,
-            size=size_limit,
+            size=size,
             user=request.user,
             created_by=request.user,
             entity_type=entity_type,
@@ -158,7 +160,7 @@ class UserAssetsV2Endpoint(BaseAPIView):
         # Get the presigned URL
         storage = S3Storage(request=request)
         # Generate a presigned URL to share an S3 object
-        presigned_url = storage.generate_presigned_post(object_name=asset_key, file_type=type, file_size=size_limit)
+        presigned_url = storage.generate_presigned_post(object_name=asset_key, file_type=type, file_size=size)
         # Return the presigned URL
         return Response(
             {
@@ -341,7 +343,7 @@ class WorkspaceFileAssetEndpoint(BaseAPIView):
     def post(self, request, slug):
         name = sanitize_filename(request.data.get("name")) or "unnamed"
         type = request.data.get("type", "image/jpeg")
-        size = int(request.data.get("size", settings.FILE_SIZE_LIMIT))
+        size = validate_attachment_size(request.data.get("size"))
         entity_type = request.data.get("entity_type")
         entity_identifier = request.data.get("entity_identifier", False)
 
@@ -380,9 +382,6 @@ class WorkspaceFileAssetEndpoint(BaseAPIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Get the size limit
-        size_limit = min(settings.FILE_SIZE_LIMIT, size)
-
         # Get the workspace
         workspace = Workspace.objects.get(slug=slug)
 
@@ -391,9 +390,9 @@ class WorkspaceFileAssetEndpoint(BaseAPIView):
 
         # Create a File Asset
         asset = FileAsset.objects.create(
-            attributes={"name": name, "type": type, "size": size_limit},
+            attributes={"name": name, "type": type, "size": size},
             asset=asset_key,
-            size=size_limit,
+            size=size,
             workspace=workspace,
             created_by=request.user,
             entity_type=entity_type,
@@ -403,7 +402,7 @@ class WorkspaceFileAssetEndpoint(BaseAPIView):
         # Get the presigned URL
         storage = S3Storage(request=request)
         # Generate a presigned URL to share an S3 object
-        presigned_url = storage.generate_presigned_post(object_name=asset_key, file_type=type, file_size=size_limit)
+        presigned_url = storage.generate_presigned_post(object_name=asset_key, file_type=type, file_size=size)
         # Return the presigned URL
         return Response(
             {
@@ -581,7 +580,7 @@ class ProjectAssetEndpoint(BaseAPIView):
     def post(self, request, slug, project_id):
         name = sanitize_filename(request.data.get("name")) or "unnamed"
         type = request.data.get("type", "image/jpeg")
-        size = int(request.data.get("size", settings.FILE_SIZE_LIMIT))
+        size = request.data.get("size")
         entity_type = request.data.get("entity_type", "")
         entity_identifier = request.data.get("entity_identifier")
 
@@ -593,36 +592,25 @@ class ProjectAssetEndpoint(BaseAPIView):
             )
 
         # Check if the file type is allowed
-        allowed_types = [
-            "image/jpeg",
-            "image/png",
-            "image/webp",
-            "image/jpg",
-            "image/gif",
-        ]
-        if type not in allowed_types:
+        if type not in settings.ATTACHMENT_MIME_TYPES:
             return Response(
-                {
-                    "error": "Invalid file type. Only JPEG, PNG, WebP, JPG and GIF files are allowed.",
-                    "status": False,
-                },
+                {"error": "Invalid file type.", "status": False},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Get the size limit
-        size_limit = min(settings.FILE_SIZE_LIMIT, size)
-
         # Get the workspace
         workspace = Workspace.objects.get(slug=slug)
+        project = Project.objects.get(id=project_id, workspace=workspace)
+        size = validate_project_attachment_size(project=project, mime_type=type, filename=name, size=size)
 
         # asset key
         asset_key = f"{workspace.id}/{uuid.uuid4().hex}-{name}"
 
         # Create a File Asset
         asset = FileAsset.objects.create(
-            attributes={"name": name, "type": type, "size": size_limit},
+            attributes={"name": name, "type": type, "size": size},
             asset=asset_key,
-            size=size_limit,
+            size=size,
             workspace=workspace,
             created_by=request.user,
             entity_type=entity_type,
@@ -633,7 +621,7 @@ class ProjectAssetEndpoint(BaseAPIView):
         # Get the presigned URL
         storage = S3Storage(request=request)
         # Generate a presigned URL to share an S3 object
-        presigned_url = storage.generate_presigned_post(object_name=asset_key, file_type=type, file_size=size_limit)
+        presigned_url = storage.generate_presigned_post(object_name=asset_key, file_type=type, file_size=size)
         # Return the presigned URL
         return Response(
             {
@@ -685,10 +673,14 @@ class ProjectAssetEndpoint(BaseAPIView):
 
         # Get the presigned URL
         storage = S3Storage(request=request)
+        disposition = get_attachment_disposition(
+            asset.attributes.get("type"),
+            request.query_params.get("disposition"),
+        )
         # Generate a presigned URL to share an S3 object
         signed_url = storage.generate_presigned_url(
             object_name=asset.asset.name,
-            disposition="attachment",
+            disposition=disposition,
             filename=asset.attributes.get("name"),
         )
         # Redirect to the signed URL

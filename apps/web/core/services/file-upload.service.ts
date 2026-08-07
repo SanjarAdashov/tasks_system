@@ -28,6 +28,8 @@ export class FileUploadService extends APIService {
       },
       cancelToken: this.cancelSource.token,
       withCredentials: false,
+      // Axios uses zero for an intentionally unlimited request timeout.
+      timeout: 0,
       onUploadProgress: uploadProgressHandler,
     })
       .then((response) => response?.data)

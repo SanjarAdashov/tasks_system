@@ -100,6 +100,13 @@ export const PROJECT_SETTINGS: Record<TProjectSettingsTabs, TProjectSettingsItem
     access: [EUserProjectRoles.ADMIN],
     highlight: (pathname: string, baseUrl: string) => pathname === `${baseUrl}/state-transitions/`,
   },
+  attachments: {
+    key: "attachments",
+    i18n_label: "project_settings.attachments.label",
+    href: `/attachments`,
+    access: [EUserProjectRoles.ADMIN],
+    highlight: (pathname: string, baseUrl: string) => pathname === `${baseUrl}/attachments/`,
+  },
   labels: {
     key: "labels",
     i18n_label: "common.labels",
@@ -149,5 +156,5 @@ export const GROUPED_PROJECT_SETTINGS: Record<PROJECT_SETTINGS_CATEGORY, TProjec
     PROJECT_SETTINGS["estimates"],
     PROJECT_SETTINGS["work_item_fields"],
   ],
-  [PROJECT_SETTINGS_CATEGORY.EXECUTION]: [PROJECT_SETTINGS["automations"]],
+  [PROJECT_SETTINGS_CATEGORY.EXECUTION]: [PROJECT_SETTINGS["attachments"], PROJECT_SETTINGS["automations"]],
 };

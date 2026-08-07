@@ -35,6 +35,10 @@ class S3Storage(S3Boto3Storage):
         self.aws_s3_endpoint_url = os.environ.get("AWS_S3_ENDPOINT_URL") or os.environ.get("MINIO_ENDPOINT_URL")
         # Use the SIGNED_URL_EXPIRATION environment variable for the expiration time (default: 3600 seconds)
         self.signed_url_expiration = int(os.environ.get("SIGNED_URL_EXPIRATION", "3600"))
+        # Upload URLs intentionally live much longer than download URLs. Files
+        # are uploaded directly to object storage and may take many hours on a
+        # slow connection. Seven days is the maximum supported by S3 SigV4.
+        self.upload_signed_url_expiration = int(os.environ.get("UPLOAD_SIGNED_URL_EXPIRATION", "604800"))
 
         if os.environ.get("USE_MINIO") == "1":
             # Determine protocol based on environment variable
@@ -65,7 +69,7 @@ class S3Storage(S3Boto3Storage):
     def generate_presigned_post(self, object_name, file_type, file_size, expiration=None):
         """Generate a presigned URL to upload an S3 object"""
         if expiration is None:
-            expiration = self.signed_url_expiration
+            expiration = self.upload_signed_url_expiration
         fields = {"Content-Type": file_type}
 
         conditions = [

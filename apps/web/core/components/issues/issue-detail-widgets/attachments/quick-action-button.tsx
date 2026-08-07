@@ -8,14 +8,18 @@ import React, { useCallback, useState } from "react";
 import { observer } from "mobx-react";
 import type { FileRejection } from "react-dropzone";
 import { useDropzone } from "react-dropzone";
+import { useTranslation } from "@plane/i18n";
 import { PlusIcon } from "@plane/propel/icons";
 // plane imports
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import type { TIssueServiceType } from "@plane/types";
+import { convertBytesToSize } from "@plane/utils";
+import {
+  useProjectAttachmentSettings,
+  validateProjectAttachment,
+} from "@/components/issues/attachment/attachment-utils";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
-// plane web hooks
-import { useFileSize } from "@/hooks/use-file-size";
 // local imports
 import { useAttachmentOperations } from "./helper";
 
@@ -34,8 +38,8 @@ export const IssueAttachmentActionButton = observer(function IssueAttachmentActi
   const [isLoading, setIsLoading] = useState(false);
   // store hooks
   const { setLastWidgetAction, fetchActivities } = useIssueDetail(issueServiceType);
-  // file size
-  const { maxFileSize } = useFileSize();
+  const { t } = useTranslation();
+  const { data: attachmentSettings } = useProjectAttachmentSettings(workspaceSlug, projectId);
   // operations
   const { operations: attachmentOperations } = useAttachmentOperations(
     workspaceSlug,
@@ -56,14 +60,29 @@ export const IssueAttachmentActionButton = observer(function IssueAttachmentActi
         const currentFile: File = acceptedFiles[0];
         if (!currentFile || !workspaceSlug) return;
 
+        const validation = validateProjectAttachment(currentFile, attachmentSettings);
+        if (!validation.valid) {
+          setToast({
+            type: TOAST_TYPE.ERROR,
+            title: t("toast.error"),
+            message:
+              validation.reason === "disabled"
+                ? t("attachment.category_disabled", {
+                    category: t(`attachment.categories.${validation.category}`),
+                  })
+                : t("attachment.file_size_limit", { size: convertBytesToSize(validation.maxSize) }),
+          });
+          return;
+        }
+
         setIsLoading(true);
         attachmentOperations
           .create(currentFile)
           .catch(() => {
             setToast({
               type: TOAST_TYPE.ERROR,
-              title: "Error!",
-              message: "File could not be attached. Try uploading again.",
+              title: t("toast.error"),
+              message: t("attachment.error"),
             });
           })
           .finally(() => {
@@ -76,32 +95,22 @@ export const IssueAttachmentActionButton = observer(function IssueAttachmentActi
 
       setToast({
         type: TOAST_TYPE.ERROR,
-        title: "Error!",
-        message:
-          totalAttachedFiles > 1
-            ? "Only one file can be uploaded at a time."
-            : `File must be of ${maxFileSize / 1024 / 1024}MB or less in size.`,
+        title: t("toast.error"),
+        message: totalAttachedFiles > 1 ? t("attachment.only_one_file_allowed") : t("attachment.error"),
       });
-      return;
     },
-    [attachmentOperations, maxFileSize, workspaceSlug, handleFetchPropertyActivities, setLastWidgetAction]
+    [attachmentOperations, attachmentSettings, workspaceSlug, handleFetchPropertyActivities, setLastWidgetAction, t]
   );
 
   const { getRootProps, getInputProps } = useDropzone({
     onDrop,
-    maxSize: maxFileSize,
     multiple: false,
     disabled: isLoading || disabled,
   });
 
   return (
-    <div
-      onClick={(e) => {
-        // TODO: Remove extra div and move event propagation to button
-        e.stopPropagation();
-      }}
-    >
-      <button {...getRootProps()} type="button" disabled={disabled}>
+    <div>
+      <button {...getRootProps({ onClick: (event) => event.stopPropagation() })} type="button" disabled={disabled}>
         <input {...getInputProps()} />
         {customButton ? customButton : <PlusIcon className="h-4 w-4" />}
       </button>

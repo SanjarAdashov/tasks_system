@@ -30,6 +30,7 @@ export type TProjectSettingsTabs =
   | "states"
   | "state_order"
   | "state_transitions"
+  | "attachments"
   | "labels"
   | "estimates"
   | "work_item_fields"
@@ -40,4 +41,19 @@ export type TProjectSettingsItem = {
   href: string;
   access: EUserProjectRoles[];
   highlight: (pathname: string, baseUrl: string) => boolean;
+};
+
+export type TProjectAttachmentSettings = {
+  id: string;
+  project: string;
+  workspace: string;
+  image_max_size: number | null;
+  video_max_size: number | null;
+  audio_max_size: number | null;
+  pdf_max_size: number | null;
+  document_max_size: number | null;
+  archive_max_size: number | null;
+  other_max_size: number | null;
+  created_at: string;
+  updated_at: string;
 };

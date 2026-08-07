@@ -760,9 +760,42 @@
   "attachment": {
     "error": "File could not be attached. Try uploading again.",
     "only_one_file_allowed": "Only one file can be uploaded at a time.",
-    "file_size_limit": "File must be of {size}MB or less in size.",
+    "file_size_limit": "File must be {size} or less.",
     "drag_and_drop": "Drag and drop anywhere to upload",
-    "delete": "Delete attachment"
+    "delete": "Delete attachment",
+    "delete_confirmation": "Are you sure you want to delete “{name}”? The attachment will be permanently removed. This action cannot be undone.",
+    "add": "Add file",
+    "download": "Download",
+    "download_file": "Download {name}",
+    "preview_file": "Preview {name}",
+    "audio": "Audio",
+    "unknown_type": "FILE",
+    "uploading": "{progress}% uploaded",
+    "category_disabled": "Uploads for the “{category}” category are disabled in this project.",
+    "categories": {
+      "image": "Images",
+      "video": "Video",
+      "audio": "Audio",
+      "pdf": "PDF",
+      "document": "Documents",
+      "archive": "Archives",
+      "other": "Other files"
+    },
+    "preview": {
+      "zoom_out": "Zoom out",
+      "zoom_in": "Zoom in",
+      "reset_zoom": "Reset zoom",
+      "rotate": "Rotate",
+      "previous": "Previous file",
+      "next": "Next file",
+      "not_supported": "Your browser cannot play this file."
+    },
+    "toast": {
+      "removed_title": "Attachment removed",
+      "removed_message": "The attachment has been successfully removed.",
+      "remove_failed_title": "Attachment not removed",
+      "remove_failed_message": "The attachment could not be removed."
+    }
   },
   "label": {
     "select": "Add labels",

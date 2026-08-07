@@ -88,6 +88,10 @@ from plane.utils.order_queryset import (
 from plane.bgtasks.storage_metadata_task import get_asset_object_metadata
 from .base import BaseAPIView
 from plane.utils.host import base_host
+from plane.utils.attachments import (
+    get_attachment_disposition,
+    validate_project_attachment_size,
+)
 from plane.utils.issue_relation_mapper import get_actual_relation
 from plane.bgtasks.webhook_task import model_activity
 from plane.app.permissions import ROLE
@@ -1910,7 +1914,12 @@ class IssueAttachmentListCreateAPIEndpoint(BaseAPIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        size_limit = min(size, settings.FILE_SIZE_LIMIT)
+        size = validate_project_attachment_size(
+            project=issue.project,
+            mime_type=type,
+            filename=name,
+            size=size,
+        )
 
         if not type or type not in settings.ATTACHMENT_MIME_TYPES:
             return Response(
@@ -1954,9 +1963,9 @@ class IssueAttachmentListCreateAPIEndpoint(BaseAPIView):
 
         # Create a File Asset
         asset = FileAsset.objects.create(
-            attributes={"name": name, "type": type, "size": size_limit},
+            attributes={"name": name, "type": type, "size": size},
             asset=asset_key,
-            size=size_limit,
+            size=size,
             workspace_id=workspace.id,
             created_by=request.user,
             issue_id=issue_id,
@@ -1969,7 +1978,7 @@ class IssueAttachmentListCreateAPIEndpoint(BaseAPIView):
         # Get the presigned URL
         storage = S3Storage(request=request)
         # Generate a presigned URL to share an S3 object
-        presigned_url = storage.generate_presigned_post(object_name=asset_key, file_type=type, file_size=size_limit)
+        presigned_url = storage.generate_presigned_post(object_name=asset_key, file_type=type, file_size=size)
         # Return the presigned URL
         return Response(
             {
@@ -2040,20 +2049,28 @@ class IssueAttachmentDetailAPIEndpoint(BaseAPIView):
         Records deletion activity and triggers metadata cleanup.
         """
         issue = Issue.objects.get(pk=issue_id, workspace__slug=slug, project_id=project_id)
-        # if the request user is creator or admin then delete the attachment
-        if not user_has_issue_permission(
-            request.user.id,
+        issue_attachment = FileAsset.objects.get(
+            pk=pk,
+            issue_id=issue_id,
+            workspace__slug=slug,
             project_id=project_id,
-            issue=issue,
-            allowed_roles=[ROLE.ADMIN.value, ROLE.MEMBER.value, ROLE.GUEST.value],
-            allow_creator=True,
+        )
+        is_project_admin = ProjectMember.objects.filter(
+            project_id=project_id,
+            member=request.user,
+            role=ROLE.ADMIN.value,
+            is_active=True,
+        ).exists()
+        if not (
+            issue_attachment.created_by_id == request.user.id
+            or issue.created_by_id == request.user.id
+            or is_project_admin
         ):
             return Response(
                 {"error": "You are not allowed to delete this attachment"},
                 status=status.HTTP_403_FORBIDDEN,
             )
 
-        issue_attachment = FileAsset.objects.get(pk=pk, workspace__slug=slug, project_id=project_id)
         issue_attachment.is_deleted = True
         issue_attachment.deleted_at = timezone.now()
         issue_attachment.save()
@@ -2137,9 +2154,13 @@ class IssueAttachmentDetailAPIEndpoint(BaseAPIView):
             )
 
         storage = S3Storage(request=request)
+        disposition = get_attachment_disposition(
+            asset.attributes.get("type"),
+            request.query_params.get("disposition"),
+        )
         presigned_url = storage.generate_presigned_url(
             object_name=asset.asset.name,
-            disposition="attachment",
+            disposition=disposition,
             filename=asset.attributes.get("name"),
         )
         return HttpResponseRedirect(presigned_url)

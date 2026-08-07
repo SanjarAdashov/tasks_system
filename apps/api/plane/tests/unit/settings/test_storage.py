@@ -78,10 +78,10 @@ class TestS3StorageSignedURLExpiration:
         # Call generate_presigned_post without explicit expiration
         storage.generate_presigned_post("test-object", "image/png", 1024)
 
-        # Assert that the boto3 method was called with the default expiration (3600)
+        # Upload links use the seven-day default so slow uploads do not expire.
         mock_s3_client.generate_presigned_post.assert_called_once()
         call_kwargs = mock_s3_client.generate_presigned_post.call_args[1]
-        assert call_kwargs["ExpiresIn"] == 3600
+        assert call_kwargs["ExpiresIn"] == 604800
 
     @patch.dict(
         os.environ,
@@ -90,7 +90,7 @@ class TestS3StorageSignedURLExpiration:
             "AWS_SECRET_ACCESS_KEY": "test-secret",
             "AWS_S3_BUCKET_NAME": "test-bucket",
             "AWS_REGION": "us-east-1",
-            "SIGNED_URL_EXPIRATION": "60",
+            "UPLOAD_SIGNED_URL_EXPIRATION": "60",
         },
         clear=True,
     )
@@ -105,7 +105,7 @@ class TestS3StorageSignedURLExpiration:
         }
         mock_boto3.client.return_value = mock_s3_client
 
-        # Create S3Storage instance with SIGNED_URL_EXPIRATION=60
+        # Create S3Storage instance with UPLOAD_SIGNED_URL_EXPIRATION=60
         storage = S3Storage()
 
         # Call generate_presigned_post without explicit expiration

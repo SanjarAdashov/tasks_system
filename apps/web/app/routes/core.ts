@@ -338,6 +338,11 @@ export const coreRoutes: RouteConfigEntry[] = [
               ":workspaceSlug/settings/projects/:projectId/state-transitions",
               "./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/state-transitions/page.tsx"
             ),
+            // Project attachment settings
+            route(
+              ":workspaceSlug/settings/projects/:projectId/attachments",
+              "./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/attachments/page.tsx"
+            ),
             // Project Labels
             route(
               ":workspaceSlug/settings/projects/:projectId/labels",

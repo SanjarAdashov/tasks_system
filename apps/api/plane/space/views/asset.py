@@ -19,6 +19,7 @@ from plane.bgtasks.storage_metadata_task import get_asset_object_metadata
 from plane.db.models import DeployBoard, FileAsset
 from plane.settings.storage import S3Storage
 from plane.utils.path_validator import sanitize_filename
+from plane.utils.attachments import validate_project_attachment_size
 
 # Module imports
 from .base import BaseAPIView
@@ -86,7 +87,7 @@ class EntityAssetEndpoint(BaseAPIView):
         # Get the asset
         name = sanitize_filename(request.data.get("name")) or "unnamed"
         type = request.data.get("type", "image/jpeg")
-        size = int(request.data.get("size", settings.FILE_SIZE_LIMIT))
+        size = request.data.get("size")
         entity_type = request.data.get("entity_type", "")
         entity_identifier = request.data.get("entity_identifier")
 
@@ -113,6 +114,13 @@ class EntityAssetEndpoint(BaseAPIView):
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+        size = validate_project_attachment_size(
+            project=deploy_board.project,
+            mime_type=type,
+            filename=name,
+            size=size,
+        )
 
         # asset key
         asset_key = f"{deploy_board.workspace_id}/{uuid.uuid4().hex}-{name}"

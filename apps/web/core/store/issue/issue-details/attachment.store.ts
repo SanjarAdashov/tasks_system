@@ -121,7 +121,7 @@ export class IssueAttachmentStore implements IIssueAttachmentStore {
     if (attachments && attachments.length > 0) {
       const newAttachmentIds = attachments.map((attachment) => attachment.id);
       runInAction(() => {
-        update(this.attachments, [issueId], (attachmentIds = []) => uniq(concat(attachmentIds, newAttachmentIds)));
+        update(this.attachments, [issueId], (attachmentIds = []) => uniq(concat(newAttachmentIds, attachmentIds)));
         attachments.forEach((attachment) => set(this.attachmentMap, attachment.id, attachment));
       });
     }
@@ -165,7 +165,7 @@ export class IssueAttachmentStore implements IIssueAttachmentStore {
 
       if (response && response.id) {
         runInAction(() => {
-          update(this.attachments, [issueId], (attachmentIds = []) => uniq(concat(attachmentIds, [response.id])));
+          update(this.attachments, [issueId], (attachmentIds = []) => uniq(concat([response.id], attachmentIds)));
           set(this.attachmentMap, response.id, response);
           this.rootIssueStore.issues.updateIssue(issueId, {
             attachment_count: this.getAttachmentsCountByIssueId(issueId),

@@ -1,8 +1,4 @@
 (plane_proxy) {
-	request_body {
-		max_size {$FILE_SIZE_LIMIT}
-	}
-
   redir /spaces /spaces/ permanent
 	reverse_proxy /spaces/* space:3000
 

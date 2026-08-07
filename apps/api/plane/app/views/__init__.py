@@ -11,6 +11,7 @@ from .project.base import (
     ProjectArchiveUnarchiveEndpoint,
 )
 
+from .project.attachment import ProjectAttachmentSettingsEndpoint
 from .project.work_item_property import (
     ProjectWorkItemFieldConfigurationEndpoint,
     ProjectWorkItemPropertyViewSet,

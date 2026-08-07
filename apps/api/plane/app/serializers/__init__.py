@@ -45,6 +45,7 @@ from .project import (
     ProjectMemberRoleSerializer,
     ProjectMemberPreferenceSerializer,
 )
+from .attachment import ProjectAttachmentSettingsSerializer
 from .work_item_property import (
     ProjectWorkItemFieldConfigurationSerializer,
     ProjectWorkItemPropertyOptionSerializer,

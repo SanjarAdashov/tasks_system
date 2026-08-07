@@ -18,6 +18,7 @@ from plane.app.views import (
     UserProjectRolesEndpoint,
     ProjectArchiveUnarchiveEndpoint,
     ProjectMemberPreferenceEndpoint,
+    ProjectAttachmentSettingsEndpoint,
     ProjectWorkItemFieldConfigurationEndpoint,
     ProjectWorkItemPropertyViewSet,
     ProjectAvailableStateTransitionsEndpoint,
@@ -135,6 +136,11 @@ urlpatterns = [
         "workspaces/<str:slug>/projects/<uuid:project_id>/preferences/member/<uuid:member_id>/",
         ProjectMemberPreferenceEndpoint.as_view(),
         name="project-member-preference",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/attachment-settings/",
+        ProjectAttachmentSettingsEndpoint.as_view(),
+        name="project-attachment-settings",
     ),
     path(
         "workspaces/<str:slug>/projects/<uuid:project_id>/work-item-fields/configuration/",

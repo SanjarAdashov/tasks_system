@@ -15,6 +15,7 @@ import type {
   TProjectWorkItemFieldConfiguration,
   TProjectWorkItemProperty,
   TProjectWorkItemPropertyPayload,
+  TProjectAttachmentSettings,
   TProjectStateTransitionRule,
   TProjectStateTransitionRulePayload,
   TProjectStateTransitionSettings,
@@ -122,6 +123,35 @@ export class ProjectService extends APIService {
     data: Partial<IProjectUserPropertiesResponse>
   ): Promise<IProjectUserPropertiesResponse> {
     return this.patch(`/api/workspaces/${workspaceSlug}/projects/${projectId}/user-properties/`, data)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async getAttachmentSettings(workspaceSlug: string, projectId: string): Promise<TProjectAttachmentSettings> {
+    return this.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/attachment-settings/`)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async updateAttachmentSettings(
+    workspaceSlug: string,
+    projectId: string,
+    data: Pick<
+      TProjectAttachmentSettings,
+      | "image_max_size"
+      | "video_max_size"
+      | "audio_max_size"
+      | "pdf_max_size"
+      | "document_max_size"
+      | "archive_max_size"
+      | "other_max_size"
+    >
+  ): Promise<TProjectAttachmentSettings> {
+    return this.patch(`/api/workspaces/${workspaceSlug}/projects/${projectId}/attachment-settings/`, data)
       .then((response) => response?.data)
       .catch((error) => {
         throw error?.response?.data;

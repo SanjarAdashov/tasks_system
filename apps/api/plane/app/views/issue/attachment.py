@@ -20,13 +20,17 @@ from rest_framework.parsers import MultiPartParser, FormParser
 # Module imports
 from .. import BaseAPIView
 from plane.app.serializers import IssueAttachmentSerializer
-from plane.db.models import FileAsset, Workspace
+from plane.db.models import FileAsset, Issue, Project, ProjectMember, Workspace
 from plane.bgtasks.issue_activities_task import issue_activity
 from plane.app.permissions import allow_permission, ROLE
 from plane.settings.storage import S3Storage
 from plane.utils.path_validator import sanitize_filename
 from plane.bgtasks.storage_metadata_task import get_asset_object_metadata
 from plane.utils.host import base_host
+from plane.utils.attachments import (
+    get_attachment_disposition,
+    validate_project_attachment_size,
+)
 
 
 class IssueAttachmentEndpoint(BaseAPIView):
@@ -36,6 +40,15 @@ class IssueAttachmentEndpoint(BaseAPIView):
 
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
     def post(self, request, slug, project_id, issue_id):
+        uploaded_file = request.FILES.get("asset")
+        if uploaded_file:
+            project = Project.objects.get(id=project_id, workspace__slug=slug)
+            validate_project_attachment_size(
+                project=project,
+                mime_type=uploaded_file.content_type,
+                filename=uploaded_file.name,
+                size=uploaded_file.size,
+            )
         serializer = IssueAttachmentSerializer(data=request.data)
         workspace = Workspace.objects.get(slug=slug)
         if serializer.is_valid():
@@ -59,7 +72,7 @@ class IssueAttachmentEndpoint(BaseAPIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @allow_permission([ROLE.ADMIN], creator=True, model=FileAsset)
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
     def delete(self, request, slug, project_id, issue_id, pk):
         issue_attachment = FileAsset.objects.filter(
             pk=pk, workspace__slug=slug, project_id=project_id, issue_id=issue_id
@@ -69,6 +82,24 @@ class IssueAttachmentEndpoint(BaseAPIView):
                 {"error": "Issue attachment not found."},
                 status=status.HTTP_404_NOT_FOUND,
             )
+        issue = Issue.objects.get(id=issue_id, project_id=project_id, workspace__slug=slug)
+        is_project_admin = ProjectMember.objects.filter(
+            project_id=project_id,
+            member_id=request.user.id,
+            role=ROLE.ADMIN.value,
+            is_active=True,
+        ).exists()
+        can_delete = (
+            issue_attachment.created_by_id == request.user.id
+            or issue.created_by_id == request.user.id
+            or is_project_admin
+        )
+        if not can_delete:
+            return Response(
+                {"error": "You are not allowed to delete this attachment."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         issue_attachment.asset.delete(save=False)
         issue_attachment.delete()
         issue_activity.delay(
@@ -100,7 +131,7 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
     def post(self, request, slug, project_id, issue_id):
         name = sanitize_filename(request.data.get("name")) or "unnamed"
         type = request.data.get("type", False)
-        size = int(request.data.get("size", settings.FILE_SIZE_LIMIT))
+        size = request.data.get("size")
 
         if not type or type not in settings.ATTACHMENT_MIME_TYPES:
             return Response(
@@ -110,18 +141,17 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
 
         # Get the workspace
         workspace = Workspace.objects.get(slug=slug)
+        project = Project.objects.get(id=project_id, workspace=workspace)
+        size = validate_project_attachment_size(project=project, mime_type=type, filename=name, size=size)
 
         # asset key
         asset_key = f"{workspace.id}/{uuid.uuid4().hex}-{name}"
 
-        # Get the size limit
-        size_limit = min(size, settings.FILE_SIZE_LIMIT)
-
         # Create a File Asset
         asset = FileAsset.objects.create(
-            attributes={"name": name, "type": type, "size": size_limit},
+            attributes={"name": name, "type": type, "size": size},
             asset=asset_key,
-            size=size_limit,
+            size=size,
             workspace_id=workspace.id,
             created_by=request.user,
             issue_id=issue_id,
@@ -133,7 +163,7 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
         storage = S3Storage(request=request)
 
         # Generate a presigned URL to share an S3 object
-        presigned_url = storage.generate_presigned_post(object_name=asset_key, file_type=type, file_size=size_limit)
+        presigned_url = storage.generate_presigned_post(object_name=asset_key, file_type=type, file_size=size)
 
         # Return the presigned URL
         return Response(
@@ -146,11 +176,29 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
             status=status.HTTP_200_OK,
         )
 
-    @allow_permission([ROLE.ADMIN], creator=True, model=FileAsset)
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
     def delete(self, request, slug, project_id, issue_id, pk):
         issue_attachment = FileAsset.objects.get(
             pk=pk, workspace__slug=slug, project_id=project_id, issue_id=issue_id
         )
+        issue = Issue.objects.get(id=issue_id, project_id=project_id, workspace__slug=slug)
+        is_project_admin = ProjectMember.objects.filter(
+            project_id=project_id,
+            member_id=request.user.id,
+            role=ROLE.ADMIN.value,
+            is_active=True,
+        ).exists()
+        can_delete = (
+            issue_attachment.created_by_id == request.user.id
+            or issue.created_by_id == request.user.id
+            or is_project_admin
+        )
+        if not can_delete:
+            return Response(
+                {"error": "You are not allowed to delete this attachment."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         issue_attachment.is_deleted = True
         issue_attachment.deleted_at = timezone.now()
         issue_attachment.save()
@@ -183,9 +231,14 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
                 )
 
             storage = S3Storage(request=request)
+            requested_disposition = request.query_params.get("disposition")
+            disposition = get_attachment_disposition(
+                asset.attributes.get("type"),
+                requested_disposition,
+            )
             presigned_url = storage.generate_presigned_url(
                 object_name=asset.asset.name,
-                disposition="attachment",
+                disposition=disposition,
                 filename=asset.attributes.get("name"),
             )
             return HttpResponseRedirect(presigned_url)

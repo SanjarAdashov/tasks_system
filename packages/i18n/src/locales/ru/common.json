@@ -760,9 +760,42 @@
   "attachment": {
     "error": "Ошибка прикрепления файла",
     "only_one_file_allowed": "Можно загрузить только один файл",
-    "file_size_limit": "Максимальный размер файла - {size} МБ",
+    "file_size_limit": "Максимальный размер файла — {size}",
     "drag_and_drop": "Перетащите файл для загрузки",
-    "delete": "Удалить вложение"
+    "delete": "Удалить вложение",
+    "delete_confirmation": "Удалить вложение «{name}»? Файл будет удалён без возможности восстановления.",
+    "add": "Добавить файл",
+    "download": "Скачать",
+    "download_file": "Скачать {name}",
+    "preview_file": "Просмотреть {name}",
+    "audio": "Аудио",
+    "unknown_type": "ФАЙЛ",
+    "uploading": "Загружено {progress}%",
+    "category_disabled": "Загрузка файлов категории «{category}» отключена в этом проекте.",
+    "categories": {
+      "image": "Изображения",
+      "video": "Видео",
+      "audio": "Аудио",
+      "pdf": "PDF",
+      "document": "Документы",
+      "archive": "Архивы",
+      "other": "Другие файлы"
+    },
+    "preview": {
+      "zoom_out": "Уменьшить",
+      "zoom_in": "Увеличить",
+      "reset_zoom": "Сбросить масштаб",
+      "rotate": "Повернуть",
+      "previous": "Предыдущий файл",
+      "next": "Следующий файл",
+      "not_supported": "Браузер не поддерживает воспроизведение этого файла."
+    },
+    "toast": {
+      "removed_title": "Вложение удалено",
+      "removed_message": "Вложение успешно удалено.",
+      "remove_failed_title": "Вложение не удалено",
+      "remove_failed_message": "Не удалось удалить вложение."
+    }
   },
   "label": {
     "select": "Выбрать метку",

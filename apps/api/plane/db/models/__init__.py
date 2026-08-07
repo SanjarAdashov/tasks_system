@@ -5,6 +5,10 @@
 from .analytic import AnalyticView
 from .api import APIActivityLog, APIToken
 from .asset import FileAsset
+from .attachment import (
+    AttachmentFileCategory,
+    ProjectAttachmentSettings,
+)
 from .base import BaseModel
 from .cycle import Cycle, CycleIssue, CycleUserProperties
 from .deploy_board import DeployBoard
