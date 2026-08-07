@@ -31,6 +31,10 @@ jobs:
             context: .
             dockerfile: ./apps/space/Dockerfile.space
             image: ghcr.io/sanjaradashov/tasks-system-space
+          - component: proxy
+            context: ./apps/proxy
+            dockerfile: ./apps/proxy/Dockerfile.ce
+            image: ghcr.io/sanjaradashov/tasks-system-proxy
 
     steps:
       - name: Check out repository
