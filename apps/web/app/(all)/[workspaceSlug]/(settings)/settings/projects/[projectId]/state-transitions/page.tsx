@@ -11,7 +11,6 @@ import { NotAuthorizedView } from "@/components/auth-screens/not-authorized-view
 import { PageHead } from "@/components/core/page-title";
 import { StateTransitionSettings } from "@/components/project-states/state-transitions";
 import { SettingsContentWrapper } from "@/components/settings/content-wrapper";
-import { SettingsHeading } from "@/components/settings/heading";
 import { useProject } from "@/hooks/store/use-project";
 import { useUserPermissions } from "@/hooks/store/user";
 import type { Route } from "./+types/page";
@@ -33,13 +32,7 @@ function StateTransitionSettingsPage({ params }: Route.ComponentProps) {
     <SettingsContentWrapper header={<StateTransitionsProjectSettingsHeader />}>
       <PageHead title={pageTitle} />
       <section className="w-full">
-        <SettingsHeading
-          title={t("project_settings.state_transitions.heading")}
-          description={t("project_settings.state_transitions.description")}
-        />
-        <div className="mt-7">
-          <StateTransitionSettings workspaceSlug={workspaceSlug} projectId={projectId} />
-        </div>
+        <StateTransitionSettings workspaceSlug={workspaceSlug} projectId={projectId} />
       </section>
     </SettingsContentWrapper>
   );
