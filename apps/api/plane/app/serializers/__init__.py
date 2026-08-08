@@ -56,6 +56,11 @@ from .state_transition import (
     ProjectStateTransitionRuleSerializer,
     ProjectStateTransitionSettingsSerializer,
 )
+from .user_group import ProjectUserGroupMemberSerializer, ProjectUserGroupSerializer
+from .custom_grouping import (
+    ProjectCustomGroupingPreferenceSerializer,
+    ProjectCustomGroupingSerializer,
+)
 
 from .state import StateSerializer, StateLiteSerializer, StateOrderSerializer
 from .view import IssueViewSerializer, ViewIssueListSerializer

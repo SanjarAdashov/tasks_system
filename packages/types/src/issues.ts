@@ -126,6 +126,8 @@ export type GroupByColumnTypes =
   | "labels"
   | "assignees"
   | "created_by"
+  | "start_date"
+  | "target_date"
   | "team_project"
   | `customproperty_${string}`;
 

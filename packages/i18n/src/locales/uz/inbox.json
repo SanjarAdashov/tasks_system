@@ -1,0 +1,87 @@
+{
+  "inbox_issue": {
+    "status": {
+      "pending": {
+        "title": "Kutilmoqda",
+        "description": "Kutilmoqda"
+      },
+      "declined": {
+        "title": "Rad etildi",
+        "description": "Rad etildi"
+      },
+      "snoozed": {
+        "title": "Kechiktirildi",
+        "description": "{kun, koʻplik, bir{# day} boshqa{# days}} qoldi"
+      },
+      "accepted": {
+        "title": "Qabul qilingan",
+        "description": "Qabul qilingan"
+      },
+      "duplicate": {
+        "title": "Dublikat",
+        "description": "Dublikat"
+      }
+    },
+    "modals": {
+      "decline": {
+        "title": "Ish elementini rad etish",
+        "content": "Haqiqatan ham {value} ish elementini rad qilmoqchimisiz?"
+      },
+      "delete": {
+        "title": "Ish elementini o'chirish",
+        "content": "Ishchi elementni {value} o‘chirib tashlamoqchimisiz?",
+        "success": "Ish elementi muvaffaqiyatli oʻchirildi"
+      }
+    },
+    "errors": {
+      "snooze_permission": "Faqat loyiha administratorlari ish elementlarini keyinga qoldirishi/bekor qilishlari mumkin",
+      "accept_permission": "Ish elementlarini faqat loyiha ma'murlari qabul qilishi mumkin",
+      "decline_permission": "Faqat loyiha ma'murlari ish elementlarini rad etishlari mumkin"
+    },
+    "actions": {
+      "accept": "Qabul qiling",
+      "decline": "Rad etish",
+      "snooze": "Kechiktirish",
+      "unsnooze": "Kechiktirmang",
+      "copy": "Ish elementi havolasini nusxalash",
+      "delete": "Oʻchirish",
+      "open": "Ish elementini ochish",
+      "mark_as_duplicate": "Dublikat deb belgilang",
+      "move": "{value} ni loyiha ish elementlariga oʻtkazing"
+    },
+    "source": {
+      "in-app": "ilova ichidagi"
+    },
+    "order_by": {
+      "created_at": "Yaratilgan",
+      "updated_at": "Yangilangan",
+      "id": "ID"
+    },
+    "label": "Qabul qilish",
+    "page_label": "{workspace} - Qabul qilish",
+    "modal": {
+      "title": "Qabul qilish ish elementini yarating"
+    },
+    "tabs": {
+      "open": "Ochiq",
+      "closed": "Yopiq"
+    },
+    "empty_state": {
+      "sidebar_open_tab": {
+        "title": "Ochiq ish elementi yo'q",
+        "description": "Bu yerda ochiq ish joylarini toping. Yangi ish elementini yarating."
+      },
+      "sidebar_closed_tab": {
+        "title": "Yopiq ish elementi yo'q",
+        "description": "Qabul qilingan yoki rad etilgan barcha ish elementlarini shu yerda topishingiz mumkin."
+      },
+      "sidebar_filter": {
+        "title": "Mos keladigan ish elementi topilmadi",
+        "description": "Hech bir ish elementi qabul qilingan filtrga mos kelmaydi. Yangi ish elementini yarating."
+      },
+      "detail": {
+        "title": "Tafsilotlarini ko'rish uchun ish elementini tanlang."
+      }
+    }
+  }
+}

@@ -1,0 +1,270 @@
+{
+  "common_empty_state": {
+    "progress": {
+      "title": "Hozircha ko‘rsatiladigan taraqqiyot ko‘rsatkichlari yo‘q.",
+      "description": "Rivojlanish koʻrsatkichlarini bu yerda koʻrish uchun ish elementlarida xususiyat qiymatlarini oʻrnatishni boshlang."
+    },
+    "updates": {
+      "title": "Hozircha yangilanishlar yo‘q.",
+      "description": "Loyiha a'zolari yangilanishlarni qo'shgandan so'ng, u shu yerda paydo bo'ladi"
+    },
+    "search": {
+      "title": "Mos natijalar topilmadi.",
+      "description": "No results found. Qidiruv soʻzlaringizni toʻgʻrilab koʻring."
+    },
+    "not_found": {
+      "title": "Voy! Something seems wrong",
+      "description": "We are unable to fetch your plane account currently. Bu tarmoq xatosi bo'lishi mumkin.",
+      "cta_primary": "Qayta yuklashga harakat qiling"
+    },
+    "server_error": {
+      "title": "Server xatosi",
+      "description": "We are unable to connect and fetch data from our server. Xavotir olmang, biz buning ustida ishlayapmiz.",
+      "cta_primary": "Qayta yuklashga harakat qiling"
+    }
+  },
+  "project_empty_state": {
+    "no_access": {
+      "title": "Sizda bu loyihaga kirish imkoningiz yo‘qdek",
+      "restricted_description": "Kirish soʻrovi uchun admin bilan bogʻlaning va shu yerda davom etishingiz mumkin.",
+      "join_description": "Unga qo'shilish uchun quyidagi tugmani bosing.",
+      "cta_primary": "Loyihaga qo'shiling",
+      "cta_loading": "Loyihaga qo'shilish"
+    },
+    "invalid_project": {
+      "title": "Loyiha topilmadi",
+      "description": "Siz izlayotgan loyiha mavjud emas."
+    },
+    "work_items": {
+      "title": "Birinchi ish elementingizdan boshlang.",
+      "description": "Ish elementlari loyihangizning qurilish bloklari - egalarni tayinlang, ustuvorliklarni belgilang va taraqqiyotni osongina kuzatib boring.",
+      "cta_primary": "Birinchi ish elementingizni yarating"
+    },
+    "cycles": {
+      "title": "Cycles-da ishlaringizni guruhlash va vaqtni belgilash.",
+      "description": "Ishlarni vaqt bo'yicha bo'laklarga ajrating, sanani belgilash uchun loyihaning oxirgi muddatidan orqaga qarab ishlang va jamoa sifatida sezilarli yutuqlarga erishing.",
+      "cta_primary": "Birinchi tsiklingizni o'rnating"
+    },
+    "cycle_work_items": {
+      "title": "Bu siklda ko‘rsatiladigan ish elementi yo‘q",
+      "description": "Ushbu tsiklda jamoangizning taraqqiyotini kuzatishni boshlash va maqsadlaringizga o'z vaqtida erishish uchun ish elementlarini yarating.",
+      "cta_primary": "Ish elementini yarating",
+      "cta_secondary": "Mavjud ish elementini qo'shing"
+    },
+    "modules": {
+      "title": "Loyiha maqsadlaringizni Modullar bilan taqqoslang va osongina kuzatib boring.",
+      "description": "Modules are made up of interconnected work items. Ular loyiha bosqichlari bo‘yicha taraqqiyotni kuzatishda yordam beradi, ularning har birida aniq muddatlar va analitiklar mavjud bo‘lib, ushbu bosqichlarga qanchalik yaqin ekanligingizni ko‘rsatadi.",
+      "cta_primary": "Birinchi modulni o'rnating"
+    },
+    "module_work_items": {
+      "title": "Ushbu modulda ko'rsatiladigan ish elementi yo'q",
+      "description": "Ushbu modulni kuzatishni boshlash uchun ish elementlarini yarating.",
+      "cta_primary": "Ish elementini yarating",
+      "cta_secondary": "Mavjud ish elementini qo'shing"
+    },
+    "views": {
+      "title": "Loyihangiz uchun maxsus ko'rinishlarni saqlang",
+      "description": "Ko'rishlar - eng ko'p foydalanadigan ma'lumotlarga tezda kirishga yordam beradigan saqlangan filtrlar. Jamoadoshlar fikr almashishi va ularning maxsus ehtiyojlariga moslashtirgani uchun muammosiz hamkorlik qiling.",
+      "cta_primary": "Ko'rinish yaratish"
+    },
+    "no_work_items_in_project": {
+      "title": "Loyihada hali hech qanday ish elementi yoʻq",
+      "description": "Loyihangizga ish elementlarini qo'shing va ishingizni ko'rinishi bilan kuzatilishi mumkin bo'lgan qismlarga bo'ling.",
+      "cta_primary": "Ish elementini qo'shing"
+    },
+    "work_item_filter": {
+      "title": "Hech qanday ish elementi topilmadi",
+      "description": "Joriy filtringiz hech qanday natija bermadi. Filtrlarni o'zgartirishga harakat qiling.",
+      "cta_primary": "Ish elementini qo'shing"
+    },
+    "pages": {
+      "title": "Hamma narsani hujjatlashtiring - eslatmalardan tortib PRDlargacha",
+      "description": "Sahifalar sizga ma'lumotlarni bir joyda yig'ish va tartibga solish imkonini beradi. Uchrashuv qaydlari, loyiha hujjatlari va PRDlarni yozing, ish elementlarini joylashtiring va ularni ishlatishga tayyor komponentlar bilan tuzing.",
+      "cta_primary": "Birinchi sahifangizni yarating"
+    },
+    "archive_pages": {
+      "title": "Hali arxivlangan sahifalar yoʻq",
+      "description": "Radaringizda bo'lmagan sahifalarni arxivlang. Zarur bo'lganda ularga bu yerdan kiring."
+    },
+    "intake_sidebar": {
+      "title": "Qabul qilish so'rovlari",
+      "description": "Loyihangizning ish jarayonida ko'rib chiqilishi, ustuvorligi va kuzatilishi uchun yangi so'rovlarni yuboring.",
+      "cta_primary": "Qabul qilish so'rovini yarating"
+    },
+    "intake_main": {
+      "title": "Tafsilotlarini ko'rish uchun Intake ish elementini tanlang"
+    },
+    "epics": {
+      "title": "Murakkab loyihalarni tuzilgan dostonlarga aylantiring.",
+      "description": "Epik katta maqsadlarni kichikroq, kuzatilishi mumkin bo'lgan vazifalarga ajratishga yordam beradi.",
+      "cta_primary": "Epos yarating",
+      "cta_secondary": "Hujjatlar"
+    },
+    "epic_work_items": {
+      "title": "Siz hali bu dostonga ish elementlarini qo‘shmagansiz.",
+      "description": "Ushbu dostonga bir nechta ish elementlarini qo'shishdan boshlang va ularni shu yerda kuzatib boring.",
+      "cta_secondary": "Ish elementlarini qo'shing"
+    }
+  },
+  "workspace_empty_state": {
+    "archive_epics": {
+      "title": "Hali arxivlangan dostonlar yoʻq",
+      "description": "You can archive epics that are completed or cancelled. Arxivlanganidan keyin ularni shu yerda toping."
+    },
+    "archive_work_items": {
+      "title": "Hali arxivlangan ish elementi yoʻq",
+      "description": "Manually or through automation, you can archive work items that are completed or cancelled. Arxivlanganidan keyin ularni shu yerda toping.",
+      "cta_primary": "Avtomatlashtirishni sozlash"
+    },
+    "archive_cycles": {
+      "title": "Hali arxivlangan tsikllar yoʻq",
+      "description": "To tidy up your project, archive completed cycles. Arxivlanganidan keyin ularni shu yerda toping."
+    },
+    "archive_modules": {
+      "title": "Hali arxivlangan modullar yo'q",
+      "description": "To tidy up your project, archive completed or cancelled modules. Arxivlanganidan keyin ularni shu yerda toping."
+    },
+    "home_widget_quick_links": {
+      "title": "Ishingiz uchun muhim ma'lumotnomalar, manbalar yoki hujjatlarni qo'lingizda saqlang"
+    },
+    "inbox_sidebar_all": {
+      "title": "Obuna boʻlgan ish elementlari uchun yangilanishlar shu yerda paydo boʻladi"
+    },
+    "inbox_sidebar_mentions": {
+      "title": "Sizning ish narsalaringiz uchun eslatmalar shu yerda paydo bo'ladi"
+    },
+    "your_work_by_priority": {
+      "title": "Hali hech qanday ish elementi tayinlanmagan"
+    },
+    "your_work_by_state": {
+      "title": "Hali hech qanday ish elementi tayinlanmagan"
+    },
+    "views": {
+      "title": "Koʻrishlar hali yoʻq",
+      "description": "Loyihangizga ish elementlarini qo'shing va jarayonni osonlikcha filtrlash, saralash va kuzatish uchun ko'rinishlardan foydalaning.",
+      "cta_primary": "Ish elementini qo'shing"
+    },
+    "drafts": {
+      "title": "Yarim yozma ish elementlari",
+      "description": "Buni sinab koʻrish uchun ish elementini qoʻshishni boshlang va uni oʻrtada qoldiring yoki quyida birinchi qoralamangizni yarating. 😉",
+      "cta_primary": "Qoralama ish elementini yarating"
+    },
+    "projects_archived": {
+      "title": "Hech qanday loyiha arxivlanmagan",
+      "description": "Sizning barcha loyihalaringiz hali ham faol bo'lib tuyuladi - ajoyib ish!"
+    },
+    "analytics_projects": {
+      "title": "Bu yerda loyiha koʻrsatkichlarini vizualizatsiya qilish uchun loyihalar yarating."
+    },
+    "analytics_work_items": {
+      "title": "Bu yerda samaradorlik, taraqqiyot va jamoa ta'sirini kuzatishni boshlash uchun ish elementlari va topshiruvchilar bilan loyihalar yarating."
+    },
+    "analytics_no_cycle": {
+      "title": "Ishni vaqtga bog'langan bosqichlarga ajratish va sprintlar bo'yicha taraqqiyotni kuzatish uchun tsikllarni yarating."
+    },
+    "analytics_no_module": {
+      "title": "Ishingizni tartibga solish va turli bosqichlardagi taraqqiyotni kuzatish uchun modullar yarating."
+    },
+    "analytics_no_intake": {
+      "title": "Kiruvchi soʻrovlarni boshqarish va ular qanday qabul qilingan va rad etilganligini kuzatish uchun qabul qilishni sozlang"
+    },
+    "home_widget_stickies": {
+      "title": "Jot down an idea, capture an aha, or record a brainwave. Boshlash uchun yopishqoq qo'shing."
+    },
+    "stickies": {
+      "title": "G'oyalarni bir zumda ushlang",
+      "description": "Tezkor qaydlar va vazifalar uchun stikerlar yarating va qayerga borsangiz ham ularni yoningizda saqlang.",
+      "cta_primary": "Birinchi yopishqoqni yarating",
+      "cta_secondary": "Hujjatlar"
+    },
+    "active_cycles": {
+      "title": "Faol tsikllar yo'q",
+      "description": "Sizda hozirda davom etayotgan siklingiz yo‘q. Active cycles appear here when they include today's date."
+    },
+    "dashboard": {
+      "title": "Taraqqiyotingizni asboblar paneli bilan tasavvur qiling",
+      "description": "Ko'rsatkichlarni kuzatish, natijalarni o'lchash va tushunchalarni samarali taqdim etish uchun moslashtirilgan asboblar panelini yarating.",
+      "cta_primary": "Yangi boshqaruv paneli yarating"
+    },
+    "wiki": {
+      "title": "Eslatma, hujjat yoki to'liq ma'lumot bazasini yozing.",
+      "description": "Pages are thought spotting space in Plane. Uchrashuv qaydlarini olib tashlang, ularni osongina formatlang, ish elementlarini joylashtiring, komponentlar kutubxonasidan foydalanib joylashtiring va barchasini loyihangiz kontekstida saqlang.",
+      "cta_primary": "O'z sahifangizni yarating"
+    },
+    "project_overview_state_sidebar": {
+      "title": "Loyiha holatlarini yoqish",
+      "description": "Davlat, ustuvorlik, tugash sanalari va boshqalar kabi xususiyatlarni ko'rish va boshqarish uchun Loyiha Davlatlarini yoqing."
+    }
+  },
+  "settings_empty_state": {
+    "estimates": {
+      "title": "Hozircha taxminlar yo'q",
+      "description": "Jamoangiz mehnatni qanday o'lchashini aniqlang va uni barcha ish elementlari bo'yicha izchil kuzatib boring.",
+      "cta_primary": "Hisoblash tizimini qo'shing"
+    },
+    "labels": {
+      "title": "Hali teglar yoʻq",
+      "description": "Ish elementlarini samarali toifalarga ajratish va boshqarish uchun moslashtirilgan teglar yarating.",
+      "cta_primary": "Birinchi yorlig'ingizni yarating"
+    },
+    "exports": {
+      "title": "Hozircha eksport yo'q",
+      "description": "Sizda hozir hech qanday eksport yozuvlari yoʻq. Once you export data, all records will appear here."
+    },
+    "tokens": {
+      "title": "Hali shaxsiy token yo'q",
+      "description": "Ish joyingizni tashqi tizimlar va ilovalar bilan ulash uchun xavfsiz API tokenlarini yarating.",
+      "cta_primary": "Kirish tokenini qo'shing"
+    },
+    "workspace_tokens": {
+      "title": "Hali kirish tokenlari yo'q",
+      "description": "Ish joyingizni tashqi tizimlar va ilovalar bilan ulash uchun xavfsiz API tokenlarini yarating.",
+      "cta_primary": "Kirish tokenini qo'shing"
+    },
+    "webhooks": {
+      "title": "Hali hech qanday Webhook qo'shilmagan",
+      "description": "Loyiha voqealari sodir bo'lganda tashqi xizmatlarga bildirishnomalarni avtomatlashtirish.",
+      "cta_primary": "Veb-huk qo'shing"
+    },
+    "work_item_types": {
+      "title": "Ish elementi turlarini yarating va sozlang",
+      "description": "Loyihangiz uchun noyob ish elementi turlarini belgilang. Har bir tur o'z xususiyatlariga, ish oqimlariga va maydonlarga ega bo'lishi mumkin - loyihangiz va jamoangiz ehtiyojlariga moslashtirilgan.",
+      "cta_primary": "Yoqish"
+    },
+    "work_item_type_properties": {
+      "title": "Ushbu ish elementi turi uchun yozmoqchi bo'lgan xususiyat va tafsilotlarni belgilang. Uni loyihangizning ish jarayoniga moslashtirish uchun sozlang.",
+      "cta_secondary": "Mulk qo'shing"
+    },
+    "templates": {
+      "title": "Hozircha shablon yo‘q",
+      "description": "Ish elementlari va sahifalar uchun shablonlarni yaratish orqali sozlash vaqtini qisqartiring va bir necha soniya ichida yangi ishni boshlang.",
+      "cta_primary": "Birinchi shabloningizni yarating"
+    },
+    "recurring_work_items": {
+      "title": "Hali takrorlanadigan ish elementi yo'q",
+      "description": "Takroriy vazifalarni avtomatlashtirish va jadvalga osonlik bilan rioya qilish uchun takrorlanadigan ish elementlarini sozlang.",
+      "cta_primary": "Takroriy ish elementini yarating"
+    },
+    "worklogs": {
+      "title": "Barcha a'zolar uchun vaqt jadvallarini kuzatib boring",
+      "description": "Loyihalar bo'yicha har qanday jamoa a'zosi uchun batafsil vaqt jadvallarini ko'rish uchun ish elementlari bo'yicha vaqtni qayd qiling."
+    },
+    "group_syncing": {
+      "title": "Hozircha guruh xaritalari mavjud emas"
+    },
+    "template_setting": {
+      "title": "Hozircha shablon yo‘q",
+      "description": "Loyihalar, ish elementlari va sahifalar uchun shablonlarni yaratish orqali sozlash vaqtini qisqartiring va bir necha soniya ichida yangi ishni boshlang.",
+      "cta_primary": "Shablon yaratish"
+    },
+    "workflows": {
+      "title": "Hozircha ish jarayonlari yo'q",
+      "description": "Ish elementlarining borishini boshqarish uchun ish oqimlarini yarating.",
+      "cta_primary": "Yangi ish jarayonini qo'shing",
+      "states": {
+        "title": "Davlatlarni qo'shing",
+        "description": "Ish elementi davom etadigan holatlarni tanlang."
+      }
+    }
+  }
+}

@@ -4,13 +4,21 @@
  * See the LICENSE file for details.
  */
 
-import { Image, BrainCog, Cog, Mail, Users } from "lucide-react";
+import { Image, BrainCog, Cog, Mail, UserRoundCog, Users } from "lucide-react";
 // plane imports
 import { LockIcon, WorkspaceIcon } from "@plane/propel/icons";
 // types
 import type { TSidebarMenuItem } from "./types";
 
-export type TCoreSidebarMenuKey = "general" | "email" | "workspace" | "users" | "authentication" | "ai" | "image";
+export type TCoreSidebarMenuKey =
+  | "general"
+  | "email"
+  | "workspace"
+  | "users"
+  | "user-groups"
+  | "authentication"
+  | "ai"
+  | "image";
 
 export const coreSidebarMenuLinks: Record<TCoreSidebarMenuKey, TSidebarMenuItem> = {
   general: {
@@ -36,6 +44,12 @@ export const coreSidebarMenuLinks: Record<TCoreSidebarMenuKey, TSidebarMenuItem>
     name: "Users",
     description: "Manage sign-in access for users.",
     href: `/users/`,
+  },
+  "user-groups": {
+    Icon: UserRoundCog,
+    name: "User groups",
+    description: "Manage project-scoped user groups.",
+    href: `/user-groups/`,
   },
   authentication: {
     Icon: LockIcon,

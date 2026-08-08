@@ -1,0 +1,378 @@
+{
+  "workspace_creation": {
+    "heading": "Ish joyingizni yarating",
+    "subheading": "Plane dan foydalanishni boshlash uchun siz ish maydoni yaratishingiz yoki unga qo‘shilishingiz kerak.",
+    "form": {
+      "name": {
+        "label": "Ish joyingizga nom bering",
+        "placeholder": "Tanish va taniqli narsa har doim eng yaxshisidir."
+      },
+      "url": {
+        "label": "Ish joyingizning URL manzilini o'rnating",
+        "placeholder": "URL manzilini kiriting yoki joylashtiring",
+        "edit_slug": "Siz faqat URL slugini tahrirlashingiz mumkin"
+      },
+      "organization_size": {
+        "label": "Bu ish joyidan qancha odam foydalanadi?",
+        "placeholder": "Diapazonni tanlang"
+      }
+    },
+    "errors": {
+      "creation_disabled": {
+        "title": "Faqat sizning namunangiz administratori ish joylari yaratishi mumkin",
+        "description": "Agar namunangiz administratorining elektron pochta manzilini bilsangiz, ular bilan bog'lanish uchun quyidagi tugmani bosing.",
+        "request_button": "So'rov namunasi administratori"
+      },
+      "validation": {
+        "name_alphanumeric": "Ish joylari nomlari faqat (' '), ('-'), ('_') va alfanumerik belgilarni o'z ichiga olishi mumkin.",
+        "name_length": "Ismingizni 80 ta belgi bilan cheklang.",
+        "url_alphanumeric": "URL manzillarida faqat ('-') va harf-raqamli belgilar bo'lishi mumkin.",
+        "url_length": "URL manzilingizni 48 belgi bilan cheklang.",
+        "url_already_taken": "Ish joyining URL manzili allaqachon olingan!"
+      }
+    },
+    "request_email": {
+      "subject": "Yangi ish joyini so'rash",
+      "body": "Salom misol admin(lar),\n\nIltimos, [ishchi maydonni yaratish maqsadi] uchun URL [/workspace-name] bilan yangi ish maydoni yarating.\n\nrahmat,\n{firstName} {lastName}\n{email}"
+    },
+    "button": {
+      "default": "Ish joyini yarating",
+      "loading": "Ish maydoni yaratish"
+    },
+    "toast": {
+      "success": {
+        "title": "Muvaffaqiyat",
+        "message": "Ish maydoni muvaffaqiyatli yaratildi"
+      },
+      "error": {
+        "title": "Xato",
+        "message": "Ish maydoni yaratib bo‘lmadi. Iltimos, qayta urinib koʻring."
+      }
+    }
+  },
+  "workspace_dashboard": {
+    "empty_state": {
+      "general": {
+        "title": "Loyihalaringiz, faoliyatingiz va ko'rsatkichlaringiz haqida umumiy ma'lumot",
+        "description": "Plane ga xush kelibsiz, sizni shu yerda kutib olishdan xursandmiz. Birinchi loyihangizni yarating va ish ob'ektlaringizni kuzatib boring, shunda bu sahifa taraqqiyotingizga yordam beradigan bo'sh joyga aylanadi. Administratorlar, shuningdek, ularning jamoasi rivojlanishiga yordam beradigan narsalarni ko'radi.",
+        "primary_button": {
+          "text": "Birinchi loyihangizni yarating",
+          "comic": {
+            "title": "Hammasi Plane dagi loyihadan boshlanadi",
+            "description": "Loyiha mahsulotning yo'l xaritasi, marketing kampaniyasi yoki yangi avtomobilni ishga tushirish bo'lishi mumkin."
+          }
+        }
+      }
+    }
+  },
+  "workspace_analytics": {
+    "label": "Analitika",
+    "page_label": "{workspace} - Tahlil",
+    "open_tasks": "Jami ochiq vazifalar",
+    "error": "Maʼlumotlarni olishda xatolik yuz berdi.",
+    "work_items_closed_in": "Ish elementlari yopildi",
+    "selected_projects": "Tanlangan loyihalar",
+    "total_members": "Jami aʼzolar",
+    "total_cycles": "Jami tsikllar",
+    "total_modules": "Jami modullar",
+    "pending_work_items": {
+      "title": "Kutilayotgan ish elementlari",
+      "empty_state": "Hamkasblar tomonidan kutilayotgan ish ob'ektlari tahlili bu erda ko'rinadi."
+    },
+    "work_items_closed_in_a_year": {
+      "title": "Ish elementlari bir yil ichida yopildi",
+      "empty_state": "Grafik ko'rinishida tahlilni ko'rish uchun ish elementlarini yoping."
+    },
+    "most_work_items_created": {
+      "title": "Ko'pgina ish elementlari yaratilgan",
+      "empty_state": "Bu yerda hamkasblar va ular tomonidan yaratilgan ish elementlari soni ko'rsatiladi."
+    },
+    "most_work_items_closed": {
+      "title": "Aksariyat ish joylari yopildi",
+      "empty_state": "Bu yerda hamkasblar va ular tomonidan yopilgan ish ob'ektlari soni ko'rsatiladi."
+    },
+    "tabs": {
+      "scope_and_demand": "Qamrov va talab",
+      "custom": "Maxsus tahlil"
+    },
+    "total": "Jami {entity}",
+    "started_work_items": "Boshlandi {entity}",
+    "backlog_work_items": "Ortiqcha yuk {entity}",
+    "un_started_work_items": "Boshlanmagan {entity}",
+    "completed_work_items": "Tugallandi {entity}",
+    "project_insights": "Loyiha tushunchalari",
+    "summary_of_projects": "Loyihalarning qisqacha mazmuni",
+    "all_projects": "Barcha loyihalar",
+    "trend_on_charts": "Grafiklardagi trend",
+    "active_projects": "Faol loyihalar",
+    "customized_insights": "Moslashtirilgan tushunchalar",
+    "created_vs_resolved": "Yaratilgan va hal qilingan",
+    "empty_state": {
+      "project_insights": {
+        "title": "Hozircha maʼlumot yoʻq",
+        "description": "Sizga tayinlangan, shtat boʻyicha ajratilgan ish elementlari shu yerda koʻrinadi."
+      },
+      "created_vs_resolved": {
+        "title": "Hozircha maʼlumot yoʻq",
+        "description": "Vaqt oʻtishi bilan yaratilgan va hal qilingan ish elementlari shu yerda koʻrinadi."
+      },
+      "customized_insights": {
+        "title": "Hozircha maʼlumot yoʻq",
+        "description": "Sizga tayinlangan, shtat boʻyicha ajratilgan ish elementlari shu yerda koʻrinadi."
+      },
+      "general": {
+        "title": "Rivojlanish, ish yuklari va taqsimotlarni kuzatib boring. Trendlarni aniqlang, blokerlarni olib tashlang va ishni tezroq harakatga keltiring",
+        "description": "Talabga nisbatan qamrovni, hisob-kitoblarni va ko'lamning o'zgarishini ko'ring. Guruh a’zolari va jamoalarning ishlashini oling va loyihangiz o‘z vaqtida bajarilishiga ishonch hosil qiling.",
+        "primary_button": {
+          "text": "Birinchi loyihangizni boshlang",
+          "comic": {
+            "title": "Analytics Cycles + Modules bilan yaxshi ishlaydi",
+            "description": "Birinchidan, muammolaringizni davrlarga ajrating va iloji bo'lsa, bir tsikldan ko'proq vaqtni qamrab oladigan muammolarni Modullarga guruhlang. Chapdagi navbatning ikkalasini ham tekshiring."
+          }
+        }
+      },
+      "cycle_progress": {
+        "title": "Hozircha maʼlumot yoʻq",
+        "description": "Bu yerda aylanish jarayoni tahlili paydo bo‘ladi. Jarayonni kuzatishni boshlash uchun tsikllarga ish elementlarini qo'shing."
+      },
+      "module_progress": {
+        "title": "Hozircha maʼlumot yoʻq",
+        "description": "Bu yerda modulning borishi tahlili paydo bo‘ladi. Jarayonni kuzatishni boshlash uchun modullarga ish elementlarini qo'shing."
+      },
+      "intake_trends": {
+        "title": "Hozircha maʼlumot yoʻq",
+        "description": "Qabul qilish tendentsiyalari tahlili bu yerda paydo bo'ladi. Trendlarni kuzatishni boshlash uchun qabul qilinadigan ish elementlarini qo'shing."
+      }
+    },
+    "upgrade_to_plan": "{tab} qulfini ochish uchun {plan} ga yangilang",
+    "workitem_resolved_vs_pending": "Ish masalalari hal qilindi va kutilmoqda",
+    "projects_by_status": "Holati bo'yicha loyihalar",
+    "active_users": "Faol foydalanuvchilar",
+    "intake_trends": "Qabul qilish tendentsiyalari"
+  },
+  "workspace_projects": {
+    "label": "{hisoblash, koʻplik, bitta {Project} boshqa {Projects}}",
+    "create": {
+      "label": "Loyiha qo'shish"
+    },
+    "network": {
+      "label": "Tarmoq",
+      "private": {
+        "title": "Shaxsiy",
+        "description": "Faqat taklifnoma orqali kirish mumkin"
+      },
+      "public": {
+        "title": "Ommaviy",
+        "description": "Mehmonlardan tashqari ish joyidagi har kim ishtirok etishi mumkin"
+      }
+    },
+    "error": {
+      "permission": "Sizda bu amalni bajarish uchun ruxsat yo‘q.",
+      "cycle_delete": "Tsiklni o‘chirib bo‘lmadi",
+      "module_delete": "Modulni o‘chirib bo‘lmadi",
+      "issue_delete": "Ishchi elementni o‘chirib bo‘lmadi"
+    },
+    "state": {
+      "backlog": "Orqaga tushish",
+      "unstarted": "Boshlanmagan",
+      "started": "Boshlandi",
+      "completed": "Bajarildi",
+      "cancelled": "Bekor qilingan"
+    },
+    "sort": {
+      "manual": "Qo'llanma",
+      "name": "Ism",
+      "created_at": "Yaratilgan sana",
+      "members_length": "A'zolar soni"
+    },
+    "scope": {
+      "my_projects": "Mening loyihalarim",
+      "archived_projects": "Arxivlangan"
+    },
+    "common": {
+      "months_count": "{oylar, koʻplik, bir{# month} boshqa{# months}}",
+      "days_count": "{kunlar, koʻplik, bir{# day} boshqa{# days}}"
+    },
+    "empty_state": {
+      "general": {
+        "title": "Faol loyihalar yo'q",
+        "description": "Har bir loyihani maqsadga yo'naltirilgan ish uchun ota-ona sifatida o'ylab ko'ring. Loyihalar ish o'rinlari, tsikllar va modullar yashaydigan joy va sizning hamkasblaringiz bilan birgalikda ushbu maqsadga erishishingizga yordam beradi. Arxivlangan loyihalar uchun yangi loyiha yoki filtr yarating.",
+        "primary_button": {
+          "text": "Birinchi loyihangizni boshlang",
+          "comic": {
+            "title": "Hammasi Plane dagi loyihadan boshlanadi",
+            "description": "Loyiha mahsulotning yo'l xaritasi, marketing kampaniyasi yoki yangi avtomobilni ishga tushirish bo'lishi mumkin."
+          }
+        }
+      },
+      "no_projects": {
+        "title": "Loyiha yo'q",
+        "description": "Ish elementlarini yaratish yoki ishingizni boshqarish uchun siz loyiha yaratishingiz yoki uning bir qismi bo'lishingiz kerak.",
+        "primary_button": {
+          "text": "Birinchi loyihangizni boshlang",
+          "comic": {
+            "title": "Hammasi Plane dagi loyihadan boshlanadi",
+            "description": "Loyiha mahsulotning yo'l xaritasi, marketing kampaniyasi yoki yangi avtomobilni ishga tushirish bo'lishi mumkin."
+          }
+        }
+      },
+      "filter": {
+        "title": "Mos loyihalar mavjud emas",
+        "description": "Mos keladigan mezonlarga ega loyihalar aniqlanmadi.\n Buning o'rniga yangi loyiha yarating."
+      },
+      "search": {
+        "description": "Mos keladigan mezonlarga ega loyihalar aniqlanmadi.\nBuning o'rniga yangi loyiha yarating"
+      }
+    }
+  },
+  "workspace_views": {
+    "add_view": "Ko'rinish qo'shish",
+    "empty_state": {
+      "all-issues": {
+        "title": "Loyihada ish elementi yo'q",
+        "description": "Birinchi loyiha amalga oshirildi! Endi ishingizni ish elementlari bilan kuzatilishi mumkin bo'lgan qismlarga bo'ling. Qani ketdik!",
+        "primary_button": {
+          "text": "Yangi ish elementini yarating"
+        }
+      },
+      "assigned": {
+        "title": "Hali hech qanday ish elementi yoʻq",
+        "description": "Sizga tayinlangan ish elementlarini shu yerdan kuzatish mumkin.",
+        "primary_button": {
+          "text": "Yangi ish elementini yarating"
+        }
+      },
+      "created": {
+        "title": "Hali hech qanday ish elementi yoʻq",
+        "description": "Siz yaratgan barcha ish elementlari shu yerga keladi, ularni bevosita shu yerda kuzatib boring.",
+        "primary_button": {
+          "text": "Yangi ish elementini yarating"
+        }
+      },
+      "subscribed": {
+        "title": "Hali hech qanday ish elementi yoʻq",
+        "description": "Sizni qiziqtirgan ish obunalariga obuna bo'ling, ularning barchasini shu yerda kuzatib boring."
+      },
+      "custom-view": {
+        "title": "Hali hech qanday ish elementi yoʻq",
+        "description": "Filtrlarga taalluqli ish elementlari, ularning barchasini shu yerda kuzatib boring."
+      }
+    },
+    "delete_view": {
+      "title": "Haqiqatan ham bu ko‘rinishni o‘chirib tashlamoqchimisiz?",
+      "content": "Agar tasdiqlasangiz, barcha saralash, filtrlash va koʻrsatish opsiyalari + ushbu koʻrinish uchun tanlagan tartib ularni qayta tiklashning hech qanday usulisiz butunlay oʻchirib tashlanadi."
+    }
+  },
+  "workspace_draft_issues": {
+    "draft_an_issue": "Ish elementini loyihalash",
+    "empty_state": {
+      "title": "Yarim yozilgan ish elementlari va tez orada sharhlar shu yerda ko'rinadi.",
+      "description": "Buni sinab koʻrish uchun ish elementini qoʻshishni boshlang va uni oʻrtada qoldiring yoki quyida birinchi qoralamangizni yarating. 😉",
+      "primary_button": {
+        "text": "Birinchi qoralamangizni yarating"
+      }
+    },
+    "delete_modal": {
+      "title": "Qoralamani oʻchirish",
+      "description": "Bu qoralamani oʻchirib tashlamoqchimisiz? Buni ortga qaytarib bo‘lmaydi."
+    },
+    "toasts": {
+      "created": {
+        "success": "Qoralama yaratildi",
+        "error": "Ish elementini yaratib bo‘lmadi. Iltimos, qayta urinib koʻring."
+      },
+      "deleted": {
+        "success": "Qoralama oʻchirildi"
+      }
+    }
+  },
+  "workspace_pages": {
+    "empty_state": {
+      "general": {
+        "title": "Eslatma, hujjat yoki to'liq ma'lumot bazasini yozing. Boshlash uchun Plane AI yordamchisi Galileoni oling",
+        "description": "Sahifalar Plane ichida joy ochadigan fikrlardir. Uchrashuv qaydlarini olib tashlang, ularni osongina formatlang, ish elementlarini joylashtiring, komponentlar kutubxonasidan foydalanib joylashtiring va barchasini loyihangiz kontekstida saqlang. Har qanday hujjatning qisqacha ishlashi uchun yorliq yoki tugmani bosish orqali Galileo, Plane AI-ni chaqiring.",
+        "primary_button": {
+          "text": "Birinchi sahifangizni yarating"
+        }
+      },
+      "private": {
+        "title": "Hozircha shaxsiy sahifalar yoʻq",
+        "description": "Shaxsiy fikrlaringizni shu yerda saqlang. Ulashishga tayyor bo'lsangiz, jamoa bir marta bosish masofasida.",
+        "primary_button": {
+          "text": "Birinchi sahifangizni yarating"
+        }
+      },
+      "public": {
+        "title": "Hali ish maydoni sahifalari yoʻq",
+        "description": "Ish joyingizdagi hamma bilan ulashilgan sahifalarni shu yerda koʻring.",
+        "primary_button": {
+          "text": "Birinchi sahifangizni yarating"
+        }
+      },
+      "archived": {
+        "title": "Hali arxivlangan sahifalar yoʻq",
+        "description": "Radaringizda bo'lmagan sahifalarni arxivlang. Zarur bo'lganda ularga bu yerdan kiring."
+      },
+      "shared": {
+        "title": "Hali hech qanday umumiy sahifalar yoʻq",
+        "description": "Boshqalar siz bilan baham ko'rgan sahifalar shu yerda paydo bo'ladi."
+      }
+    }
+  },
+  "workspace_cycles": {
+    "empty_state": {
+      "active": {
+        "title": "Faol tsikllar yo'q",
+        "description": "Loyihalaringiz davrlari, jumladan, bugungi sanani oʻz ichiga olgan har qanday davr. Barcha faol tsiklingizning borishi va tafsilotlarini shu yerda toping."
+      }
+    }
+  },
+  "workspace": {
+    "members_import": {
+      "title": "CSV dan a'zolarni import qilish",
+      "description": "Ustunlar bilan CSV yuklang: Elektron pochta, ko'rsatilgan ism, ism, familiya, rol (5, 15 yoki 20)",
+      "dropzone": {
+        "active": "CSV faylini shu yerga tashlang",
+        "inactive": "Yuklash uchun sudrab olib tashlang yoki bosing",
+        "file_type": "Faqat .csv fayllar qo'llab-quvvatlanadi"
+      },
+      "buttons": {
+        "cancel": "Bekor qilish",
+        "import": "Import qilish",
+        "try_again": "Qayta urinib ko'ring",
+        "close": "Yopish",
+        "done": "Bajarildi"
+      },
+      "progress": {
+        "uploading": "Yuklanmoqda...",
+        "importing": "Import qilinmoqda..."
+      },
+      "summary": {
+        "title": {
+          "failed": "Import amalga oshmadi",
+          "complete": "Import tugallandi"
+        },
+        "message": {
+          "seat_limit": "Oʻrindiqlar chegarasi cheklovlari tufayli aʼzolarni import qilib boʻlmadi.",
+          "success": "Ish maydoniga {count} a'zosi{plural} muvaffaqiyatli qo'shildi.",
+          "no_imports": "CSV faylidan hech qanday a'zo import qilinmadi."
+        },
+        "stats": {
+          "successful": "Muvaffaqiyatli",
+          "failed": "Muvaffaqiyatsiz"
+        },
+        "download_errors": "Yuklab olish xatolar"
+      },
+      "toast": {
+        "invalid_file": {
+          "title": "Yaroqsiz fayl",
+          "message": "Faqat CSV fayllari qo'llab-quvvatlanadi."
+        },
+        "import_failed": {
+          "title": "Import amalga oshmadi",
+          "message": "Nimadir xato ketdi."
+        }
+      }
+    }
+  }
+}

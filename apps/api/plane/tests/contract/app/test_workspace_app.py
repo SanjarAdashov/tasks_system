@@ -10,6 +10,14 @@ from unittest.mock import patch
 from plane.db.models import Workspace, WorkspaceMember
 
 
+@pytest.fixture(autouse=True)
+def allow_workspace_creation_for_existing_contracts(db, create_user):
+    """Keep pre-quota workspace contracts focused on their original behavior."""
+
+    create_user.workspace_creation_limit = None
+    create_user.save(update_fields=["workspace_creation_limit", "updated_at"])
+
+
 @pytest.mark.contract
 class TestWorkspaceAPI:
     """Test workspace CRUD operations"""
@@ -25,7 +33,13 @@ class TestWorkspaceAPI:
 
     @pytest.mark.django_db
     @patch("plane.bgtasks.workspace_seed_task.workspace_seed.delay")
-    def test_create_workspace_valid_data(self, mock_workspace_seed, session_client, create_user):
+    def test_create_workspace_valid_data(
+        self,
+        mock_workspace_seed,
+        session_client,
+        create_user,
+        django_capture_on_commit_callbacks,
+    ):
         """Test creating a workspace with valid data"""
         url = reverse("workspace")
         user = create_user  # Use the create_user fixture directly as it returns a user object
@@ -38,7 +52,8 @@ class TestWorkspaceAPI:
         }
 
         # Make the request
-        response = session_client.post(url, workspace_data, format="json")
+        with django_capture_on_commit_callbacks(execute=True):
+            response = session_client.post(url, workspace_data, format="json")
 
         # Check response status
         assert response.status_code == status.HTTP_201_CREATED

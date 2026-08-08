@@ -33,6 +33,7 @@ export enum EIssueGroupByToServerOptions {
   "cycle" = "cycle_id",
   "module" = "issue_module__module_id",
   "target_date" = "target_date",
+  "start_date" = "start_date",
   "project" = "project_id",
   "created_by" = "created_by",
   // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
@@ -48,6 +49,7 @@ export enum EIssueGroupBYServerToProperty {
   "cycle_id" = "cycle_id",
   "issue_module__module_id" = "module_ids",
   "target_date" = "target_date",
+  "start_date" = "start_date",
   "project_id" = "project_id",
   "created_by" = "created_by",
 }
@@ -237,6 +239,14 @@ export const SPREADSHEET_PROPERTY_DETAILS: {
     icon: string;
   };
 } = {
+  key: {
+    i18n_title: "issue.identifier",
+    ascendingOrderKey: "sequence_id",
+    ascendingOrderTitle: "1",
+    descendingOrderKey: "-sequence_id",
+    descendingOrderTitle: "9",
+    icon: "Hash",
+  },
   assignee: {
     i18n_title: "common.assignees",
     ascendingOrderKey: "assignees__first_name",

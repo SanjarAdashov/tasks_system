@@ -145,7 +145,11 @@ export const SpreadsheetTable = observer(function SpreadsheetTable(props: Props)
       {canLoadMoreIssues && (
         <tfoot ref={setIntersectionElement}>
           {Array.from({ length: 3 }).map((_, index) => (
-            <SpreadsheetIssueRowLoader key={index} columnCount={displayPropertiesCount} />
+            <SpreadsheetIssueRowLoader
+              key={index}
+              columnCount={displayPropertiesCount}
+              showIdentifierColumn={!!displayProperties.key}
+            />
           ))}
         </tfoot>
       )}

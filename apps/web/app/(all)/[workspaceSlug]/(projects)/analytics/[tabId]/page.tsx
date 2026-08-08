@@ -8,7 +8,6 @@ import { useState, useEffect } from "react";
 import { observer } from "mobx-react";
 import { useRouter } from "next/navigation";
 // plane package imports
-import { EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import { EmptyStateDetailed } from "@plane/propel/empty-state";
 import { Tabs } from "@plane/propel/tabs";
@@ -20,7 +19,7 @@ import { PageHead } from "@/components/core/page-title";
 import { useCommandPalette } from "@/hooks/store/use-command-palette";
 import { useProject } from "@/hooks/store/use-project";
 import { useWorkspace } from "@/hooks/store/use-workspace";
-import { useUserPermissions } from "@/hooks/store/user";
+import { useCreationQuotas } from "@/hooks/use-creation-quotas";
 import { useAnalyticsTabs } from "@/components/analytics/use-analytics-tabs";
 import type { Route } from "./+types/page";
 
@@ -37,19 +36,17 @@ function AnalyticsPage({ params }: Route.ComponentProps) {
   const { toggleCreateProjectModal } = useCommandPalette();
   const { workspaceProjectIds, loader } = useProject();
   const { currentWorkspace } = useWorkspace();
-  const { allowPermissions } = useUserPermissions();
+  const { data: creationQuotas } = useCreationQuotas();
 
   const pageTitle = currentWorkspace?.name
     ? t(`workspace_analytics.page_label`, { workspace: currentWorkspace?.name })
     : undefined;
 
   // permissions
-  const canPerformEmptyStateActions = allowPermissions(
-    [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
-    EUserPermissionsLevel.WORKSPACE
-  );
-
   const workspaceSlug = params.workspaceSlug;
+  const canPerformEmptyStateActions = Boolean(
+    creationQuotas?.projects.find((quota) => quota.workspace_slug === workspaceSlug)?.can_create
+  );
   const ANALYTICS_TABS = useAnalyticsTabs(workspaceSlug.toString());
 
   const [selectedTab, setSelectedTab] = useState(tabId || ANALYTICS_TABS[0]?.key);

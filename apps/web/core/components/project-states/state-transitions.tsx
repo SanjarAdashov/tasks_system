@@ -8,13 +8,14 @@ import { useEffect, useMemo, useState } from "react";
 import { Archive, ChevronRight, Pencil, Plus, Trash2 } from "lucide-react";
 import useSWR from "swr";
 import { v4 as uuidv4 } from "uuid";
-import { useTranslation } from "@plane/i18n";
+import { getIntlLocale, useTranslation } from "@plane/i18n";
 import { setToast, TOAST_TYPE } from "@plane/propel/toast";
 import type {
   IState,
   TProjectStateTransitionRule,
   TProjectStateTransitionRulePayload,
   TProjectWorkItemProperty,
+  TProjectUserGroup,
   TStateTransitionCondition,
   TStateTransitionConditionGroup,
   TStateTransitionConditionNode,
@@ -53,40 +54,40 @@ const VALUELESS_OPERATORS = new Set<TStateTransitionConditionOperator>([
 ]);
 
 const OPERATORS: Array<{ value: TStateTransitionConditionOperator; label: string }> = [
-  { value: "IS_SET", label: "Filled in" },
-  { value: "IS_NOT_SET", label: "Not filled in" },
-  { value: "EQ", label: "Equals" },
-  { value: "NEQ", label: "Does not equal" },
-  { value: "BEFORE", label: "Date is before" },
-  { value: "AFTER", label: "Date is after" },
-  { value: "CONTAINS", label: "Contains" },
-  { value: "NOT_CONTAINS", label: "Does not contain" },
-  { value: "ALL_COMPLETED", label: "All are completed" },
-  { value: "HAS_INCOMPLETE", label: "Has incomplete items" },
+  { value: "IS_SET", label: "project_settings.state_transitions.operators.is_set" },
+  { value: "IS_NOT_SET", label: "project_settings.state_transitions.operators.is_not_set" },
+  { value: "EQ", label: "project_settings.state_transitions.operators.eq" },
+  { value: "NEQ", label: "project_settings.state_transitions.operators.neq" },
+  { value: "BEFORE", label: "project_settings.state_transitions.operators.before" },
+  { value: "AFTER", label: "project_settings.state_transitions.operators.after" },
+  { value: "CONTAINS", label: "project_settings.state_transitions.operators.contains" },
+  { value: "NOT_CONTAINS", label: "project_settings.state_transitions.operators.not_contains" },
+  { value: "ALL_COMPLETED", label: "project_settings.state_transitions.operators.all_completed" },
+  { value: "HAS_INCOMPLETE", label: "project_settings.state_transitions.operators.has_incomplete" },
 ];
 
 const BUILT_IN_FIELDS = [
-  ["name", "Title"],
-  ["description", "Description"],
-  ["priority", "Priority"],
-  ["state", "Status"],
-  ["assignees", "Assignees"],
-  ["labels", "Labels"],
-  ["start_date", "Start date"],
-  ["target_date", "Due date"],
-  ["cycle", "Cycle"],
-  ["module", "Module"],
-  ["estimate", "Estimate"],
-  ["parent", "Parent work item"],
-  ["created_by", "Creator"],
-  ["attachments", "Attachments"],
-  ["comments", "Comments"],
-  ["subtasks", "Subtasks"],
-  ["dependencies", "Dependencies"],
-  ["actor.user", "Current user"],
-  ["actor.role", "Current user's project role"],
-  ["actor.is_assignee", "Current user is an assignee"],
-  ["actor.is_creator", "Current user created the work item"],
+  ["name", "title"],
+  ["description", "description"],
+  ["priority", "priority"],
+  ["state", "status"],
+  ["assignees", "assignees"],
+  ["labels", "labels"],
+  ["start_date", "start_date"],
+  ["target_date", "due_date"],
+  ["cycle", "cycle"],
+  ["module", "module"],
+  ["estimate", "estimate"],
+  ["parent", "parent"],
+  ["created_by", "creator"],
+  ["attachments", "attachments"],
+  ["comments", "comments"],
+  ["subtasks", "subtasks"],
+  ["dependencies", "dependencies"],
+  ["actor.user", "current_user"],
+  ["actor.role", "current_user_role"],
+  ["actor.is_assignee", "current_user_assignee"],
+  ["actor.is_creator", "current_user_creator"],
 ] as const;
 
 const ensureNodeIds = (node: TStateTransitionConditionNode): TStateTransitionConditionNode => {
@@ -121,17 +122,17 @@ const removeNode = (root: TStateTransitionConditionGroup, nodeId: string): TStat
   return visit(root);
 };
 
-const formatError = (error: unknown): string => {
+const formatError = (error: unknown, fallback: string): string => {
   if (typeof error === "string") return error;
-  if (!error || typeof error !== "object") return "Please try again.";
+  if (!error || typeof error !== "object") return fallback;
   const first = Object.values(error)[0];
   if (typeof first === "string") return first;
   if (Array.isArray(first) && typeof first[0] === "string") return first[0];
-  return formatError(first);
+  return formatError(first, fallback);
 };
 
-const stateName = (states: IState[], stateId: string | null) =>
-  states.find((state) => state.id === stateId)?.name ?? "Unknown status";
+const stateName = (states: IState[], stateId: string | null, unknownLabel: string) =>
+  states.find((state) => state.id === stateId)?.name ?? unknownLabel;
 
 const parseConditionValue = (field: string, rawValue: string): unknown => {
   if (field === "actor.is_assignee" || field === "actor.is_creator" || field.startsWith("actor.member_property:"))
@@ -147,22 +148,40 @@ type ConditionTreeProps = {
   onChange: (tree: TStateTransitionConditionGroup) => void;
   states: IState[];
   properties: TProjectWorkItemProperty[];
+  groups: TProjectUserGroup[];
 };
 
-function ConditionTreeEditor({ title, value, onChange, states, properties }: ConditionTreeProps) {
+function ConditionTreeEditor({ title, value, onChange, states, properties, groups }: ConditionTreeProps) {
+  const { t } = useTranslation();
+  const memberProperties = properties.filter(
+    (property) =>
+      property.select_source === "MEMBERS" &&
+      (property.property_type === "SINGLE_SELECT" || property.property_type === "MULTI_SELECT")
+  );
   const fieldOptions = [
-    ...BUILT_IN_FIELDS.map(([fieldValue, label]) => ({ value: fieldValue, label })),
+    ...BUILT_IN_FIELDS.map(([fieldValue, labelKey]) => ({
+      value: fieldValue,
+      label: t(`project_settings.state_transitions.editor.fields.${labelKey}`),
+    })),
     ...properties.map((property) => ({ value: `custom:${property.id}`, label: property.name })),
-    ...properties
-      .filter(
-        (property) =>
-          property.select_source === "MEMBERS" &&
-          (property.property_type === "SINGLE_SELECT" || property.property_type === "MULTI_SELECT")
-      )
-      .map((property) => ({
-        value: `actor.member_property:${property.id}`,
-        label: `Current user is selected in ${property.name}`,
-      })),
+    ...memberProperties.map((property) => ({
+      value: `actor.member_property:${property.id}`,
+      label: t("project_settings.state_transitions.editor.current_user_property", { property: property.name }),
+    })),
+    { value: "actor.group", label: t("project_settings.state_transitions.editor.actor_group") },
+    { value: "created_by.group", label: t("project_settings.state_transitions.editor.creator_group") },
+    { value: "assignees.group_any", label: t("project_settings.state_transitions.editor.any_assignee_group") },
+    { value: "assignees.group_all", label: t("project_settings.state_transitions.editor.all_assignee_group") },
+    ...memberProperties.flatMap((property) => [
+      {
+        value: `custom.group_any:${property.id}`,
+        label: t("project_settings.state_transitions.editor.any_property_group", { property: property.name }),
+      },
+      {
+        value: `custom.group_all:${property.id}`,
+        label: t("project_settings.state_transitions.editor.all_property_group", { property: property.name }),
+      },
+    ]),
   ];
 
   const addCondition = (groupId: string) =>
@@ -186,6 +205,31 @@ function ConditionTreeEditor({ title, value, onChange, states, properties }: Con
 
   const renderConditionValue = (condition: TStateTransitionCondition) => {
     if (VALUELESS_OPERATORS.has(condition.operator)) return null;
+    const isGroupField =
+      condition.field.endsWith(".group") ||
+      condition.field.includes(".group_any") ||
+      condition.field.includes(".group_all");
+    if (isGroupField)
+      return (
+        <select
+          className="h-8 rounded border border-subtle bg-surface-1 px-2 text-12 text-primary"
+          value={String(condition.value ?? groups.find((group) => !group.archived_at)?.id ?? "")}
+          onChange={(event) =>
+            onChange(
+              updateNode(value, condition.id!, (node) =>
+                node.kind === "condition" ? { ...node, value: event.target.value } : node
+              )
+            )
+          }
+        >
+          {groups.map((group) => (
+            <option key={group.id} value={group.id}>
+              {group.name}
+              {group.archived_at ? ` (${t("project_settings.state_transitions.editor.archived_group")})` : ""}
+            </option>
+          ))}
+        </select>
+      );
     const booleanField =
       condition.field === "actor.is_assignee" ||
       condition.field === "actor.is_creator" ||
@@ -203,8 +247,8 @@ function ConditionTreeEditor({ title, value, onChange, states, properties }: Con
             )
           }
         >
-          <option value="true">Yes</option>
-          <option value="false">No</option>
+          <option value="true">{t("project_settings.state_transitions.editor.yes")}</option>
+          <option value="false">{t("project_settings.state_transitions.editor.no")}</option>
         </select>
       );
     if (condition.field === "actor.role")
@@ -220,9 +264,9 @@ function ConditionTreeEditor({ title, value, onChange, states, properties }: Con
             )
           }
         >
-          <option value="5">Guest</option>
-          <option value="15">Member</option>
-          <option value="20">Project Admin</option>
+          <option value="5">{t("project_settings.state_transitions.editor.guest")}</option>
+          <option value="15">{t("project_settings.state_transitions.editor.member")}</option>
+          <option value="20">{t("project_settings.state_transitions.editor.project_admin")}</option>
         </select>
       );
     if (condition.field === "state")
@@ -288,7 +332,11 @@ function ConditionTreeEditor({ title, value, onChange, states, properties }: Con
             : "text"
         }
         value={typeof condition.value === "string" || typeof condition.value === "number" ? condition.value : ""}
-        placeholder={condition.field === "actor.user" ? "User UUID" : "Value"}
+        placeholder={t(
+          condition.field === "actor.user"
+            ? "project_settings.state_transitions.editor.user_uuid"
+            : "project_settings.state_transitions.editor.value"
+        )}
         onChange={(event) =>
           onChange(
             updateNode(value, condition.id!, (node) =>
@@ -317,8 +365,10 @@ function ConditionTreeEditor({ title, value, onChange, states, properties }: Con
                       ? {
                           ...current,
                           field: event.target.value,
-                          operator: "IS_SET",
-                          value: undefined,
+                          operator: event.target.value.includes(".group") ? "EQ" : "IS_SET",
+                          value: event.target.value.includes(".group")
+                            ? groups.find((group) => !group.archived_at)?.id
+                            : undefined,
                         }
                       : current
                   )
@@ -352,7 +402,7 @@ function ConditionTreeEditor({ title, value, onChange, states, properties }: Con
             >
               {OPERATORS.map((operator) => (
                 <option key={operator.value} value={operator.value}>
-                  {operator.label}
+                  {t(operator.label)}
                 </option>
               ))}
             </select>
@@ -361,14 +411,14 @@ function ConditionTreeEditor({ title, value, onChange, states, properties }: Con
               type="button"
               className="ml-auto grid size-8 place-items-center rounded text-tertiary hover:bg-danger-subtle hover:text-danger-primary"
               onClick={() => onChange(removeNode(value, node.id!))}
-              aria-label="Remove condition"
+              aria-label={t("project_settings.state_transitions.editor.remove_condition")}
             >
               <Trash2 className="size-4" />
             </button>
           </div>
           <Input
             value={node.message ?? ""}
-            placeholder="Optional custom failure message"
+            placeholder={t("project_settings.state_transitions.editor.optional_message")}
             onChange={(event) =>
               onChange(
                 updateNode(value, node.id!, (current) =>
@@ -383,7 +433,9 @@ function ConditionTreeEditor({ title, value, onChange, states, properties }: Con
     return (
       <div key={node.id} className={depth ? "space-y-2 rounded border border-subtle bg-surface-2 p-3" : "space-y-2"}>
         <div className="flex items-center gap-2">
-          <span className="text-11 font-medium text-tertiary">{depth ? "Nested group" : title}</span>
+          <span className="text-11 font-medium text-tertiary">
+            {depth ? t("project_settings.state_transitions.editor.nested_group") : title}
+          </span>
           <select
             className="h-7 rounded border border-subtle bg-surface-1 px-2 text-11 text-primary"
             value={node.operator}
@@ -395,15 +447,15 @@ function ConditionTreeEditor({ title, value, onChange, states, properties }: Con
               )
             }
           >
-            <option value="AND">AND · all conditions</option>
-            <option value="OR">OR · any condition</option>
+            <option value="AND">{t("project_settings.state_transitions.editor.all_conditions")}</option>
+            <option value="OR">{t("project_settings.state_transitions.editor.any_condition")}</option>
           </select>
           {depth > 0 && (
             <button
               type="button"
               className="ml-auto grid size-7 place-items-center rounded text-tertiary hover:bg-danger-subtle hover:text-danger-primary"
               onClick={() => onChange(removeNode(value, node.id!))}
-              aria-label="Remove group"
+              aria-label={t("project_settings.state_transitions.editor.remove_group")}
             >
               <Trash2 className="size-4" />
             </button>
@@ -412,7 +464,7 @@ function ConditionTreeEditor({ title, value, onChange, states, properties }: Con
         {node.children.map((child) => renderNode(child, depth + 1))}
         <div className="flex gap-2">
           <Button variant="neutral-primary" size="sm" prependIcon={<Plus />} onClick={() => addCondition(node.id!)}>
-            Add condition
+            {t("project_settings.state_transitions.add_condition")}
           </Button>
           <Button
             variant="neutral-primary"
@@ -421,7 +473,7 @@ function ConditionTreeEditor({ title, value, onChange, states, properties }: Con
             onClick={() => addGroup(node.id!)}
             disabled={depth >= 7}
           >
-            Add group
+            {t("project_settings.state_transitions.add_group")}
           </Button>
         </div>
       </div>
@@ -436,12 +488,13 @@ type RuleFormProps = {
   projectId: string;
   states: IState[];
   properties: TProjectWorkItemProperty[];
+  groups: TProjectUserGroup[];
   rule?: TProjectStateTransitionRule;
   onCancel: () => void;
   onSaved: (rule: TProjectStateTransitionRule) => void;
 };
 
-function RuleForm({ workspaceSlug, projectId, states, properties, rule, onCancel, onSaved }: RuleFormProps) {
+function RuleForm({ workspaceSlug, projectId, states, properties, groups, rule, onCancel, onSaved }: RuleFormProps) {
   const { t } = useTranslation();
   const service = useMemo(() => new ProjectService(), []);
   const [payload, setPayload] = useState<TProjectStateTransitionRulePayload>(() => ({
@@ -472,7 +525,7 @@ function RuleForm({ workspaceSlug, projectId, states, properties, rule, onCancel
       setToast({
         type: TOAST_TYPE.ERROR,
         title: t("toast.error"),
-        message: formatError(error),
+        message: formatError(error, t("project_settings.state_transitions.editor.try_again")),
       });
     } finally {
       setIsSaving(false);
@@ -483,7 +536,7 @@ function RuleForm({ workspaceSlug, projectId, states, properties, rule, onCancel
     <div className="space-y-5 rounded-lg border border-subtle bg-surface-1 p-4">
       <div className="grid gap-3 sm:grid-cols-3">
         <label className="space-y-1 text-11 font-medium text-secondary">
-          Transition type
+          {t("project_settings.state_transitions.editor.transition_type")}
           <select
             className="h-9 w-full rounded border border-subtle bg-surface-1 px-2 text-13 text-primary"
             value={payload.source_type}
@@ -544,6 +597,7 @@ function RuleForm({ workspaceSlug, projectId, states, properties, rule, onCancel
         onChange={(allow_conditions) => setPayload((current) => ({ ...current, allow_conditions }))}
         states={states}
         properties={properties}
+        groups={groups}
       />
       <ConditionTreeEditor
         title={t("project_settings.state_transitions.deny")}
@@ -551,6 +605,7 @@ function RuleForm({ workspaceSlug, projectId, states, properties, rule, onCancel
         onChange={(deny_conditions) => setPayload((current) => ({ ...current, deny_conditions }))}
         states={states}
         properties={properties}
+        groups={groups}
       />
       <ConditionTreeEditor
         title={t("project_settings.state_transitions.validation")}
@@ -558,6 +613,7 @@ function RuleForm({ workspaceSlug, projectId, states, properties, rule, onCancel
         onChange={(validation_conditions) => setPayload((current) => ({ ...current, validation_conditions }))}
         states={states}
         properties={properties}
+        groups={groups}
       />
 
       <div className="space-y-3 rounded border border-subtle bg-surface-2 p-3">
@@ -589,7 +645,7 @@ function RuleForm({ workspaceSlug, projectId, states, properties, rule, onCancel
 }
 
 export function StateTransitionSettings({ workspaceSlug, projectId }: Props) {
-  const { t } = useTranslation();
+  const { t, currentLocale } = useTranslation();
   const service = useMemo(() => new ProjectService(), []);
   const stateService = useMemo(() => new ProjectStateService(), []);
   const [tab, setTab] = useState<TTab>("rules");
@@ -608,6 +664,9 @@ export function StateTransitionSettings({ workspaceSlug, projectId }: Props) {
   );
   const { data: properties = [] } = useSWR(`STATE_TRANSITION_PROPERTIES_${workspaceSlug}_${projectId}`, () =>
     service.getWorkItemProperties(workspaceSlug, projectId)
+  );
+  const { data: groups = [] } = useSWR(`STATE_TRANSITION_GROUPS_${workspaceSlug}_${projectId}`, () =>
+    service.getUserGroups(workspaceSlug, projectId, true)
   );
   const { data: settings, mutate: mutateSettings } = useSWR(
     `STATE_TRANSITION_SETTINGS_${workspaceSlug}_${projectId}`,
@@ -633,14 +692,18 @@ export function StateTransitionSettings({ workspaceSlug, projectId }: Props) {
       });
       await mutateSettings(saved, { revalidate: false });
     } catch (error) {
-      setToast({ type: TOAST_TYPE.ERROR, title: t("toast.error"), message: formatError(error) });
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: t("toast.error"),
+        message: formatError(error, t("project_settings.state_transitions.editor.try_again")),
+      });
     } finally {
       setIsSavingSettings(false);
     }
   };
 
   const archiveRule = async (rule: TProjectStateTransitionRule) => {
-    if (!window.confirm("Archive this transition rule? Its audit history will be preserved.")) return;
+    if (!window.confirm(t("project_settings.state_transitions.archive"))) return;
     try {
       await service.archiveStateTransitionRule(workspaceSlug, projectId, rule.id);
       await mutateRules((current) => current?.filter((item) => item.id !== rule.id), { revalidate: false });
@@ -650,7 +713,11 @@ export function StateTransitionSettings({ workspaceSlug, projectId }: Props) {
         message: t("project_settings.state_transitions.archived"),
       });
     } catch (error) {
-      setToast({ type: TOAST_TYPE.ERROR, title: t("toast.error"), message: formatError(error) });
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: t("toast.error"),
+        message: formatError(error, t("project_settings.state_transitions.editor.try_again")),
+      });
     }
   };
 
@@ -680,7 +747,11 @@ export function StateTransitionSettings({ workspaceSlug, projectId }: Props) {
       });
       setPreviewResult(result);
     } catch (error) {
-      setToast({ type: TOAST_TYPE.ERROR, title: t("toast.error"), message: formatError(error) });
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: t("toast.error"),
+        message: formatError(error, t("project_settings.state_transitions.editor.try_again")),
+      });
     } finally {
       setIsPreviewing(false);
     }
@@ -732,6 +803,7 @@ export function StateTransitionSettings({ workspaceSlug, projectId }: Props) {
               projectId={projectId}
               states={states}
               properties={properties}
+              groups={groups}
               rule={editingRule ?? undefined}
               onCancel={() => {
                 setIsCreating(false);
@@ -759,7 +831,11 @@ export function StateTransitionSettings({ workspaceSlug, projectId }: Props) {
                   <div className="flex min-w-0 items-center gap-3">
                     <div className="rounded bg-layer-1 px-2 py-1 text-11 font-medium text-secondary">
                       {rule.source_type === "EXACT"
-                        ? stateName(states, rule.source_state)
+                        ? stateName(
+                            states,
+                            rule.source_state,
+                            t("project_settings.state_transitions.editor.unknown_status")
+                          )
                         : t(
                             rule.source_type === "CREATE"
                               ? "project_settings.state_transitions.create"
@@ -768,13 +844,19 @@ export function StateTransitionSettings({ workspaceSlug, projectId }: Props) {
                     </div>
                     <ChevronRight className="size-4 text-tertiary" />
                     <div className="truncate text-13 font-medium text-primary">
-                      {stateName(states, rule.target_state)}
+                      {stateName(
+                        states,
+                        rule.target_state,
+                        t("project_settings.state_transitions.editor.unknown_status")
+                      )}
                     </div>
                     {(rule.project_admin_bypass || rule.system_bypass) && (
                       <span className="text-10 text-tertiary">
-                        {rule.project_admin_bypass ? "Admin bypass" : ""}
+                        {rule.project_admin_bypass
+                          ? t("project_settings.state_transitions.editor.admin_bypass_short")
+                          : ""}
                         {rule.project_admin_bypass && rule.system_bypass ? " · " : ""}
-                        {rule.system_bypass ? "System bypass" : ""}
+                        {rule.system_bypass ? t("project_settings.state_transitions.editor.system_bypass_short") : ""}
                       </span>
                     )}
                   </div>
@@ -818,19 +900,27 @@ export function StateTransitionSettings({ workspaceSlug, projectId }: Props) {
             <>
               <div className="flex justify-end">
                 <Button variant="neutral-primary" size="sm" onClick={() => mutateAuditLogs()}>
-                  Refresh
+                  {t("project_settings.state_transitions.editor.refresh")}
                 </Button>
               </div>
               {auditLogs.map((log) => (
                 <div key={log.id} className="rounded-lg border border-subtle p-3">
                   <div className="flex items-center justify-between gap-3">
                     <span className="text-12 font-medium text-primary">
-                      {log.action === "TRANSITION_DENIED" ? "Denied transition" : "Configuration changed"}
+                      {t(
+                        log.action === "TRANSITION_DENIED"
+                          ? "project_settings.state_transitions.editor.denied_transition"
+                          : "project_settings.state_transitions.editor.configuration_changed"
+                      )}
                     </span>
-                    <time className="text-10 text-tertiary">{new Date(log.created_at).toLocaleString()}</time>
+                    <time className="text-10 text-tertiary">
+                      {new Date(log.created_at).toLocaleString(getIntlLocale(currentLocale), { hour12: false })}
+                    </time>
                   </div>
                   <div className="mt-1 text-11 text-secondary">
-                    Actor: {log.actor_id ?? "System"} · Work item: {log.issue ?? "—"}
+                    {t("project_settings.state_transitions.editor.actor")}:{" "}
+                    {log.actor_id ?? t("project_settings.state_transitions.editor.system")} ·{" "}
+                    {t("project_settings.state_transitions.editor.work_item")}: {log.issue ?? "—"}
                   </div>
                   <pre className="mt-2 overflow-auto rounded bg-surface-2 p-2 text-10 whitespace-pre-wrap text-tertiary">
                     {JSON.stringify(log.details, null, 2)}
@@ -840,7 +930,7 @@ export function StateTransitionSettings({ workspaceSlug, projectId }: Props) {
             </>
           ) : (
             <div className="rounded border border-dashed border-subtle p-8 text-center text-12 text-tertiary">
-              The audit log is empty.
+              {t("project_settings.state_transitions.editor.audit_empty")}
             </div>
           )}
         </div>
@@ -849,7 +939,7 @@ export function StateTransitionSettings({ workspaceSlug, projectId }: Props) {
       {tab === "preview" && (
         <div className="space-y-4 rounded-lg border border-subtle p-4">
           <div className="flex items-center justify-between gap-4 text-12 text-primary">
-            Preview work-item creation
+            {t("project_settings.state_transitions.editor.preview_creation")}
             <ToggleSwitch value={previewIsCreation} onChange={setPreviewIsCreation} />
           </div>
           {!previewIsCreation && (
@@ -857,7 +947,7 @@ export function StateTransitionSettings({ workspaceSlug, projectId }: Props) {
               htmlFor="state-transition-preview-issue"
               className="block space-y-1 text-11 font-medium text-secondary"
             >
-              Work-item UUID
+              {t("project_settings.state_transitions.editor.work_item_uuid")}
               <Input
                 id="state-transition-preview-issue"
                 value={previewIssueId}
@@ -869,7 +959,7 @@ export function StateTransitionSettings({ workspaceSlug, projectId }: Props) {
             htmlFor="state-transition-preview-actor"
             className="block space-y-1 text-11 font-medium text-secondary"
           >
-            User UUID (leave empty to use yourself)
+            {t("project_settings.state_transitions.editor.user_uuid_self")}
             <Input
               id="state-transition-preview-actor"
               value={previewActorId}
@@ -877,7 +967,7 @@ export function StateTransitionSettings({ workspaceSlug, projectId }: Props) {
             />
           </label>
           <label className="block space-y-1 text-11 font-medium text-secondary">
-            Target status
+            {t("project_settings.state_transitions.editor.target_status")}
             <select
               className="h-9 w-full rounded border border-subtle bg-surface-1 px-2 text-13 text-primary"
               value={previewTargetId}
@@ -896,7 +986,7 @@ export function StateTransitionSettings({ workspaceSlug, projectId }: Props) {
               loading={isPreviewing}
               disabled={!previewTargetId || (!previewIsCreation && !previewIssueId)}
             >
-              Run preview
+              {t("project_settings.state_transitions.editor.run_preview")}
             </Button>
           </div>
           {previewResult && (
@@ -908,7 +998,11 @@ export function StateTransitionSettings({ workspaceSlug, projectId }: Props) {
               }`}
             >
               <div className="text-13 font-medium text-primary">
-                {previewResult.allowed ? "Transition allowed" : "Transition denied"}
+                {t(
+                  previewResult.allowed
+                    ? "project_settings.state_transitions.editor.allowed"
+                    : "project_settings.state_transitions.editor.denied"
+                )}
               </div>
               {previewResult.reasons.map((reason) => (
                 <div key={reason} className="mt-1 text-12 text-secondary">

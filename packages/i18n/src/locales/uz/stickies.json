@@ -1,0 +1,59 @@
+{
+  "stickies": {
+    "title": "Sizning yopishqoqlaringiz",
+    "placeholder": "bu yerga yozish uchun bosing",
+    "all": "Barcha yopishqoq",
+    "no-data": "Jot down an idea, capture an aha, or record a brainwave. Boshlash uchun yopishqoq qo'shing.",
+    "add": "Yopishqoq qo'shing",
+    "search_placeholder": "Sarlavha bo'yicha qidirish",
+    "delete": "Yopishqoqni o'chirish",
+    "delete_confirmation": "Haqiqatan ham bu stikerni oʻchirib tashlamoqchimisiz?",
+    "empty_state": {
+      "simple": "Jot down an idea, capture an aha, or record a brainwave. Boshlash uchun yopishqoq qo'shing.",
+      "general": {
+        "title": "Stickies - bu tezkor qaydlar va siz tezda olib qo'yadigan vazifalar.",
+        "description": "Istalgan vaqtda va istalgan joydan kirishingiz mumkin bo'lgan stikerlarni yaratish orqali o'z fikrlaringiz va g'oyalaringizni osongina yozib oling.",
+        "primary_button": {
+          "text": "Yopishqoq qo'shing"
+        }
+      },
+      "search": {
+        "title": "Bu hech qanday stikeringizga mos kelmaydi.",
+        "description": "Boshqa atama ishlating yoki bizga xabar bering\nagar qidiruvingiz to'g'ri ekanligiga ishonchingiz komil bo'lsa.",
+        "primary_button": {
+          "text": "Yopishqoq qo'shing"
+        }
+      }
+    },
+    "toasts": {
+      "errors": {
+        "wrong_name": "Yopishqoq nom 100 ta belgidan oshmasligi kerak.",
+        "already_exists": "Ta'rifi yo'q yopishqoq allaqachon mavjud"
+      },
+      "created": {
+        "title": "Yopishqoq yaratilgan",
+        "message": "Yopishqoq muvaffaqiyatli yaratildi"
+      },
+      "not_created": {
+        "title": "Yopishqoq yaratilmagan",
+        "message": "Yopishqoqni yaratib bo'lmadi"
+      },
+      "updated": {
+        "title": "Sticky yangilandi",
+        "message": "Yopishqoq muvaffaqiyatli yangilandi"
+      },
+      "not_updated": {
+        "title": "Sticky yangilanmagan",
+        "message": "Yopishqoqni yangilab bo'lmadi"
+      },
+      "removed": {
+        "title": "Yopishqoq olib tashlandi",
+        "message": "Yopishqoq muvaffaqiyatli olib tashlandi"
+      },
+      "not_removed": {
+        "title": "Yopishqoq olib tashlanmadi",
+        "message": "Yopishqoqni olib tashlab bo'lmadi"
+      }
+    }
+  }
+}

@@ -441,6 +441,7 @@
     "created_by": "Created by",
     "none": "None",
     "link": "Link",
+    "link_count": "{count, plural, one {# link} other {# links}}",
     "estimates": "Estimates",
     "estimate": "Estimate",
     "created_at": "Created at",
@@ -465,6 +466,7 @@
     "work_item": "Work item",
     "work_items": "Work items",
     "sub_work_item": "Sub-work item",
+    "sub_work_item_count": "{count, plural, one {# sub-work item} other {# sub-work items}}",
     "views": "Views",
     "pages": "Pages",
     "add": "Add",
@@ -478,6 +480,7 @@
     "description": "Description",
     "title": "Title",
     "attachment": "Attachment",
+    "attachment_count": "{count, plural, one {# attachment} other {# attachments}}",
     "general": "General",
     "features": "Features",
     "automation": "Automation",
@@ -900,5 +903,10 @@
       "description": "Export work items to a JSON file.",
       "short_description": "Export as json"
     }
+  },
+  "creation_quotas": {
+    "workspace_reached": "Workspace creation quota has been reached.",
+    "project_reached": "Project creation quota has been reached.",
+    "unavailable": "Creation is unavailable: used {used} of {limit}."
   }
 }

@@ -1,0 +1,100 @@
+{
+  "workflows": {
+    "workflow_states": {
+      "work_item_creation": "Yangi ish elementlariga ruxsat bering",
+      "work_item_creation_disable_tooltip": "Bu holat uchun ish elementini yaratish o‘chirib qo‘yilgan",
+      "default_state": "Standart holat barcha a'zolarga yangi ish elementlarini yaratish imkonini beradi. Buni o'zgartirib bo'lmaydi",
+      "state_change_count": "{hisob, koʻplik, bitta {1 permitted state change} boshqa {{count} ruxsat etilgan holat oʻzgarishlari}}",
+      "movers_count": "{hisoblash, koʻplik, bitta {1 listed reviewer} boshqa {{count} roʻyxatga olingan sharhlovchilar}}",
+      "state_changes": {
+        "label": {
+          "default": "Ruxsat etilgan holat o'zgarishini qo'shing",
+          "loading": "Ruxsat etilgan holat o'zgarishini qo'shish"
+        },
+        "move_to": "Holatni ga o'zgartiring",
+        "movers": {
+          "label": "tomonidan ko'rib chiqilganda",
+          "tooltip": "Sharhlovchilar - bu ish elementlarini bir shtatdan boshqasiga ko'chirishga ruxsat berilgan odamlar.",
+          "add": "Sharhlovchilarni qo'shing"
+        }
+      }
+    },
+    "workflow_disabled": {
+      "title": "Bu ish elementini bu yerga ko‘chira olmaysiz."
+    },
+    "workflow_enabled": {
+      "label": "Davlat o'zgarishi"
+    },
+    "workflow_tree": {
+      "label": "Ish elementlari uchun",
+      "state_change_label": "ga ko'chirish mumkin"
+    },
+    "empty_state": {
+      "upgrade": {
+        "title": "Ish oqimlari bilan o'zgarishlar va sharhlarning tartibsizligini boshqaring.",
+        "description": "Plane da Workflows bilan ishingiz qayerga, kim tomonidan va qachon harakatlanishi qoidalarini belgilang."
+      }
+    },
+    "quick_actions": {
+      "view_change_history": "O'zgarishlar tarixini ko'rish",
+      "reset_workflow": "Ish jarayonini tiklash"
+    },
+    "confirmation_modals": {
+      "reset_workflow": {
+        "title": "Haqiqatan ham ushbu ish jarayonini asliga qaytarmoqchimisiz?",
+        "description": "Agar siz ushbu ish jarayonini qayta o'rnatsangiz, barcha holatni o'zgartirish qoidalari o'chiriladi va ularni ushbu loyiha uchun ishga tushirish uchun ularni qayta yaratishingiz kerak bo'ladi."
+      },
+      "delete_state_change": {
+        "title": "Bu holatni oʻzgartirish qoidasini oʻchirib tashlamoqchimisiz?",
+        "description": "Oʻchirib tashlangandan soʻng, bu oʻzgarishlarni bekor qila olmaysiz va agar siz ushbu loyihada ishlashni istasangiz, qoidani qayta oʻrnatishingiz kerak boʻladi."
+      }
+    },
+    "toasts": {
+      "enable_disable": {
+        "loading": "{action} ish jarayoni",
+        "success": {
+          "title": "Muvaffaqiyat",
+          "message": "Ish jarayoni {action} muvaffaqiyatli"
+        },
+        "error": {
+          "title": "Xato",
+          "message": "Ish jarayoni {action} bo‘lishi mumkin emas. Iltimos, qayta urinib koʻring."
+        }
+      },
+      "reset": {
+        "success": {
+          "title": "Muvaffaqiyat",
+          "message": "Ish jarayoni qayta tiklandi"
+        },
+        "error": {
+          "title": "Ish jarayonini tiklashda xatolik yuz berdi",
+          "message": "Ish jarayonini tiklab bo‘lmadi. Iltimos, qayta urinib koʻring."
+        }
+      },
+      "add_state_change_rule": {
+        "error": {
+          "title": "Holatni oʻzgartirish qoidasini qoʻshishda xatolik yuz berdi",
+          "message": "Davlatni oʻzgartirish qoidasini qoʻshib boʻlmadi. Iltimos, qayta urinib koʻring."
+        }
+      },
+      "modify_state_change_rule": {
+        "error": {
+          "title": "Holatni oʻzgartirish qoidasini oʻzgartirishda xatolik yuz berdi",
+          "message": "Davlatni oʻzgartirish qoidasini oʻzgartirib boʻlmadi. Iltimos, qayta urinib koʻring."
+        }
+      },
+      "remove_state_change_rule": {
+        "error": {
+          "title": "Holatni oʻzgartirish qoidasini olib tashlashda xatolik yuz berdi",
+          "message": "Shtatni oʻzgartirish qoidasini olib tashlab boʻlmadi. Iltimos, qayta urinib koʻring."
+        }
+      },
+      "modify_state_change_rule_movers": {
+        "error": {
+          "title": "Holatni oʻzgartirish qoidasini koʻrib chiquvchilarni oʻzgartirishda xatolik yuz berdi",
+          "message": "Shtatni oʻzgartirish qoidalarini koʻrib chiquvchilarni oʻzgartirib boʻlmadi. Iltimos, qayta urinib koʻring."
+        }
+      }
+    }
+  }
+}

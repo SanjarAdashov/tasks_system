@@ -59,6 +59,8 @@ from plane.db.models import (
     ModuleIssue,
     Project,
     ProjectMember,
+    ProjectWorkItemProperty,
+    WorkItemPropertyType,
     UserRecentVisit,
 )
 from plane.utils.filters import ComplexFilterBackend, IssueFilterSet
@@ -71,7 +73,11 @@ from plane.utils.grouper import (
 from plane.utils.host import base_host
 from plane.utils.issue_filters import issue_filters
 from plane.utils.order_queryset import order_issue_queryset
-from plane.utils.paginator import GroupedOffsetPaginator, SubGroupedOffsetPaginator
+from plane.utils.paginator import (
+    CustomPropertyMultiValueGroupedOffsetPaginator,
+    GroupedOffsetPaginator,
+    SubGroupedOffsetPaginator,
+)
 from plane.utils.work_item_fields import (
     serialize_work_item_property_values,
     serialize_work_item_property_values_for_issues,
@@ -375,6 +381,16 @@ class IssueViewSet(BaseViewSet):
                     )
             else:
                 # Group paginate
+                paginator_cls = GroupedOffsetPaginator
+                if isinstance(group_by, str) and group_by.startswith("customproperty_"):
+                    property_id = group_by.removeprefix("customproperty_")
+                    if ProjectWorkItemProperty.objects.filter(
+                        id=property_id,
+                        project_id=project_id,
+                        property_type=WorkItemPropertyType.MULTI_SELECT,
+                        archived_at__isnull=True,
+                    ).exists():
+                        paginator_cls = CustomPropertyMultiValueGroupedOffsetPaginator
                 return self.paginate(
                     request=request,
                     order_by=order_by_param,
@@ -383,7 +399,7 @@ class IssueViewSet(BaseViewSet):
                     on_results=lambda issues: issue_on_results(
                         group_by=group_by, issues=issues, sub_group_by=sub_group_by
                     ),
-                    paginator_cls=GroupedOffsetPaginator,
+                    paginator_cls=paginator_cls,
                     group_by_fields=issue_group_values(
                         field=group_by,
                         slug=slug,

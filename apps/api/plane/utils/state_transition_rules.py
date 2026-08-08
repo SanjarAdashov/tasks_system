@@ -20,6 +20,7 @@ from plane.db.models import (
     ProjectStateTransitionAuditLog,
     ProjectStateTransitionRule,
     ProjectStateTransitionSettings,
+    ProjectUserGroupMember,
     ProjectWorkItemProperty,
     State,
     StateGroup,
@@ -55,6 +56,10 @@ FIELD_LABELS = {
     "actor.role": "Project role",
     "actor.is_assignee": "Assignee",
     "actor.is_creator": "Creator",
+    "actor.group": "User group requirement",
+    "created_by.group": "User group requirement",
+    "assignees.group_any": "User group requirement",
+    "assignees.group_all": "User group requirement",
 }
 
 
@@ -269,6 +274,46 @@ def _actor_values(*, project, actor, issue, values):
     return actor_values, membership
 
 
+def _user_group_values(*, project, actor, values):
+    memberships = ProjectUserGroupMember.objects.filter(project=project).values_list("group_id", "member_id")
+    groups_by_member = {}
+    all_group_ids = set()
+    for group_id, member_id in memberships:
+        group_id = str(group_id)
+        member_id = str(member_id)
+        all_group_ids.add(group_id)
+        groups_by_member.setdefault(member_id, set()).add(group_id)
+
+    def member_groups(member_id):
+        return sorted(groups_by_member.get(str(member_id), set())) if member_id else []
+
+    def matching_groups(member_ids, *, require_all):
+        member_ids = [str(item) for item in member_ids if item]
+        if not member_ids:
+            return []
+        matches = []
+        for group_id in all_group_ids:
+            flags = [group_id in groups_by_member.get(member_id, set()) for member_id in member_ids]
+            if all(flags) if require_all else any(flags):
+                matches.append(group_id)
+        return sorted(matches)
+
+    group_values = {
+        "actor.group": member_groups(getattr(actor, "id", None)),
+        "created_by.group": member_groups(values.get("created_by")),
+        "assignees.group_any": matching_groups(values.get("assignees") or [], require_all=False),
+        "assignees.group_all": matching_groups(values.get("assignees") or [], require_all=True),
+    }
+    for field_name, selected_members in values.items():
+        if not field_name.startswith("custom:"):
+            continue
+        property_id = field_name.split(":", 1)[1]
+        selected_members = selected_members if isinstance(selected_members, list) else [selected_members]
+        group_values[f"custom.group_any:{property_id}"] = matching_groups(selected_members, require_all=False)
+        group_values[f"custom.group_all:{property_id}"] = matching_groups(selected_members, require_all=True)
+    return group_values
+
+
 def _matches_condition(node, *, values):
     field_name = node["field"]
     operator = node["operator"]
@@ -294,6 +339,21 @@ def _matches_condition(node, *, values):
 
     actual = _canonical(actual)
     expected = _canonical(expected)
+    is_group_condition = (
+        field_name
+        in {
+            "actor.group",
+            "created_by.group",
+            "assignees.group_any",
+            "assignees.group_all",
+        }
+        or field_name.startswith("custom.group_any:")
+        or field_name.startswith("custom.group_all:")
+    )
+    if operator == "EQ" and is_group_condition:
+        return expected in (actual or [])
+    if operator == "NEQ" and is_group_condition:
+        return expected not in (actual or [])
     if operator == "EQ":
         if isinstance(expected, list) and not isinstance(actual, list):
             return actual in expected
@@ -343,6 +403,8 @@ def _condition_message(node, custom_field_labels=None):
         label = "Custom field"
     if label is None and field_name.startswith("actor.member_property:"):
         label = "Member field"
+    if label is None and (field_name.startswith("custom.group_any:") or field_name.startswith("custom.group_all:")):
+        label = "User group requirement"
     operator = node.get("operator")
     if operator == "IS_SET":
         return f"{label} must be filled in."
@@ -444,7 +506,8 @@ def evaluate_state_transition(
         issue=issue,
         values=issue_values,
     )
-    values = {**issue_values, **actor_values}
+    group_values = _user_group_values(project=project, actor=actor, values=issue_values)
+    values = {**issue_values, **actor_values, **group_values}
     is_project_admin = bool(membership and membership["role"] == 20)
     applied = []
     validation_failures = []

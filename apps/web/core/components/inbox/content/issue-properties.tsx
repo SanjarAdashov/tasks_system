@@ -28,6 +28,7 @@ import { IssueLabel } from "@/components/issues/issue-detail/label";
 // hooks
 import { useProject } from "@/hooks/store/use-project";
 import { useAppRouter } from "@/hooks/use-app-router";
+import { useProjectWorkItemFieldVisibility } from "@/hooks/use-project-work-item-field-visibility";
 
 type Props = {
   workspaceSlug: string;
@@ -46,6 +47,7 @@ export const InboxIssueContentProperties = observer(function InboxIssueContentPr
   const router = useAppRouter();
   // store hooks
   const { currentProjectDetails } = useProject();
+  const { isFieldVisible } = useProjectWorkItemFieldVisibility(workspaceSlug, projectId);
 
   const minDate = issue.start_date ? getDate(issue.start_date) : null;
   minDate?.setDate(minDate.getDate());
@@ -138,30 +140,32 @@ export const InboxIssueContentProperties = observer(function InboxIssueContentPr
         <div className={`mt-3 divide-y-2 divide-subtle-1 ${!isEditable ? "opacity-60" : ""}`}>
           <div className="flex flex-col gap-3">
             {/* Due Date */}
-            <div className="flex h-8 items-center gap-2">
-              <div className="flex w-2/5 flex-shrink-0 items-center gap-1 text-13 text-tertiary">
-                <DueDatePropertyIcon className="h-4 w-4 flex-shrink-0" />
-                <span>Due date</span>
+            {isFieldVisible("target_date") && (
+              <div className="flex h-8 items-center gap-2">
+                <div className="flex w-2/5 flex-shrink-0 items-center gap-1 text-13 text-tertiary">
+                  <DueDatePropertyIcon className="h-4 w-4 flex-shrink-0" />
+                  <span>Due date</span>
+                </div>
+                <DateDropdown
+                  placeholder="Add due date"
+                  value={issue.target_date || null}
+                  onChange={(val) =>
+                    issue?.id &&
+                    issueOperations.update(workspaceSlug, projectId, issue?.id, {
+                      target_date: val ? renderFormattedPayloadDate(val) : null,
+                    })
+                  }
+                  minDate={minDate ?? undefined}
+                  disabled={!isEditable}
+                  buttonVariant="transparent-with-text"
+                  className="group w-3/5 flex-grow"
+                  buttonContainerClassName="w-full text-left"
+                  buttonClassName={`text-13 ${issue?.target_date ? "" : "text-placeholder"}`}
+                  hideIcon
+                  clearIconClassName="h-3 w-3 hidden group-hover:inline"
+                />
               </div>
-              <DateDropdown
-                placeholder="Add due date"
-                value={issue.target_date || null}
-                onChange={(val) =>
-                  issue?.id &&
-                  issueOperations.update(workspaceSlug, projectId, issue?.id, {
-                    target_date: val ? renderFormattedPayloadDate(val) : null,
-                  })
-                }
-                minDate={minDate ?? undefined}
-                disabled={!isEditable}
-                buttonVariant="transparent-with-text"
-                className="group w-3/5 flex-grow"
-                buttonContainerClassName="w-full text-left"
-                buttonClassName={`text-13 ${issue?.target_date ? "" : "text-placeholder"}`}
-                hideIcon
-                clearIconClassName="h-3 w-3 hidden group-hover:inline"
-              />
-            </div>
+            )}
             {/* Labels */}
             <div className="flex min-h-8 items-center gap-2">
               <div className="flex w-2/5 flex-shrink-0 items-center gap-1 text-13 text-tertiary">

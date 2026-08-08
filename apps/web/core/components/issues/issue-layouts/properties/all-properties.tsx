@@ -42,6 +42,7 @@ import { useProjectState } from "@/hooks/store/use-project-state";
 import { useAppRouter } from "@/hooks/use-app-router";
 import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 import { usePlatformOS } from "@/hooks/use-platform-os";
+import { useProjectWorkItemFieldVisibility } from "@/hooks/use-project-work-item-field-visibility";
 // local components
 import { IssuePropertyLabels } from "./labels";
 import { WithDisplayPropertiesHOC } from "./with-display-properties-HOC";
@@ -57,7 +58,14 @@ export interface IIssueProperties {
 }
 
 export const IssueProperties = observer(function IssueProperties(props: IIssueProperties) {
-  const { issue, updateIssue, displayProperties, isReadOnly, className, isEpic = false } = props;
+  const {
+    issue,
+    updateIssue,
+    displayProperties: storedDisplayProperties,
+    isReadOnly,
+    className,
+    isEpic = false,
+  } = props;
   // i18n
   const { t } = useTranslation();
   // store hooks
@@ -78,6 +86,11 @@ export const IssueProperties = observer(function IssueProperties(props: IIssuePr
   // router
   const router = useAppRouter();
   const { workspaceSlug, projectId } = useParams();
+  const { visibleDisplayProperties } = useProjectWorkItemFieldVisibility(
+    workspaceSlug?.toString(),
+    issue.project_id ?? undefined
+  );
+  const displayProperties = visibleDisplayProperties(storedDisplayProperties);
 
   // derived values
   const stateDetails = getStateById(issue.state_id);

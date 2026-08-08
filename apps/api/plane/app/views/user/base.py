@@ -44,6 +44,7 @@ from plane.db.models import (
     Session,
 )
 from plane.license.models import Instance, InstanceAdmin
+from plane.license.services import creation_quota_snapshot
 from plane.utils.paginator import BasePaginator
 from plane.utils.order_queryset import ACTIVITY_ORDER_BY_ALLOWLIST, sanitize_order_by
 from plane.authentication.utils.host import user_ip
@@ -88,6 +89,9 @@ class UserEndpoint(BaseViewSet):
         instance = Instance.objects.first()
         is_admin = InstanceAdmin.objects.filter(instance=instance, user=request.user).exists()
         return Response({"is_instance_admin": is_admin}, status=status.HTTP_200_OK)
+
+    def retrieve_creation_quotas(self, request):
+        return Response(creation_quota_snapshot(request.user), status=status.HTTP_200_OK)
 
     def partial_update(self, request, *args, **kwargs):
         return super().partial_update(request, *args, **kwargs)

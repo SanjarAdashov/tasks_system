@@ -27,6 +27,7 @@ export enum EServerGroupByToFilterOptions {
   "cycle_id" = "cycle",
   "issue_module__module_id" = "module",
   "target_date" = "target_date",
+  "start_date" = "start_date",
   "project_id" = "project",
   "created_by" = "created_by",
 }
@@ -59,6 +60,9 @@ export const ISSUE_DISPLAY_FILTERS_BY_LAYOUT: {
     filters: ["priority", "state", "labels"],
   },
   gantt: {
+    filters: ["priority", "state", "labels"],
+  },
+  custom_grouping: {
     filters: ["priority", "state", "labels"],
   },
 };
@@ -273,6 +277,28 @@ export const ISSUE_DISPLAY_FILTERS_BY_PAGE: TIssueFiltersToDisplayByPageType = {
         extra_options: {
           access: true,
           values: ["sub_issue"],
+        },
+      },
+      custom_grouping: {
+        display_properties: ISSUE_DISPLAY_PROPERTIES_KEYS,
+        display_filters: {
+          group_by: [
+            "state",
+            "priority",
+            "assignees",
+            "labels",
+            "cycle",
+            "module",
+            "created_by",
+            "start_date",
+            "target_date",
+          ],
+          order_by: ["sort_order", "-created_at", "-updated_at", "start_date", "-priority", "target_date"],
+          type: ["active", "backlog"],
+        },
+        extra_options: {
+          access: true,
+          values: ["show_empty_groups", "sub_issue"],
         },
       },
     },

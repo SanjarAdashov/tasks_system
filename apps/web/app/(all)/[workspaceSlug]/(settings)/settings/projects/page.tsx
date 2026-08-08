@@ -6,6 +6,7 @@
 
 import { observer } from "mobx-react";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import { useTheme } from "next-themes";
 // plane imports
 import { PROJECT_TRACKER_ELEMENTS } from "@plane/constants";
@@ -16,13 +17,19 @@ import ProjectDarkEmptyState from "@/app/assets/empty-state/project-settings/no-
 import ProjectLightEmptyState from "@/app/assets/empty-state/project-settings/no-projects-light.png?url";
 // hooks
 import { useCommandPalette } from "@/hooks/store/use-command-palette";
+import { useCreationQuotas } from "@/hooks/use-creation-quotas";
 
 function ProjectSettingsPage() {
   // store hooks
   const { resolvedTheme } = useTheme();
+  const { workspaceSlug } = useParams<{ workspaceSlug: string }>();
   const { toggleCreateProjectModal } = useCommandPalette();
+  const { data: creationQuotas } = useCreationQuotas();
   // derived values
   const resolvedPath = resolvedTheme === "dark" ? ProjectDarkEmptyState : ProjectLightEmptyState;
+  const canCreateProject = Boolean(
+    creationQuotas?.projects.find((quota) => quota.workspace_slug === workspaceSlug)?.can_create
+  );
   return (
     <div className="mx-auto flex h-full max-w-[480px] flex-col items-center justify-center gap-4">
       <img src={resolvedPath} alt="No projects yet" />
@@ -37,6 +44,7 @@ function ProjectSettingsPage() {
         </Link>
         <Button
           onClick={() => toggleCreateProjectModal(true)}
+          disabled={!canCreateProject}
           data-ph-element={PROJECT_TRACKER_ELEMENTS.EMPTY_STATE_CREATE_PROJECT_BUTTON}
         >
           Start your first project

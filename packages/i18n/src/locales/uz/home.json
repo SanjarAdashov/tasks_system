@@ -1,0 +1,76 @@
+{
+  "home": {
+    "empty": {
+      "quickstart_guide": "Tez boshlash qo'llanmangiz",
+      "not_right_now": "Hozir emas",
+      "create_project": {
+        "title": "Loyiha yarating",
+        "description": "Aksariyat ishlar Plane’dagi loyihadan boshlanadi.",
+        "cta": "Boshlash"
+      },
+      "invite_team": {
+        "title": "Jamoangizni taklif qiling",
+        "description": "Hamkasblar bilan tuzing, yuboring va boshqaring.",
+        "cta": "Ularni ichkariga kiriting"
+      },
+      "configure_workspace": {
+        "title": "Ish joyingizni sozlang.",
+        "description": "Funksiyalarni yoqing yoki o'chiring yoki undan tashqariga chiqing.",
+        "cta": "Ushbu ish maydonini sozlang"
+      },
+      "personalize_account": {
+        "title": "Plane ni sizniki qiling.",
+        "description": "Rasm, ranglar va boshqalarni tanlang.",
+        "cta": "Hozir shaxsiylashtiring"
+      },
+      "widgets": {
+        "title": "Vidjetlarsiz jim, ularni yoqing",
+        "description": "Barcha vidjetlaringiz oʻchirilganga oʻxshaydi. Ularni yoqing\nEndi tajribangizni oshirish uchun!",
+        "primary_button": {
+          "text": "Vidjetlarni boshqarish"
+        }
+      }
+    },
+    "quick_links": {
+      "empty": "O'zingizga qulay bo'lgan ish narsalarga havolalarni saqlang.",
+      "add": "Tez havola qo'shing",
+      "title": "Tez havola",
+      "title_plural": "Tezkor havolalar"
+    },
+    "recents": {
+      "title": "Oxirgilar",
+      "empty": {
+        "project": "Oxirgi loyihalaringiz biriga tashrif buyurganingizdan so‘ng shu yerda paydo bo‘ladi.",
+        "page": "Oxirgi sahifalaringiz biriga kirganingizdan so‘ng shu yerda paydo bo‘ladi.",
+        "issue": "Oxirgi ish narsalaringiz biriga tashrif buyurganingizdan keyin shu yerda chiqadi.",
+        "default": "Sizda hali hech qanday soʻnggi xabarlar yoʻq."
+      },
+      "filters": {
+        "all": "Hammasi",
+        "projects": "Loyihalar",
+        "pages": "Sahifalar",
+        "issues": "Ish elementlari"
+      }
+    },
+    "new_at_plane": {
+      "title": "Plane da yangi"
+    },
+    "quick_tutorial": {
+      "title": "Tez o'quv qo'llanma"
+    },
+    "widget": {
+      "reordered_successfully": "Vidjet qayta tartiblandi.",
+      "reordering_failed": "Vidjetni qayta tartiblashda xatolik yuz berdi."
+    },
+    "manage_widgets": "Vidjetlarni boshqarish",
+    "title": "Uy",
+    "business_trial_banner": {
+      "title": "14 kunlik biznes rejangiz sinov muddati jonli!",
+      "description": "Biznesning barcha xususiyatlarini o'rganing. Tayyor bo'lgach, obuna bo'lishni tanlang. Sizdan avtomatik ravishda to‘lov olinmaydi.",
+      "trial_ends_today": "Sinov bugun tugaydi",
+      "trial_ends_in_days": "Sinov muddati {kun, koʻplik, bitta {# day} boshqa {# days}} ichida tugaydi",
+      "start_subscription": "Obunani boshlang",
+      "explore_business_features": "Biznes xususiyatlari bilan tanishing"
+    }
+  }
+}

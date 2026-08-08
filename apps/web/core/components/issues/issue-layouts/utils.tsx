@@ -7,12 +7,13 @@
 
 import type { CSSProperties } from "react";
 import { extractInstruction } from "@atlaskit/pragmatic-drag-and-drop-hitbox/tree-item";
-import { clone, isNil, pull, uniq, concat } from "lodash-es";
+import { clone, isNil, pull, uniq, concat, sortBy } from "lodash-es";
 import scrollIntoView from "smooth-scroll-into-view-if-needed";
 import type { FC } from "react";
-import { CalendarDays, LayersIcon, ListChecks, Paperclip } from "lucide-react";
+import { CalendarDays, Hash, LayersIcon, ListChecks, Paperclip } from "lucide-react";
 // plane types
 import { EIconSize, ISSUE_PRIORITIES, STATE_GROUPS } from "@plane/constants";
+import { formatLocalizedDate, getIntlLocale } from "@plane/i18n";
 import { Logo } from "@plane/propel/emoji-icon-picker";
 import type { ISvgIcons } from "@plane/propel/icons";
 import {
@@ -37,6 +38,7 @@ import type {
   IIssueDisplayProperties,
   IPragmaticDropPayload,
   TIssue,
+  TIssueMap,
   TIssueGroupByOptions,
   IIssueFilterOptions,
   IIssueFilters,
@@ -92,6 +94,28 @@ export type IssueUpdates = {
   };
 };
 
+export const parseDateBucketGroupBy = (groupBy: string | null | undefined) => {
+  if (!groupBy?.startsWith("datebucket_")) return null;
+  const remainder = groupBy.replace("datebucket_", "");
+  const separatorIndex = remainder.indexOf("_");
+  if (separatorIndex < 0) return null;
+  return {
+    period: remainder.slice(0, separatorIndex) as "week" | "month",
+    source: remainder.slice(separatorIndex + 1) as GroupByColumnTypes,
+  };
+};
+
+const getDateBucketValue = (value: string, period: "week" | "month") => {
+  const date = new Date(`${value}T00:00:00`);
+  if (period === "week") {
+    const day = (date.getDay() + 6) % 7;
+    date.setDate(date.getDate() - day);
+  } else {
+    date.setDate(1);
+  }
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+};
+
 export const isWorkspaceLevel = (type: EIssuesStoreType) =>
   // oxlint-disable-next-line no-unneeded-ternary
   [
@@ -112,6 +136,17 @@ type TGetGroupByColumns = {
   isEpic?: boolean;
   projectId?: string;
   customProperties?: TProjectWorkItemProperty[];
+  issuesMap?: TIssueMap;
+  locale?: string;
+  labels?: Partial<{
+    none: string;
+    yes: string;
+    no: string;
+    inactiveSuffix: string;
+    archivedSuffix: string;
+    inactiveDropError: string;
+    archivedDropError: string;
+  }>;
 };
 
 // NOTE: Type of groupBy is different compared to what's being passed from the components.
@@ -124,7 +159,21 @@ export const getGroupByColumns = ({
   isEpic = false,
   projectId,
   customProperties = [],
+  issuesMap = {},
+  locale = "en",
+  labels: labelOverrides = {},
 }: TGetGroupByColumns): IGroupByColumn[] | undefined => {
+  const labels = {
+    none: "None",
+    yes: "Yes",
+    no: "No",
+    inactiveSuffix: "inactive",
+    archivedSuffix: "archived",
+    inactiveDropError: "This user is no longer an active project member",
+    archivedDropError: "This option is archived",
+    ...labelOverrides,
+  };
+  const formatGroupingDate = (value: string) => formatLocalizedDate(new Date(`${value}T00:00:00`), locale) || value;
   // If no groupBy is specified and includeNone is true, return "All Issues" group
   if (!groupBy && includeNone) {
     return [
@@ -140,41 +189,147 @@ export const getGroupByColumns = ({
   // Return undefined if no valid groupBy
   if (!groupBy) return undefined;
 
+  const dateBucket = parseDateBucketGroupBy(groupBy);
+  if (dateBucket) {
+    const values = new Set<string>();
+    Object.values(issuesMap).forEach((issue) => {
+      const rawValue = dateBucket.source.startsWith("customproperty_")
+        ? issue.property_values?.[dateBucket.source.replace("customproperty_", "")]
+        : issue[dateBucket.source as "start_date" | "target_date"];
+      if (typeof rawValue === "string" && rawValue) values.add(getDateBucketValue(rawValue, dateBucket.period));
+    });
+    const propertyId = dateBucket.source.startsWith("customproperty_")
+      ? dateBucket.source.replace("customproperty_", "")
+      : null;
+    return [
+      ...sortBy([...values]).map((value) => ({
+        id: value,
+        name:
+          dateBucket.period === "week"
+            ? `${formatGroupingDate(value)} – ${formatLocalizedDate(
+                new Date(new Date(`${value}T00:00:00`).setDate(new Date(`${value}T00:00:00`).getDate() + 6)),
+                locale
+              )}`
+            : new Intl.DateTimeFormat(getIntlLocale(locale), { month: "long", year: "numeric" }).format(
+                new Date(`${value}T00:00:00`)
+              ),
+        icon: <CalendarDays className="size-3.5" />,
+        payload: propertyId ? { property_values: { [propertyId]: value } } : { [dateBucket.source]: value },
+      })),
+      {
+        id: "None",
+        name: labels.none,
+        icon: <CalendarDays className="size-3.5" />,
+        payload: propertyId ? { property_values: { [propertyId]: null } } : { [dateBucket.source]: null },
+      },
+    ];
+  }
+
   if (groupBy.startsWith("customproperty_")) {
     const propertyId = groupBy.replace("customproperty_", "");
     const property = customProperties.find((item) => item.id === propertyId);
-    if (!property || !["SINGLE_SELECT", "CHECKBOX"].includes(property.property_type)) return undefined;
+    if (!property || !["SINGLE_SELECT", "MULTI_SELECT", "CHECKBOX", "DATE"].includes(property.property_type))
+      return undefined;
+    const usedValues = new Set<string>();
+    Object.values(issuesMap).forEach((issue) => {
+      const rawValue = issue.property_values?.[property.id];
+      if (Array.isArray(rawValue)) rawValue.forEach((value) => usedValues.add(String(value)));
+      else if (rawValue !== null && rawValue !== undefined && rawValue !== "") usedValues.add(String(rawValue));
+    });
     const columns: IGroupByColumn[] =
       property.property_type === "CHECKBOX"
         ? [
             {
               id: "True",
-              name: "Yes",
+              name: labels.yes,
               icon: <ListChecks className="size-3.5" />,
               payload: { property_values: { [property.id]: true } },
             },
             {
               id: "False",
-              name: "No",
+              name: labels.no,
               icon: <ListChecks className="size-3.5" />,
               payload: { property_values: { [property.id]: false } },
             },
           ]
-        : property.options
-            .filter((option) => !option.archived_at)
-            .map((option) => ({
-              id: option.id,
-              name: option.name,
-              icon: <ListChecks className="size-3.5" />,
-              payload: { property_values: { [property.id]: option.id } },
-            }));
+        : property.property_type === "DATE"
+          ? sortBy([...usedValues]).map((value) => ({
+              id: value,
+              name: formatGroupingDate(value),
+              icon: <CalendarDays className="size-3.5" />,
+              payload: { property_values: { [property.id]: value } },
+            }))
+          : property.select_source === "MEMBERS"
+            ? (() => {
+                const { memberIds } = getScopeMemberIds({ isWorkspaceLevel, projectId });
+                const currentMemberIds = new Set(memberIds ?? []);
+                const ids = [...new Set([...(memberIds ?? []), ...usedValues])];
+                return ids.map((memberId) => {
+                  const member = store.memberRoot.getUserDetails(memberId);
+                  const isHistorical = !currentMemberIds.has(memberId);
+                  return {
+                    id: memberId,
+                    name: `${member?.display_name || memberId}${isHistorical ? ` · ${labels.inactiveSuffix}` : ""}`,
+                    icon: <Avatar name={member?.display_name} src={getFileURL(member?.avatar_url ?? "")} size="md" />,
+                    payload: {
+                      property_values: {
+                        [property.id]: property.property_type === "MULTI_SELECT" ? [memberId] : memberId,
+                      },
+                    },
+                    isDropDisabled: isHistorical,
+                    dropErrorMessage: isHistorical ? labels.inactiveDropError : undefined,
+                  };
+                });
+              })()
+            : (() => {
+                const optionMap = new Map(property.options.map((option) => [option.id, option]));
+                const ids = [...new Set([...property.options.map((option) => option.id), ...usedValues])];
+                return ids.map((optionId) => {
+                  const option = optionMap.get(optionId);
+                  const isHistorical = !option || !!option.archived_at;
+                  return {
+                    id: optionId,
+                    name: `${option?.name || optionId}${isHistorical ? ` · ${labels.archivedSuffix}` : ""}`,
+                    icon: <ListChecks className="size-3.5" />,
+                    payload: {
+                      property_values: {
+                        [property.id]: property.property_type === "MULTI_SELECT" ? [optionId] : optionId,
+                      },
+                    },
+                    isDropDisabled: isHistorical,
+                    dropErrorMessage: isHistorical ? labels.archivedDropError : undefined,
+                  };
+                });
+              })();
     columns.push({
       id: "None",
-      name: "None",
+      name: labels.none,
       icon: <ListChecks className="size-3.5" />,
       payload: { property_values: { [property.id]: null } },
     });
     return columns;
+  }
+
+  if (groupBy === "start_date" || groupBy === "target_date") {
+    const values = new Set<string>();
+    Object.values(issuesMap).forEach((issue) => {
+      const value = issue[groupBy];
+      if (value) values.add(value);
+    });
+    return [
+      ...sortBy([...values]).map((value) => ({
+        id: value,
+        name: formatGroupingDate(value),
+        icon: <CalendarDays className="size-3.5" />,
+        payload: { [groupBy]: value },
+      })),
+      {
+        id: "None",
+        name: labels.none,
+        icon: <CalendarDays className="size-3.5" />,
+        payload: { [groupBy]: null },
+      },
+    ];
   }
 
   // Map of group by options to their corresponding column getter functions
@@ -192,6 +347,8 @@ export const getGroupByColumns = ({
     assignees: getAssigneeColumns,
     created_by: getCreatedByColumns,
     team_project: getTeamProjectColumns,
+    start_date: () => undefined,
+    target_date: () => undefined,
   };
 
   // Get and return the columns for the specified group by option
@@ -615,10 +772,13 @@ export const handleGroupDragDrop = async (
     ),
   };
 
+  const bucketGroupBy = parseDateBucketGroupBy(groupBy);
+  const effectiveGroupBy = bucketGroupBy?.source ?? groupBy;
+
   // update updatedIssue values based on the source and destination groupIds
   if (source.groupId && destination.groupId && source.groupId !== destination.groupId && groupBy) {
-    if (groupBy.startsWith("customproperty_")) {
-      const propertyId = groupBy.replace("customproperty_", "");
+    if (effectiveGroupBy?.startsWith("customproperty_")) {
+      const propertyId = effectiveGroupBy.replace("customproperty_", "");
       const groupValue =
         destination.groupId === "None"
           ? null
@@ -627,10 +787,10 @@ export const handleGroupDragDrop = async (
             : destination.groupId === "False"
               ? false
               : destination.groupId;
-      issueUpdates[groupBy] = { ADD: getGroupId(destination.groupId), REMOVE: getGroupId(source.groupId) };
+      issueUpdates[effectiveGroupBy] = { ADD: getGroupId(destination.groupId), REMOVE: getGroupId(source.groupId) };
       updatedIssue = { ...updatedIssue, property_values: { [propertyId]: groupValue } };
     } else {
-      const groupKey = ISSUE_FILTER_DEFAULT_DATA[groupBy];
+      const groupKey = effectiveGroupBy ? ISSUE_FILTER_DEFAULT_DATA[effectiveGroupBy] : undefined;
       if (!groupKey) return;
       let groupValue: any = clone(sourceIssue[groupKey]);
 
@@ -907,6 +1067,7 @@ export const getScopeMemberIds = ({ isWorkspaceLevel, projectId }: TGetColumns):
 export const getTeamProjectColumns = (): IGroupByColumn[] | undefined => undefined;
 
 export const SpreadSheetPropertyIconMap: Record<string, FC<ISvgIcons>> = {
+  Hash: Hash,
   MembersPropertyIcon: MembersPropertyIcon,
   CalenderDays: CalendarDays,
   DueDatePropertyIcon: DueDatePropertyIcon,

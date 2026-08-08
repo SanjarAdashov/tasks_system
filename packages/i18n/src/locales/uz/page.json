@@ -1,0 +1,115 @@
+{
+  "page_navigation_pane": {
+    "tabs": {
+      "outline": {
+        "label": "Kontur",
+        "empty_state": {
+          "title": "Yo'qolgan sarlavhalar",
+          "description": "Keling, ularni bu erda ko'rish uchun ushbu sahifaga ba'zi sarlavhalarni qo'yamiz."
+        }
+      },
+      "info": {
+        "label": "Ma'lumot",
+        "document_info": {
+          "words": "So'zlar",
+          "characters": "Belgilar",
+          "paragraphs": "Paragraflar",
+          "read_time": "O'qish vaqti"
+        },
+        "actors_info": {
+          "edited_by": "tomonidan tahrirlangan",
+          "created_by": "tomonidan yaratilgan"
+        },
+        "version_history": {
+          "label": "Versiya tarixi",
+          "current_version": "Joriy versiya",
+          "highlight_changes": "O'zgarishlarni ajratib ko'rsatish"
+        }
+      },
+      "assets": {
+        "label": "Aktivlar",
+        "download_button": "Yuklab olish",
+        "empty_state": {
+          "title": "Rasmlar etishmayotgan",
+          "description": "Bu yerda koʻrish uchun rasmlarni qoʻshing."
+        }
+      },
+      "comments": {
+        "label": "Fikrlar",
+        "empty_state": {
+          "title": "Izohlar yo‘q",
+          "description": "Bu yerda ko‘rish uchun sharhlar qo‘shing."
+        }
+      }
+    },
+    "toasts": {
+      "errors": {
+        "wrong_name": "Yopishqoq nom 100 ta belgidan oshmasligi kerak.",
+        "already_exists": "Ta'rifi yo'q yopishqoq allaqachon mavjud"
+      },
+      "created": {
+        "title": "Yopishqoq yaratilgan",
+        "message": "Yopishqoq muvaffaqiyatli yaratildi"
+      },
+      "not_created": {
+        "title": "Yopishqoq yaratilmagan",
+        "message": "Yopishqoqni yaratib bo'lmadi"
+      },
+      "updated": {
+        "title": "Sticky yangilandi",
+        "message": "Yopishqoq muvaffaqiyatli yangilandi"
+      },
+      "not_updated": {
+        "title": "Sticky yangilanmagan",
+        "message": "Yopishqoqni yangilab bo'lmadi"
+      },
+      "removed": {
+        "title": "Yopishqoq olib tashlandi",
+        "message": "Yopishqoq muvaffaqiyatli olib tashlandi"
+      },
+      "not_removed": {
+        "title": "Yopishqoq olib tashlanmadi",
+        "message": "Yopishqoqni olib tashlab bo'lmadi"
+      }
+    },
+    "open_button": "Navigatsiya panelini oching",
+    "close_button": "Navigatsiya panelini yoping",
+    "outline_floating_button": "Ochiq kontur"
+  },
+  "page_actions": {
+    "move_page": {
+      "submit_button": {
+        "default": "Ko'chirish",
+        "loading": "Harakatlanuvchi"
+      },
+      "cannot_move_to_teamspace": "Shaxsiy va umumiy sahifalarni jamoa maydoniga koʻchirib boʻlmaydi.",
+      "placeholders": {
+        "workspace_to_all": "Loyihalar va jamoaviy maydonlarni qidiring",
+        "workspace_to_project": "Loyihalarni qidirish",
+        "project_to_all": "Loyihalar va jamoaviy maydonlarni qidiring",
+        "project_to_project": "Loyihalarni qidirish",
+        "project_to_all_with_wiki": "Wiki to'plamlari, loyihalari va jamoaviy maydonlarni qidiring",
+        "project_to_project_with_wiki": "Wiki to'plamlari va loyihalarini qidiring"
+      },
+      "toasts": {
+        "success": {
+          "title": "Muvaffaqiyat!",
+          "message": "Sahifa muvaffaqiyatli koʻchirildi."
+        },
+        "error": {
+          "title": "Xato!",
+          "message": "Sahifani ko‘chirib bo‘lmadi. Keyinroq qayta urinib ko‘ring."
+        },
+        "collection_error": {
+          "title": "Wiki-ga ko'chirildi",
+          "message": "Sahifa wiki-ga koʻchirildi, lekin tanlangan toʻplamga qoʻshib boʻlmadi. Umumiy holda qoladi."
+        }
+      }
+    },
+    "remove_from_collection": {
+      "label": "To'plamdan olib tashlang",
+      "success_message": "Sahifa kolleksiyadan olib tashlandi.",
+      "error_message": "Sahifani to‘plamdan olib tashlab bo‘lmadi. Iltimos, qayta urinib koʻring."
+    }
+  }
+}

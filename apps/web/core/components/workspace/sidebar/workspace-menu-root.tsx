@@ -24,7 +24,7 @@ import { AppSidebarItem } from "@/components/sidebar/sidebar-item";
 import { useAppTheme } from "@/hooks/store/use-app-theme";
 import { useWorkspace } from "@/hooks/store/use-workspace";
 import { useUser, useUserProfile } from "@/hooks/store/user";
-import { useInstance } from "@/hooks/store/use-instance";
+import { useCreationQuotas } from "@/hooks/use-creation-quotas";
 // components
 import { WorkspaceLogo } from "../logo";
 import SidebarDropdownItem from "./dropdown-item";
@@ -37,13 +37,13 @@ export const WorkspaceMenuRoot = observer(function WorkspaceMenuRoot(props: Work
   const { variant } = props;
   // store hooks
   const { toggleSidebar, toggleAnySidebarDropdown } = useAppTheme();
-  const { config } = useInstance();
+  const { data: creationQuotas } = useCreationQuotas();
   const { data: currentUser } = useUser();
   const { signOut } = useUser();
   const { updateUserProfile } = useUserProfile();
   const { currentWorkspace: activeWorkspace, workspaces } = useWorkspace();
   // derived values
-  const isWorkspaceCreationDisabled = config?.is_workspace_creation_disabled ?? false;
+  const canCreateWorkspace = Boolean(creationQuotas?.workspace.can_create);
   // translation
   const { t } = useTranslation();
   // local state
@@ -187,7 +187,7 @@ export const WorkspaceMenuRoot = observer(function WorkspaceMenuRoot(props: Work
                     )}
                   </div>
                   <div className="flex w-full flex-col items-start justify-start gap-2 px-4 py-2 text-13">
-                    {!isWorkspaceCreationDisabled && (
+                    {canCreateWorkspace && (
                       <Link href="/create-workspace" className="w-full">
                         <Menu.Item
                           as="div"

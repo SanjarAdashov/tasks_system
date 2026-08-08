@@ -20,6 +20,8 @@ from plane.license.api.views import (
     InstanceWorkSpaceEndpoint,
     InstanceUserEndpoint,
     InstanceUserBlockEndpoint,
+    InstanceUserCreationQuotaEndpoint,
+    InstanceProjectUserGroupContextEndpoint,
     InstanceUserUnblockEndpoint,
 )
 
@@ -84,5 +86,15 @@ urlpatterns = [
         "users/<uuid:user_id>/unblock/",
         InstanceUserUnblockEndpoint.as_view(),
         name="instance-user-unblock",
+    ),
+    path(
+        "users/<uuid:user_id>/creation-quotas/",
+        InstanceUserCreationQuotaEndpoint.as_view(),
+        name="instance-user-creation-quotas",
+    ),
+    path(
+        "project-user-groups/",
+        InstanceProjectUserGroupContextEndpoint.as_view(),
+        name="instance-project-user-groups",
     ),
 ]

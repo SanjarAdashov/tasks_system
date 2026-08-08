@@ -21,6 +21,7 @@ import { StateDropdown } from "@/components/dropdowns/state/dropdown";
 // hooks
 import { WithDisplayPropertiesHOC } from "@/components/issues/issue-layouts/properties/with-display-properties-HOC";
 import { useProjectState } from "@/hooks/store/use-project-state";
+import { useProjectWorkItemFieldVisibility } from "@/hooks/use-project-work-item-field-visibility";
 
 type Props = {
   workspaceSlug: string;
@@ -40,9 +41,19 @@ type Props = {
 };
 
 export const SubIssuesListItemProperties = observer(function SubIssuesListItemProperties(props: Props) {
-  const { workspaceSlug, parentIssueId, issueId, canEdit, updateSubIssue, displayProperties, issue } = props;
+  const {
+    workspaceSlug,
+    parentIssueId,
+    issueId,
+    canEdit,
+    updateSubIssue,
+    displayProperties: storedDisplayProperties,
+    issue,
+  } = props;
   const { t } = useTranslation();
   const { getStateById } = useProjectState();
+  const { visibleDisplayProperties } = useProjectWorkItemFieldVisibility(workspaceSlug, issue.project_id ?? undefined);
+  const displayProperties = visibleDisplayProperties(storedDisplayProperties);
 
   const handleEventPropagation = (e: SyntheticEvent<HTMLDivElement>) => {
     e.stopPropagation();

@@ -8,7 +8,7 @@ import { useCallback, useRef, useState } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 // plane imports
-import { EUserPermissions, EUserPermissionsLevel, PROJECT_TRACKER_ELEMENTS } from "@plane/constants";
+import { PROJECT_TRACKER_ELEMENTS } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import { EmptyStateCompact } from "@plane/propel/empty-state";
 import { PlusIcon, SearchIcon } from "@plane/propel/icons";
@@ -21,7 +21,7 @@ import { SidebarProjectsListItem } from "@/components/workspace/sidebar/projects
 // hooks
 import { useAppTheme } from "@/hooks/store/use-app-theme";
 import { useProject } from "@/hooks/store/use-project";
-import { useUserPermissions } from "@/hooks/store/user";
+import { useCreationQuotas } from "@/hooks/use-creation-quotas";
 import type { TProject } from "@plane/types";
 import { ExtendedSidebarWrapper } from "./extended-sidebar-wrapper";
 
@@ -37,7 +37,7 @@ export const ExtendedProjectSidebar = observer(function ExtendedProjectSidebar()
   const { t } = useTranslation();
   const { isExtendedProjectSidebarOpened, toggleExtendedProjectSidebar } = useAppTheme();
   const { getPartialProjectById, joinedProjectIds: joinedProjects, updateProjectView } = useProject();
-  const { allowPermissions } = useUserPermissions();
+  const { data: creationQuotas } = useCreationQuotas();
 
   const handleOnProjectDrop = (
     sourceId: string | undefined,
@@ -77,9 +77,8 @@ export const ExtendedProjectSidebar = observer(function ExtendedProjectSidebar()
   });
 
   // auth
-  const isAuthorizedUser = allowPermissions(
-    [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
-    EUserPermissionsLevel.WORKSPACE
+  const isAuthorizedUser = Boolean(
+    creationQuotas?.projects.find((quota) => quota.workspace_slug === workspaceSlug?.toString())?.can_create
   );
 
   const handleClose = useCallback(() => toggleExtendedProjectSidebar(false), [toggleExtendedProjectSidebar]);

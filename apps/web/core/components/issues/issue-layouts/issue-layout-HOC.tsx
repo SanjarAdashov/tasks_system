@@ -23,6 +23,7 @@ function ActiveLoader(props: { layout: EIssueLayoutTypes }) {
   const { layout } = props;
   switch (layout) {
     case EIssueLayoutTypes.LIST:
+    case EIssueLayoutTypes.CUSTOM_GROUPING:
       return <ListLayoutLoader />;
     case EIssueLayoutTypes.KANBAN:
       return <KanbanLayoutLoader />;

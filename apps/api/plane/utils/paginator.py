@@ -8,7 +8,7 @@ from collections import defaultdict
 from collections.abc import Sequence
 
 # Django imports
-from django.db.models import Count, F, Window
+from django.db.models import Count, F, Q, Window
 from django.db.models.functions import RowNumber
 
 # Third party imports
@@ -385,6 +385,84 @@ class GroupedOffsetPaginator(OffsetPaginator):
         else:
             processed_results = {}
         return processed_results
+
+
+class CustomPropertyMultiValueGroupedOffsetPaginator(OffsetPaginator):
+    """Groups JSON array custom-property values while preserving one page per group."""
+
+    def __init__(
+        self,
+        queryset,
+        group_by_field_name,
+        group_by_fields,
+        count_filter,
+        total_count_queryset=None,
+        *args,
+        **kwargs,
+    ):
+        super().__init__(queryset, total_count_queryset=total_count_queryset, *args, **kwargs)
+        self.group_by_field_name = group_by_field_name
+        self.group_by_fields = group_by_fields
+        self.count_filter = count_filter
+        self.selected_ids_by_group = {}
+        self.total_by_group = {}
+
+    def _group_queryset(self, group_id):
+        if str(group_id) == "None":
+            return self.queryset.filter(
+                Q(**{f"{self.group_by_field_name}__isnull": True})
+                | Q(**{self.group_by_field_name: []})
+            )
+        return self.queryset.filter(**{f"{self.group_by_field_name}__contains": [str(group_id)]})
+
+    def get_result(self, limit=50, cursor=None):
+        if cursor is None:
+            cursor = Cursor(0, 0, 0)
+        limit = min(limit, self.max_limit)
+        page = cursor.offset
+        offset = page * (cursor.value or limit)
+        stop = offset + (cursor.value or limit)
+        selected_ids = []
+        has_next = False
+
+        for group_id in self.group_by_fields:
+            group_key = str(group_id)
+            group_queryset = self._group_queryset(group_id)
+            if self.key:
+                group_queryset = group_queryset.order_by(
+                    F(*self.key).desc(nulls_last=True) if self.desc else F(*self.key).asc(nulls_last=True),
+                    F("created_at").desc(),
+                )
+            self.total_by_group[group_key] = group_queryset.count()
+            ids = [str(value) for value in group_queryset.values_list("id", flat=True)[offset : stop + 1]]
+            has_next = has_next or len(ids) > limit
+            ids = ids[:limit]
+            self.selected_ids_by_group[group_key] = ids
+            selected_ids.extend(ids)
+
+        unique_ids = list(dict.fromkeys(selected_ids))
+        results = self.queryset.filter(id__in=unique_ids)
+        next_cursor = Cursor(limit, page + 1, False, has_next)
+        prev_cursor = Cursor(limit, page - 1, True, page > 0)
+        count = self.queryset.count()
+        max_group_count = max(self.total_by_group.values(), default=0)
+        return CursorResult(
+            results=results,
+            next=next_cursor,
+            prev=prev_cursor,
+            hits=count,
+            max_hits=math.ceil(max_group_count / limit) if limit else 0,
+        )
+
+    def process_results(self, results):
+        result_map = {str(result["id"]): result for result in results}
+        return {
+            group_id: {
+                "results": [result_map[issue_id] for issue_id in issue_ids if issue_id in result_map],
+                "total_results": self.total_by_group.get(group_id, 0),
+            }
+            for group_id, issue_ids in self.selected_ids_by_group.items()
+        }
 
 
 class SubGroupedOffsetPaginator(OffsetPaginator):

@@ -1,0 +1,508 @@
+{
+  "workspace_settings": {
+    "label": "Ish maydoni sozlamalari",
+    "page_label": "{workspace} - Umumiy sozlamalar",
+    "key_created": "Kalit yaratildi",
+    "copy_key": "Ushbu maxfiy kalitdan nusxa oling va Plane sahifalarida saqlang. Yopish tugmasini bosganingizdan keyin bu kalitni ko'ra olmaysiz. Kalitni o'z ichiga olgan CSV fayli yuklab olindi.",
+    "token_copied": "Token vaqtinchalik xotiraga nusxalandi.",
+    "settings": {
+      "general": {
+        "title": "Umumiy",
+        "upload_logo": "Logotip yuklash",
+        "edit_logo": "Logotipni tahrirlash",
+        "name": "Ish maydoni nomi",
+        "company_size": "Kompaniya hajmi",
+        "url": "Ish maydoni URL",
+        "workspace_timezone": "Ish maydoni vaqt zonasi",
+        "update_workspace": "Ish joyini yangilash",
+        "delete_workspace": "Ushbu ish maydonini o'chiring",
+        "delete_workspace_description": "Ish maydoni o'chirilganda, ushbu ish maydonidagi barcha ma'lumotlar va resurslar butunlay o'chiriladi va ularni qayta tiklab bo'lmaydi.",
+        "delete_btn": "Ushbu ish maydonini o'chiring",
+        "delete_modal": {
+          "title": "Haqiqatan ham bu ish joyini oʻchirib tashlamoqchimisiz?",
+          "description": "Sizda pulli rejalarimizdan birining faol sinov muddati bor. Davom etish uchun avval uni bekor qiling.",
+          "dismiss": "Rad etish",
+          "cancel": "Sinov muddatini bekor qilish",
+          "success_title": "Ish maydoni oʻchirildi.",
+          "success_message": "Tez orada profil sahifangizga o'tasiz.",
+          "error_title": "Bu ish bermadi.",
+          "error_message": "Yana urinib koʻring, iltimos."
+        },
+        "errors": {
+          "name": {
+            "required": "Ism talab qilinadi",
+            "max_length": "Ish maydoni nomi 80 belgidan oshmasligi kerak"
+          },
+          "company_size": {
+            "required": "Kompaniya hajmi talab qilinadi",
+            "select_a_range": "Tashkilot hajmini tanlang"
+          }
+        }
+      },
+      "members": {
+        "title": "A'zolar",
+        "add_member": "A'zo qo'shing",
+        "pending_invites": "Kutilayotgan takliflar",
+        "invitations_sent_successfully": "Taklifnomalar muvaffaqiyatli yuborildi",
+        "leave_confirmation": "Ish joyini tark etmoqchimisiz? Siz endi bu ish maydoniga kira olmaysiz. Bu amalni ortga qaytarib bo‘lmaydi.",
+        "details": {
+          "full_name": "To'liq ism",
+          "display_name": "Ko'rsatilgan nom",
+          "email_address": "Elektron pochta manzili",
+          "account_type": "Hisob turi",
+          "authentication": "Autentifikatsiya",
+          "joining_date": "Qo'shilish sanasi"
+        },
+        "modal": {
+          "title": "Odamlarni hamkorlikka taklif qiling",
+          "description": "Odamlarni ish joyingizda hamkorlik qilishga taklif qiling.",
+          "button": "Taklifnomalarni yuboring",
+          "button_loading": "Taklifnomalarni yuborish",
+          "placeholder": "name@company.com",
+          "errors": {
+            "required": "Ularni taklif qilish uchun bizga elektron pochta manzili kerak.",
+            "invalid": "Elektron pochta manzili yaroqsiz"
+          }
+        }
+      },
+      "billing_and_plans": {
+        "heading": "Hisob-kitob va rejalar",
+        "description": "Rejangizni tanlang, obunalarni boshqaring va ehtiyojlaringiz oshgani sayin osongina yangilang.",
+        "title": "Hisob-kitob va rejalar",
+        "current_plan": "Joriy reja",
+        "free_plan": "Siz hozirda bepul tarif rejasidan foydalanmoqdasiz",
+        "view_plans": "Rejalarni ko'rish"
+      },
+      "exports": {
+        "heading": "Eksport",
+        "description": "Loyiha ma'lumotlaringizni turli formatlarda eksport qiling va yuklab olish havolalari bilan eksport tarixiga kiring.",
+        "title": "Eksport",
+        "exporting": "Eksport qilinmoqda",
+        "previous_exports": "Oldingi eksport",
+        "export_separate_files": "Ma'lumotlarni alohida fayllarga eksport qiling",
+        "exporting_projects": "Loyihani eksport qilish",
+        "format": "Format",
+        "filters_info": "Mezonlaringiz asosida muayyan ish elementlarini eksport qilish uchun filtrlarni qo'llang.",
+        "modal": {
+          "title": "Kimga eksport qilish",
+          "toasts": {
+            "success": {
+              "title": "Eksport muvaffaqiyatli",
+              "message": "Siz oldingi eksportdan eksport qilingan {entity} ni yuklab olishingiz mumkin bo'ladi."
+            },
+            "error": {
+              "title": "Eksport amalga oshmadi",
+              "message": "Eksport muvaffaqiyatsiz tugadi. Iltimos, qayta urinib koʻring."
+            }
+          }
+        }
+      },
+      "webhooks": {
+        "heading": "Webhuklar",
+        "description": "Loyiha voqealari sodir bo'lganda tashqi xizmatlarga bildirishnomalarni avtomatlashtirish.",
+        "title": "Webhuklar",
+        "add_webhook": "Veb-huk qo'shing",
+        "modal": {
+          "title": "Webhook yarating",
+          "details": "Webhook tafsilotlari",
+          "payload": "Foydali yuk URL",
+          "question": "Ushbu vebhukni ishga tushirishni qaysi hodisalarni xohlaysiz?",
+          "error": "URL talab qilinadi"
+        },
+        "secret_key": {
+          "title": "Yashirin kalit",
+          "message": "Webhook foydali yukiga kirish uchun token yarating"
+        },
+        "options": {
+          "all": "Menga hamma narsani yuboring",
+          "individual": "Shaxsiy voqealarni tanlang"
+        },
+        "toasts": {
+          "created": {
+            "title": "Webhook yaratilgan",
+            "message": "Vebhuk muvaffaqiyatli yaratildi"
+          },
+          "not_created": {
+            "title": "Webhook yaratilmadi",
+            "message": "Vebhuk yaratib bo‘lmadi"
+          },
+          "updated": {
+            "title": "Webhook yangilandi",
+            "message": "Veb-huk muvaffaqiyatli yangilandi"
+          },
+          "not_updated": {
+            "title": "Webhook yangilanmagan",
+            "message": "Vebhukni yangilab bo‘lmadi"
+          },
+          "removed": {
+            "title": "Webhook olib tashlandi",
+            "message": "Vebhuk muvaffaqiyatli olib tashlandi"
+          },
+          "not_removed": {
+            "title": "Webhook olib tashlanmadi",
+            "message": "Vebhukni olib tashlab bo‘lmadi"
+          },
+          "secret_key_copied": {
+            "message": "Maxfiy kalit vaqtinchalik xotiraga nusxalandi."
+          },
+          "secret_key_not_copied": {
+            "message": "Maxfiy kalitni nusxalashda xatolik yuz berdi."
+          }
+        }
+      },
+      "api_tokens": {
+        "heading": "Tokenlarga kirish",
+        "description": "Maʼlumotlaringizni tashqi tizimlar va ilovalar bilan birlashtirish uchun xavfsiz API tokenlarini yarating.",
+        "title": "Tokenlarga kirish",
+        "add_token": "Kirish tokenini qo'shing",
+        "create_token": "Token yarating",
+        "never_expires": "Hech qachon tugamaydi",
+        "generate_token": "Token yaratish",
+        "generating": "Yaratilmoqda",
+        "delete": {
+          "title": "Kirish tokenini oʻchirish",
+          "description": "Ushbu tokendan foydalanadigan har qanday ilova endi Plane maʼlumotlariga kira olmaydi. Bu amalni ortga qaytarib bo‘lmaydi.",
+          "success": {
+            "title": "Muvaffaqiyat!",
+            "message": "Token muvaffaqiyatli o'chirildi"
+          },
+          "error": {
+            "title": "Xato!",
+            "message": "Tokenni oʻchirib boʻlmadi"
+          }
+        }
+      },
+      "integrations": {
+        "title": "Integratsiyalar",
+        "heading": "Integratsiyalar",
+        "description": "Ishingizni butun ish jarayoni ekotizimida sinxronlashtirish uchun mashhur vositalar va xizmatlarga ulaning.",
+        "page_title": "Mavjud ilovalarda yoki o'zingizning Plane ma'lumotlaringiz bilan ishlang.",
+        "page_description": "Ushbu ish maydoni yoki siz tomonidan ishlatiladigan barcha integratsiyalarni ko'ring."
+      },
+      "imports": {
+        "title": "Import",
+        "heading": "Import",
+        "description": "Ish oqimi integratsiyasini soddalashtirish uchun mavjud loyihalarni boshqarish vositalaridan ma'lumotlarni ulang va import qiling."
+      },
+      "worklogs": {
+        "title": "Ish jurnallari",
+        "heading": "Ish jurnallari",
+        "description": "Har qanday loyihadagi har bir kishi uchun ish jurnallarini AKA vaqt jadvallarini yuklab oling."
+      },
+      "group_syncing": {
+        "title": "Guruh sinxronlash",
+        "heading": "Guruh sinxronlash",
+        "description": "Identifikatsiya provayderlari guruhlarini loyihalar va rollarga bog'lang. Guruh aʼzoligi IdPʼda oʻzgarganda foydalanuvchi ruxsati avtomatik ravishda yangilanadi, bu esa ishga kirish va tashqariga chiqishni osonlashtiradi.",
+        "enable": {
+          "title": "Guruh bilan sinxronlashni yoqish",
+          "description": "Foydalanuvchilarni identifikatsiya provayderlari guruhlari asosida loyihalarga avtomatik qo‘shish."
+        },
+        "config": {
+          "title": "Guruh sinxronlashni sozlang",
+          "description": "Identifikatsiya provayderlari guruhlari loyihalar va rollarga qanday solishtirilishini sozlang.",
+          "sync_on_login": {
+            "title": "Kirishda sinxronlash",
+            "description": "Foydalanuvchi tizimga kirganda guruh aʼzoligi va loyihaga kirishni yangilang."
+          },
+          "sync_offline": {
+            "title": "Oflayn sinxronlash",
+            "description": "Foydalanuvchilarning tizimga kirishini kutmasdan, har olti soatda avtomatik sinxronlashni amalga oshiradi."
+          },
+          "auto_remove": {
+            "title": "Avtomatik olib tashlash",
+            "description": "Foydalanuvchilar guruhga mos kelmasa, avtomatik ravishda loyihalardan olib tashlang."
+          },
+          "group_attribute_key": {
+            "title": "Guruh atribut kaliti",
+            "description": "Identifikatsiya provayderi atributi foydalanuvchi guruhlarini aniqlash va sinxronlashtirish uchun ishlatiladi.",
+            "placeholder": "Guruhlar"
+          }
+        },
+        "group_mapping": {
+          "title": "Guruh xaritasi",
+          "description": "Identifikatsiya provayderlari guruhlarini loyihalar va rollarga bog'lang.",
+          "button_text": "Yangi guruh sinxronizatsiyasini qo'shing"
+        },
+        "toast": {
+          "updating": "Guruhlarni sinxronlashtirish funksiyasi yangilanmoqda",
+          "success": "Guruh bilan sinxronlash funksiyasi muvaffaqiyatli yangilandi.",
+          "error": "Guruhlarni sinxronlash funksiyasini yangilab bo‘lmadi!"
+        },
+        "delete_modal": {
+          "title": "Guruh sinxronlashni o'chirish",
+          "content": "Ushbu identifikatsiya guruhidagi yangi foydalanuvchilar endi loyihaga qo'shilmaydi. Allaqachon qo‘shilgan foydalanuvchilar joriy rolini saqlab qoladilar."
+        },
+        "modal": {
+          "idp_group_name": {
+            "text": "Foydalanuvchilar guruhi",
+            "required": "Foydalanuvchilar guruhi talab qilinadi",
+            "placeholder": "IdP guruh nomlarini kiriting"
+          },
+          "project": {
+            "text": "Loyiha",
+            "required": "Loyiha talab qilinadi",
+            "placeholder": "Loyihani tanlang"
+          },
+          "default_role": {
+            "text": "Loyiha roli",
+            "required": "Loyiha roli talab qilinadi",
+            "placeholder": "Loyiha rolini tanlang"
+          }
+        }
+      },
+      "identity": {
+        "title": "Identifikatsiya",
+        "heading": "Identifikatsiya",
+        "description": "Domeningizni sozlang va Yagona tizimga kirishni yoqing"
+      },
+      "project_states": {
+        "title": "Loyiha holatlari",
+        "heading": "Barcha loyihalar boʻyicha taraqqiyot koʻrinishini koʻring.",
+        "description": "Loyiha holatlari - bu Plane-faqat har qanday loyiha mulki boʻyicha barcha loyihalaringizning borishini kuzatish uchun moʻljallangan xususiyatdir.",
+        "go_to_settings": "Sozlamalarga o'ting"
+      },
+      "projects": {
+        "title": "Loyihalar",
+        "description": "Loyiha holatini boshqaring va loyiha yorliqlari va boshqa konfiguratsiyalarni yoqing.",
+        "tabs": {
+          "states": "Loyiha holatlari",
+          "labels": "Loyiha belgilari"
+        }
+      },
+      "templates": {
+        "title": "Shablonlar",
+        "heading": "Shablonlar",
+        "description": "Shablonlardan foydalanganda loyihalar, ish elementlari va sahifalarni yaratishga sarflangan vaqtni 80% tejang."
+      },
+      "relations": {
+        "title": "Aloqalar",
+        "heading": "Aloqalar",
+        "description": "Ish makoningiz boʻylab ish elementlarini bogʻlaydigan aloqa turlarini yarating va boshqaring."
+      },
+      "cancel_trial": {
+        "title": "Avval sinov muddatini bekor qiling.",
+        "description": "Sizda pulli rejalarimizdan birining faol sinov muddati bor. Davom etish uchun avval uni bekor qiling.",
+        "dismiss": "Rad etish",
+        "cancel": "Sinov muddatini bekor qilish",
+        "cancel_success_title": "Sinov bekor qilindi.",
+        "cancel_success_message": "Endi siz ish maydonini o'chirishingiz mumkin.",
+        "cancel_error_title": "Bu ish bermadi.",
+        "cancel_error_message": "Yana urinib koʻring, iltimos."
+      },
+      "applications": {
+        "internal": "Ichki",
+        "title": "Ilovalar",
+        "applicationId_copied": "Ilova identifikatori vaqtinchalik xotiraga nusxalandi",
+        "clientId_copied": "Mijoz identifikatori vaqtinchalik xotiraga nusxalandi",
+        "clientSecret_copied": "Mijoz siri vaqtinchalik xotiraga nusxalandi",
+        "third_party_apps": "Uchinchi tomon ilovalari",
+        "your_apps": "Ilovalaringiz",
+        "connect": "Ulanish",
+        "connected": "Ulangan",
+        "disconnect": "Ulanishni uzing",
+        "install": "O'rnatish",
+        "installed": "Oʻrnatilgan",
+        "configure": "Sozlang",
+        "app_available": "Siz ushbu ilovani Plane ish maydoni bilan foydalanishga tayyorladingiz",
+        "app_credentials_regenrated": {
+          "title": "Ilova hisob maʼlumotlari muvaffaqiyatli qayta yaratildi",
+          "description": "Mijoz sirini hamma joyda almashtiring. Avvalgi sir endi haqiqiy emas."
+        },
+        "app_created": {
+          "title": "Ilova muvaffaqiyatli yaratildi",
+          "description": "Ilovani Plane ish joyiga oʻrnatish uchun hisob maʼlumotlaridan foydalaning"
+        },
+        "installed_apps": "O'rnatilgan ilovalar",
+        "all_apps": "Barcha ilovalar",
+        "internal_apps": "Ichki ilovalar",
+        "app_name_title": "Ilova nomi",
+        "app_description_title": {
+          "label": "Uzoq tavsif",
+          "placeholder": "Bozor uchun uzun tavsif yozing. Buyruqlar uchun \"/\" tugmasini bosing."
+        },
+        "authorization_grant_type": {
+          "title": "Ulanish turi",
+          "description": "Ilovangiz ish maydoni uchun bir marta oʻrnatilishi kerakligini tanlang yoki har bir foydalanuvchiga oʻz hisobini ulashiga ruxsat bering"
+        },
+        "website": {
+          "title": "Veb-sayt",
+          "description": "Ilovangiz veb-saytiga havola.",
+          "placeholder": "https://example.com"
+        },
+        "app_maker": {
+          "title": "Ilova yaratuvchisi",
+          "description": "Ilovani yaratgan shaxs yoki tashkilot."
+        },
+        "app_maker_error": "Ishlab chiqaruvchi nomi talab qilinadi",
+        "setup_url": {
+          "label": "URL manzilini sozlash",
+          "description": "Foydalanuvchilar ilovani oʻrnatishda ushbu URL manziliga yoʻnaltiriladi.",
+          "placeholder": "https://example.com/setup"
+        },
+        "webhook_url": {
+          "label": "Webhook URL manzili",
+          "description": "Bu yerda biz ilovangiz oʻrnatilgan ish joylaridan webhook voqealari va yangilanishlarni yuboramiz.",
+          "placeholder": "https://example.com/webhook"
+        },
+        "webhook_secret": {
+          "label": "Webhook siri",
+          "description": "Kiruvchi webhook so'rovlarini tekshirish uchun foydalaniladigan maxfiy.",
+          "placeholder": "Tasodifiy maxfiy kalitni kiriting"
+        },
+        "redirect_uris": {
+          "label": "Qayta yo'naltirish URI (bo'sh joy ajratilgan)",
+          "description": "Foydalanuvchilar Plane bilan autentifikatsiya qilinganidan keyin ushbu yo‘lga yo‘naltiriladi.",
+          "placeholder": "https://example.com https://example.com/"
+        },
+        "app_available_description": "Foydalanishni boshlash uchun Plane ish joyini ulang",
+        "client_id_and_secret": "Mijoz identifikatori va siri",
+        "client_id_and_secret_description": "Ushbu maxfiy kalitdan nusxa oling va Sahifalar ilovasida saqlang. Yopish tugmasini bosganingizdan keyin bu kalitni boshqa ko‘ra olmaysiz.",
+        "client_id_and_secret_download": "Bu yerdan kalit bilan CSV ni yuklab olishingiz mumkin.",
+        "application_id": "Ilova identifikatori",
+        "client_id": "Mijoz identifikatori",
+        "client_secret": "Mijoz siri",
+        "export_as_csv": "CSV sifatida eksport qiling",
+        "slug_already_exists": "Slug allaqachon mavjud",
+        "failed_to_create_application": "Ilova yaratib bo‘lmadi",
+        "upload_logo": "Logotip yuklash",
+        "app_name_error": "Ilova nomi talab qilinadi",
+        "app_short_description_title": "Qisqacha tavsif",
+        "app_short_description_error": "Ilovaning qisqacha tavsifi talab qilinadi",
+        "app_description_error": "Ilova tavsifi talab qilinadi",
+        "app_slug_title": "Ilova slug",
+        "app_slug_error": "Ilova slug'i talab qilinadi",
+        "invalid_website_error": "Yaroqsiz veb-sayt",
+        "webhook_url_title": "Webhook URL manzili",
+        "webhook_url_error": "Webhook URL manzili talab qilinadi",
+        "invalid_webhook_url_error": "Yaroqsiz vebhuk URL",
+        "redirect_uris_title": "URI-larni qayta yo'naltirish",
+        "redirect_uris_error": "Qayta yo'naltirish URI'lari talab qilinadi",
+        "invalid_redirect_uris_error": "Qayta yo'naltirish URI'lari noto'g'ri",
+        "redirect_uris_description": "Ilova foydalanuvchidan keyin yoʻnaltiriladigan boʻsh joy ajratilgan URI kodlarini kiriting, masalan, https://example.com https://example.com/",
+        "authorized_javascript_origins_title": "Ruxsat etilgan Javascript Origins",
+        "authorized_javascript_origins_error": "Vakolatli Javascript Origins talab qilinadi",
+        "invalid_authorized_javascript_origins_error": "Yaroqsiz vakolatli Javascript Origins",
+        "authorized_javascript_origins_description": "Ilovaga soʻrovlar yuborishi mumkin boʻlgan manbalarni boʻsh joydan ajrating, masalan, app.com example.com",
+        "create_app": "Ilova yaratish",
+        "update_app": "Ilovani yangilash",
+        "build_your_own_app": "O'z ilovangizni yarating",
+        "edit_app_details": "Ilova tafsilotlarini tahrirlash",
+        "regenerate_client_secret_description": "Mijoz sirini qayta tiklang. Agar siz sirni qayta tiklasangiz, kalitni nusxalashingiz yoki darhol CSV fayliga yuklab olishingiz mumkin.",
+        "regenerate_client_secret": "Mijoz sirini qayta tiklang",
+        "regenerate_client_secret_confirm_title": "Mijoz sirini qayta tiklamoqchimisiz?",
+        "regenerate_client_secret_confirm_description": "Ushbu sirni ishlatadigan ilova ishlashni to'xtatadi. Ilovadagi sirni yangilashingiz kerak bo'ladi.",
+        "regenerate_client_secret_confirm_cancel": "Bekor qilish",
+        "regenerate_client_secret_confirm_regenerate": "Qayta tiklash",
+        "read_only_access_to_workspace": "Ish joyingizga faqat oʻqish uchun ruxsat",
+        "write_access_to_workspace": "Ish joyingizga yozish ruxsati",
+        "read_only_access_to_user_profile": "Foydalanuvchi profilingizga faqat o'qish uchun ruxsat",
+        "write_access_to_user_profile": "Foydalanuvchi profilingizga yozish ruxsati",
+        "connect_app_to_workspace": "{app} ish joyingizga ulang {workspace}",
+        "user_permissions": "Foydalanuvchi ruxsatlari",
+        "user_permissions_description": "Foydalanuvchi ruxsatlari foydalanuvchi profiliga kirish huquqini berish uchun ishlatiladi.",
+        "workspace_permissions": "Ish maydoni ruxsatnomalari",
+        "workspace_permissions_description": "Ish maydoni ruxsatlari ish maydoniga ruxsat berish uchun ishlatiladi.",
+        "with_the_permissions": "ruxsatlar bilan",
+        "app_consent_title": "{app} Plane ish joyingiz va profilingizga ruxsat so‘ramoqda.",
+        "choose_workspace_to_connect_app_with": "Ilovani ulash uchun ish joyini tanlang",
+        "app_consent_workspace_permissions_title": "{app} xohlaydi",
+        "app_consent_user_permissions_title": "{app} shuningdek, foydalanuvchidan quyidagi resurslarga ruxsat soʻrashi mumkin. Ushbu ruxsatlar faqat foydalanuvchi tomonidan so'raladi va ruxsat etiladi.",
+        "app_consent_accept_title": "Qabul qilib, siz",
+        "app_consent_accept_1": "Ilovadan Plane ichida yoki undan tashqarida foydalanishingiz mumkin boʻlgan joyda Plane maʼlumotlaringizga ilovaga kirishiga ruxsat bering.",
+        "app_consent_accept_2": "{app} Maxfiylik siyosati va Foydalanish shartlariga rozilik bildiring",
+        "accepting": "Qabul qilinmoqda...",
+        "accept": "Qabul qiling",
+        "categories": "Kategoriyalar",
+        "select_app_categories": "Ilova toifalarini tanlang",
+        "categories_title": "Kategoriyalar",
+        "categories_error": "Kategoriyalar talab qilinadi",
+        "invalid_categories_error": "Yaroqsiz toifalar",
+        "categories_description": "Ilovani eng yaxshi tavsiflovchi toifalarni tanlang",
+        "supported_plans": "Qo'llab-quvvatlanadigan rejalar",
+        "supported_plans_description": "Ushbu ilovani o'rnatishi mumkin bo'lgan ish maydoni rejalarini tanlang. Barcha rejalarga ruxsat berish uchun bo'sh qoldiring.",
+        "select_plans": "Rejalarni tanlang",
+        "privacy_policy_url_title": "Maxfiylik siyosati URL manzili",
+        "privacy_policy_url_error": "Maxfiylik siyosati URL manzili talab qilinadi",
+        "invalid_privacy_policy_url_error": "Maxfiylik siyosati URL manzili noto‘g‘ri",
+        "terms_of_service_url_title": "Xizmat shartlari URL",
+        "terms_of_service_url_error": "Xizmat shartlari URL manzili talab qilinadi",
+        "invalid_terms_of_service_url_error": "Xizmat shartlari URL manzili noto‘g‘ri",
+        "support_url_title": "Qo'llab-quvvatlash URL",
+        "support_url_error": "Yordam URL manzili talab qilinadi",
+        "invalid_support_url_error": "Yordam URL manzili noto‘g‘ri",
+        "video_url_title": "Video manzili",
+        "video_url_error": "Video URL manzili talab qilinadi",
+        "invalid_video_url_error": "Video URL manzili noto‘g‘ri",
+        "setup_url_error": "Sozlash URL manzili talab qilinadi",
+        "invalid_setup_url_error": "Sozlash URL manzili noto‘g‘ri",
+        "configuration_url_title": "Konfiguratsiya URL manzili",
+        "configuration_url_error": "Konfiguratsiya URL manzili talab qilinadi",
+        "invalid_configuration_url_error": "Konfiguratsiya URL manzili noto‘g‘ri",
+        "contact_email_title": "Aloqa elektron pochtasi",
+        "contact_email_error": "Aloqa uchun elektron pochta kerak",
+        "invalid_contact_email_error": "Kontakt e-pochta manzili noto‘g‘ri",
+        "upload_attachments": "Qo'shimchalarni yuklash",
+        "uploading_images": "{count} Rasm yuklanmoqda{hisob, koʻplik, bitta {s} boshqa {s}}",
+        "drop_images_here": "Tasvirlarni bu yerga tashlang",
+        "click_to_upload_images": "Rasmlarni yuklash uchun bosing",
+        "invalid_file_or_exceeds_size_limit": "Fayl noto‘g‘ri yoki o‘lcham chegarasidan oshib ketdi ({size} MB)",
+        "uploading": "Yuklanmoqda...",
+        "upload_and_save": "Yuklash va saqlash",
+        "app_consent_no_access_title": "O'rnatish uchun so'rov",
+        "app_consent_no_access_description": "Bu ilovani ish maydoni administratori oʻrnatgandan keyingina oʻrnatish mumkin. Davom etish uchun ish joyi administratoriga murojaat qiling.",
+        "app_consent_unapproved_title": "Bu ilova hali Plane tomonidan ko‘rib chiqilmagan yoki tasdiqlanmagan.",
+        "app_consent_unapproved_description": "Bu ilovani ish joyingizga ulashdan oldin unga ishonch hosil qiling.",
+        "go_to_app": "Ilovaga o'ting",
+        "enable_app_mentions": "Ilova eslatmalarini yoqing",
+        "enable_app_mentions_tooltip": "Bu yoqilganda, foydalanuvchilar ushbu ilovaga Ish elementlarini eslatishi yoki belgilashi mumkin.",
+        "scopes": "Qo'llash sohalari",
+        "select_scopes": "Scopes-ni tanlang",
+        "read_access_to": "Faqat o'qish uchun ruxsat",
+        "write_access_to": "Yozish uchun ruxsat",
+        "global_permission_expiration": "Tez orada global qamrovlar tugaydi. Buning o'rniga donador doiralardan foydalaning. Masalan, global o'qish o'rniga project:read dan foydalaning.",
+        "selected_scopes": "{count} tanlandi",
+        "scopes_and_permissions": "Qo'llash doirasi va ruxsatnomalar",
+        "read": "O'qing",
+        "write": "Yozing",
+        "scope_description": {
+          "projects": "Loyihalarga va loyiha bilan bog'liq barcha ob'ektlarga kirish",
+          "wiki": "Wiki va wiki bilan bog'liq barcha ob'ektlarga kirish",
+          "workspaces": "Ish joylariga va ish maydoniga tegishli barcha ob'ektlarga kirish",
+          "stickies": "Yopishqoqlarga va barcha yopishqoq ob'ektlarga kirish",
+          "profile": "Foydalanuvchi profili ma'lumotlariga kirish",
+          "agents": "Agentlarga va barcha agentlarga aloqador shaxslarga kirish",
+          "assets": "Aktivlarga va barcha aktivlarga tegishli ob'ektlarga kirish"
+        }
+      },
+      "plane-intelligence": {
+        "title": "Plane AI",
+        "heading": "Plane AI",
+        "description": "Ishingiz va bilim bazangiz bilan tabiiy ravishda bog‘langan sun’iy intellekt yordamida ishingiz yanada aqlli va tezroq bo‘lishini ko‘ring."
+      },
+      "runners": {
+        "title": "Plane Yuguruvchi",
+        "heading": "Skriptlar",
+        "new_script": "Yangi skript",
+        "description": "Maxsus skriptlar va avtomatlashtirish qoidalari bilan ish oqimlaringizni avtomatlashtiring."
+      }
+    },
+    "empty_state": {
+      "api_tokens": {
+        "title": "Hech qanday kirish tokeni yaratilmagan",
+        "description": "Plane API'lari Plane-dagi ma'lumotlaringizni har qanday tashqi tizim bilan birlashtirish uchun ishlatilishi mumkin. Boshlash uchun token yarating."
+      },
+      "webhooks": {
+        "title": "Hech qanday vebhuk qo'shilmagan",
+        "description": "Haqiqiy vaqtda yangilanishlarni olish va harakatlarni avtomatlashtirish uchun vebhuklarni yarating."
+      },
+      "exports": {
+        "title": "Hozircha eksport yo'q",
+        "description": "Istalgan vaqtda eksport qilsangiz, ma'lumot uchun bu yerda nusxasi ham bo'ladi."
+      },
+      "imports": {
+        "title": "Hozircha import yo'q",
+        "description": "Oldingi barcha importlaringizni shu yerda toping va ularni yuklab oling."
+      }
+    }
+  }
+}

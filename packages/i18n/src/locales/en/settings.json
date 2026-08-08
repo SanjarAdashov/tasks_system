@@ -41,7 +41,25 @@
     },
     "preferences": {
       "heading": "Preferences",
-      "description": "Customize your app experience the way you work"
+      "description": "Customize your app experience the way you work",
+      "select_language": "Select a language",
+      "timezone_updated": "Timezone updated successfully.",
+      "timezone_update_failed": "Failed to update the timezone.",
+      "language_updated": "Language updated successfully.",
+      "language_update_failed": "Failed to update the language.",
+      "first_day_of_week": "First day of the week",
+      "first_day_of_week_description": "This changes how all calendars in the app are displayed.",
+      "first_day_updated": "First day of the week updated successfully.",
+      "first_day_update_failed": "Failed to update the first day of the week.",
+      "weekdays": {
+        "sunday": "Sunday",
+        "monday": "Monday",
+        "tuesday": "Tuesday",
+        "wednesday": "Wednesday",
+        "thursday": "Thursday",
+        "friday": "Friday",
+        "saturday": "Saturday"
+      }
     },
     "notifications": {
       "heading": "Email notifications",

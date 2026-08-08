@@ -71,6 +71,7 @@ interface Props {
   handleCollapsedGroups: (value: string) => void;
   collapsedGroups: TIssueKanbanFilters;
   isEpic?: boolean;
+  disableGroupDrag?: boolean;
 }
 
 export const ListGroup = observer(function ListGroup(props: Props) {
@@ -98,6 +99,7 @@ export const ListGroup = observer(function ListGroup(props: Props) {
     handleCollapsedGroups,
     collapsedGroups,
     isEpic = false,
+    disableGroupDrag = false,
   } = props;
 
   const [isDraggingOverColumn, setIsDraggingOverColumn] = useState(false);
@@ -147,9 +149,11 @@ export const ListGroup = observer(function ListGroup(props: Props) {
     return true;
   };
 
-  const prePopulateQuickAddData = (groupByKey: string | null, value: any) => {
+  const prePopulateQuickAddData = (groupByKey: string | null, value: any, payload?: Partial<TIssue>) => {
     const defaultState = projectState.projectStates?.find((state) => state.default);
     let preloadedData: object = { state_id: defaultState?.id };
+
+    if (payload) return { ...preloadedData, ...payload };
 
     if (groupByKey === null) {
       preloadedData = { ...preloadedData };
@@ -168,6 +172,10 @@ export const ListGroup = observer(function ListGroup(props: Props) {
         preloadedData = { ...preloadedData, module_ids: [value] };
       } else if (groupByKey === "created_by") {
         preloadedData = { ...preloadedData };
+      } else if (groupByKey.startsWith("customproperty_")) {
+        const propertyId = groupByKey.replace("customproperty_", "");
+        const propertyValue = value === "None" ? null : value === "True" ? true : value === "False" ? false : value;
+        preloadedData = { ...preloadedData, property_values: { [propertyId]: propertyValue } };
       } else {
         preloadedData = { ...preloadedData, [groupByKey]: value };
       }
@@ -227,13 +235,13 @@ export const ListGroup = observer(function ListGroup(props: Props) {
             return;
           }
 
-          handleOnDrop(source, destination);
-
-          highlightIssueOnDrop(getIssueBlockId(source.id, destination?.groupId), orderBy !== "sort_order");
-
-          if (!isExpanded) {
-            handleCollapsedGroups(group.id);
-          }
+          void handleOnDrop(source, destination)
+            .then(() => {
+              highlightIssueOnDrop(getIssueBlockId(source.id, destination?.groupId), orderBy !== "sort_order");
+              if (!isExpanded) handleCollapsedGroups(group.id);
+              return undefined;
+            })
+            .catch(() => undefined);
         },
       })
     );
@@ -248,7 +256,15 @@ export const ListGroup = observer(function ListGroup(props: Props) {
     isWorkflowDropDisabled,
   ]);
 
-  const isDragAllowed = group_by ? DRAG_ALLOWED_GROUPS.includes(group_by) : true;
+  const isDragAllowed =
+    !disableGroupDrag &&
+    (group_by
+      ? DRAG_ALLOWED_GROUPS.includes(group_by) ||
+        group_by.startsWith("customproperty_") ||
+        group_by.startsWith("datebucket_") ||
+        group_by === "start_date" ||
+        group_by === "target_date"
+      : true);
   const canOverlayBeVisible = isWorkflowDropDisabled || orderBy !== "sort_order" || !!group.isDropDisabled;
   const isDropDisabled = isWorkflowDropDisabled || !!group.isDropDisabled;
 
@@ -336,7 +352,7 @@ export const ListGroup = observer(function ListGroup(props: Props) {
                 <QuickAddIssueRoot
                   layout={EIssueLayoutTypes.LIST}
                   QuickAddButton={ListQuickAddIssueButton}
-                  prePopulatedData={prePopulateQuickAddData(group_by, group.id)}
+                  prePopulatedData={prePopulateQuickAddData(group_by, group.id, group.payload)}
                   containerClassName="border-b border-t border-subtle bg-surface-1 "
                   quickAddCallback={quickAddCallback}
                   isEpic={isEpic}

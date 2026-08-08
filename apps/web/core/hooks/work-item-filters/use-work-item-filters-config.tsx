@@ -68,6 +68,7 @@ import { useMember } from "@/hooks/store/use-member";
 import { useModule } from "@/hooks/store/use-module";
 import { useProject } from "@/hooks/store/use-project";
 import { useProjectState } from "@/hooks/store/use-project-state";
+import { useProjectWorkItemFieldVisibility } from "@/hooks/use-project-work-item-field-visibility";
 // plane web imports
 import { useFiltersOperatorConfigs } from "@/hooks/rich-filters/use-filters-operator-configs";
 import { ProjectService } from "@/services/project";
@@ -115,6 +116,10 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
     projectId ? `ISSUE_CUSTOM_PROPERTIES_${workspaceSlug}_${projectId}` : null,
     () => projectService.getWorkItemProperties(workspaceSlug, projectId as string)
   );
+  const { isFilterPropertyVisible, isLoading: isFieldVisibilityLoading } = useProjectWorkItemFieldVisibility(
+    workspaceSlug,
+    projectId
+  );
   const filtersToShow = useMemo(() => new Set(allowedFilters), [allowedFilters]);
   const project = useMemo(() => getProjectById(projectId), [projectId, getProjectById]);
   const members: IUserLite[] | undefined = useMemo(
@@ -153,8 +158,8 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
     [projectIds, getProjectById]
   );
   const areAllConfigsInitialized = useMemo(
-    () => isLoaderReady(projectLoader) && (!projectId || customProperties !== undefined),
-    [customProperties, projectId, projectLoader]
+    () => isLoaderReady(projectLoader) && (!projectId || (customProperties !== undefined && !isFieldVisibilityLoading)),
+    [customProperties, isFieldVisibilityLoading, projectId, projectLoader]
   );
 
   /**
@@ -163,7 +168,10 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
    * @param level - The level of the filter.
    * @returns True if the filter is enabled, false otherwise.
    */
-  const isFilterEnabled = useCallback((key: TWorkItemFilterProperty) => filtersToShow.has(key), [filtersToShow]);
+  const isFilterEnabled = useCallback(
+    (key: TWorkItemFilterProperty) => filtersToShow.has(key) && isFilterPropertyVisible(key),
+    [filtersToShow, isFilterPropertyVisible]
+  );
 
   // state group filter config
   const stateGroupFilterConfig = useMemo(
@@ -327,22 +335,22 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
   const startDateFilterConfig = useMemo(
     () =>
       getStartDateFilterConfig<TWorkItemFilterProperty>("start_date")({
-        isEnabled: true,
+        isEnabled: isFilterEnabled("start_date"),
         filterIcon: StartDatePropertyIcon,
         ...operatorConfigs,
       }),
-    [operatorConfigs]
+    [isFilterEnabled, operatorConfigs]
   );
 
   // target date filter config
   const targetDateFilterConfig = useMemo(
     () =>
       getTargetDateFilterConfig<TWorkItemFilterProperty>("target_date")({
-        isEnabled: true,
+        isEnabled: isFilterEnabled("target_date"),
         filterIcon: DueDatePropertyIcon,
         ...operatorConfigs,
       }),
-    [operatorConfigs]
+    [isFilterEnabled, operatorConfigs]
   );
 
   // created at filter config

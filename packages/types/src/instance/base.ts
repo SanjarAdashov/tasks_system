@@ -5,6 +5,7 @@
  */
 
 import type { IUserLite } from "../users";
+import type { TProjectUserGroup } from "../user-group";
 import type {
   TInstanceAIConfigurationKeys,
   TInstanceEmailConfigurationKeys,
@@ -119,6 +120,39 @@ export interface IInstanceUserPagination {
 
 export interface IInstanceUserAccessPayload {
   reason: string;
+}
+
+export interface ICreationQuotaValue {
+  limit: number | null;
+  used: number;
+  remaining: number | null;
+  is_unlimited: boolean;
+  can_create: boolean;
+}
+
+export interface IProjectCreationQuota extends ICreationQuotaValue {
+  workspace_id: string;
+  workspace_name: string;
+  workspace_slug: string;
+  membership_active: boolean;
+}
+
+export interface IUserCreationQuotaSnapshot {
+  user_id: string;
+  is_instance_admin: boolean;
+  workspace: ICreationQuotaValue;
+  projects: IProjectCreationQuota[];
+}
+
+export interface IInstanceProjectUserGroupContext {
+  workspaces: Array<{
+    id: string;
+    name: string;
+    slug: string;
+    projects: Array<{ id: string; name: string; identifier: string }>;
+  }>;
+  groups: TProjectUserGroup[];
+  eligible_members: IUserLite[];
 }
 
 export type TInstanceConfigurationKeys =

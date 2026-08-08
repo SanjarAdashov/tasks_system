@@ -20,6 +20,7 @@ import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useMember } from "@/hooks/store/use-member";
 import { useUser } from "@/hooks/store/user";
 import useReloadConfirmations from "@/hooks/use-reload-confirmation";
+import { useProjectWorkItemFieldVisibility } from "@/hooks/use-project-work-item-field-visibility";
 import useSize from "@/hooks/use-window-size";
 // services
 import { WorkItemVersionService } from "@/services/issue";
@@ -59,6 +60,7 @@ export const IssueMainContent = observer(function IssueMainContent(props: Props)
     peekIssue,
   } = useIssueDetail();
   const { setShowAlert } = useReloadConfirmations(isSubmitting === "submitting");
+  const { isFieldVisible } = useProjectWorkItemFieldVisibility(workspaceSlug, projectId);
   // derived values
   const issue = issueId ? getIssueById(issueId) : undefined;
 
@@ -78,7 +80,7 @@ export const IssueMainContent = observer(function IssueMainContent(props: Props)
   return (
     <>
       <div className="space-y-4 rounded-lg">
-        {issue.parent_id && (
+        {isFieldVisible("parent") && issue.parent_id && (
           <IssueParentDetail
             workspaceSlug={workspaceSlug}
             projectId={projectId}

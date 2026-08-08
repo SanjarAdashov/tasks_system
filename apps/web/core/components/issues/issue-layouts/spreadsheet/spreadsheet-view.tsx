@@ -6,6 +6,7 @@
 
 import React, { useRef } from "react";
 import { observer } from "mobx-react";
+import { useParams } from "next/navigation";
 // plane constants
 import { SPREADSHEET_SELECT_GROUP, SPREADSHEET_PROPERTY_LIST } from "@plane/constants";
 // types
@@ -17,6 +18,7 @@ import { IssueBulkOperationsRoot } from "@/components/issues/bulk-operations";
 // hooks
 import { useProject } from "@/hooks/store/use-project";
 import { useBulkOperationStatus } from "@/hooks/use-bulk-operation-status";
+import { useProjectWorkItemFieldVisibility } from "@/hooks/use-project-work-item-field-visibility";
 // local imports
 import type { TRenderQuickActions } from "../list/list-view-types";
 import { QuickAddIssueRoot, SpreadsheetAddIssueButton } from "../quick-add";
@@ -42,7 +44,7 @@ type Props = {
 
 export const SpreadsheetView = observer(function SpreadsheetView(props: Props) {
   const {
-    displayProperties,
+    displayProperties: storedDisplayProperties,
     displayFilters,
     handleDisplayFilterUpdate,
     issueIds,
@@ -60,20 +62,27 @@ export const SpreadsheetView = observer(function SpreadsheetView(props: Props) {
   // refs
   const containerRef = useRef<HTMLTableElement | null>(null);
   const portalRef = useRef<HTMLDivElement | null>(null);
+  const { workspaceSlug, projectId } = useParams();
   // store hooks
   const { currentProjectDetails } = useProject();
   // plane web hooks
   const isBulkOperationsEnabled = useBulkOperationStatus();
+  const { isDisplayPropertyVisible, visibleDisplayProperties } = useProjectWorkItemFieldVisibility(
+    workspaceSlug?.toString(),
+    projectId?.toString()
+  );
+  const displayProperties = visibleDisplayProperties(storedDisplayProperties) ?? {};
 
   const isEstimateEnabled: boolean = currentProjectDetails?.estimate !== null;
 
-  const spreadsheetColumnsList = isWorkspaceLevel
-    ? SPREADSHEET_PROPERTY_LIST
-    : SPREADSHEET_PROPERTY_LIST.filter((property) => {
-        if (property === "cycle" && !currentProjectDetails?.cycle_view) return false;
-        if (property === "modules" && !currentProjectDetails?.module_view) return false;
-        return true;
-      });
+  const spreadsheetColumnsList = SPREADSHEET_PROPERTY_LIST.filter((property) => {
+    if (!isDisplayPropertyVisible(property)) return false;
+    if (!isWorkspaceLevel) {
+      if (property === "cycle" && !currentProjectDetails?.cycle_view) return false;
+      if (property === "modules" && !currentProjectDetails?.module_view) return false;
+    }
+    return true;
+  });
 
   if (!issueIds || issueIds.length === 0) return <></>;
   return (

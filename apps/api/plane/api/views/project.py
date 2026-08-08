@@ -38,6 +38,7 @@ from plane.db.models import (
     IntakeIssue,
     ProjectPage,
 )
+from plane.license.services import CreationQuotaError, assert_can_create_project
 from plane.bgtasks.webhook_task import model_activity, webhook_activity
 from plane.utils.exception_logger import log_exception
 from .base import BaseAPIView
@@ -234,6 +235,7 @@ class ProjectListCreateAPIEndpoint(BaseAPIView):
 
             if serializer.is_valid():
                 with transaction.atomic():
+                    assert_can_create_project(request.user, workspace)
                     serializer.save()
 
                     # Add the creator as Administrator of the project.
@@ -303,6 +305,11 @@ class ProjectListCreateAPIEndpoint(BaseAPIView):
                 serializer = ProjectSerializer(project)
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except CreationQuotaError as e:
+            return Response(
+                {"error": {"code": e.code, "message": e.message}},
+                status=e.status_code,
+            )
         except IntegrityError as e:
             if "already exists" in str(e):
                 return Response(

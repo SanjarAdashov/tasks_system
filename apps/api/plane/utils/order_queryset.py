@@ -117,6 +117,14 @@ ISSUE_GROUP_BY_ALLOWLIST = frozenset(
 def is_allowed_issue_group_by(field_name):
     if field_name in ISSUE_GROUP_BY_ALLOWLIST:
         return True
+    if isinstance(field_name, str) and field_name.startswith("datebucket_"):
+        remainder = field_name.removeprefix("datebucket_")
+        period, separator, source = remainder.partition("_")
+        if not separator or period not in {"week", "month"}:
+            return False
+        if source in {"start_date", "target_date"}:
+            return True
+        field_name = source
     if not isinstance(field_name, str) or not field_name.startswith("customproperty_"):
         return False
     try:

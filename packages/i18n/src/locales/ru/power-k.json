@@ -1,7 +1,7 @@
 {
   "power_k": {
     "actions_commands": {
-      "bulk_delete_work_items": "Массовое удаление рабочих элементов"
+      "bulk_delete_work_items": "Массовое удаление задач"
     },
     "contextual_actions": {
       "work_item": {
@@ -66,7 +66,7 @@
       }
     },
     "creation_actions": {
-      "create_work_item": "Новый рабочий элемент",
+      "create_work_item": "Новая задача",
       "create_page": "Новая страница",
       "create_view": "Новое представление",
       "create_cycle": "Новый цикл",

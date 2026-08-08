@@ -467,7 +467,7 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
                   />
                 </div>
               </div>
-              {watch("parent_id") && selectedParentIssue && (
+              {!hiddenFieldKeys.includes("parent") && watch("parent_id") && selectedParentIssue && (
                 <div className="pb-4">
                   <IssueParentTag
                     control={control}

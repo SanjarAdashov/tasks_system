@@ -96,12 +96,13 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
   ): Partial<Record<TIssueParams, string | boolean>> => {
     const computedDisplayFilters: Partial<Record<TIssueParams, undefined | string[] | boolean | string>> = {
       group_by: displayFilters?.group_by
-        ? displayFilters.group_by.startsWith("customproperty_")
+        ? displayFilters.group_by.startsWith("customproperty_") || displayFilters.group_by.startsWith("datebucket_")
           ? displayFilters.group_by
           : EIssueGroupByToServerOptions[displayFilters.group_by as keyof typeof EIssueGroupByToServerOptions]
         : undefined,
       sub_group_by: displayFilters?.sub_group_by
-        ? displayFilters.sub_group_by.startsWith("customproperty_")
+        ? displayFilters.sub_group_by.startsWith("customproperty_") ||
+          displayFilters.sub_group_by.startsWith("datebucket_")
           ? displayFilters.sub_group_by
           : EIssueGroupByToServerOptions[displayFilters.sub_group_by as keyof typeof EIssueGroupByToServerOptions]
         : undefined,
@@ -335,7 +336,9 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
       delete paginationParams["group_by"];
 
       if (groupBy) {
-        if (groupBy.startsWith("customproperty_")) {
+        if (groupBy.startsWith("datebucket_")) {
+          this.addDateBucketFilter(paginationParams, groupBy, groupId);
+        } else if (groupBy.startsWith("customproperty_")) {
           const currentFilters = JSON.parse(String(paginationParams.filters ?? "{}"));
           const condition = {
             [`${groupBy}__${groupId === "None" ? "isnull" : "exact"}`]: groupId === "None" ? true : groupId,
@@ -356,7 +359,9 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
       delete paginationParams["sub_group_by"];
 
       if (subGroupBy) {
-        if (subGroupBy.startsWith("customproperty_")) {
+        if (subGroupBy.startsWith("datebucket_")) {
+          this.addDateBucketFilter(paginationParams, subGroupBy, subGroupId);
+        } else if (subGroupBy.startsWith("customproperty_")) {
           const currentFilters = JSON.parse(String(paginationParams.filters ?? "{}"));
           const condition = {
             [`${subGroupBy}__${subGroupId === "None" ? "isnull" : "exact"}`]: subGroupId === "None" ? true : subGroupId,
@@ -372,5 +377,38 @@ export class IssueFilterHelperStore implements IIssueFilterHelperStore {
     }
 
     return paginationParams;
+  }
+
+  private addDateBucketFilter(
+    paginationParams: Partial<Record<TIssueParams, string | boolean>>,
+    groupBy: string,
+    groupId: string
+  ) {
+    const match = groupBy.match(/^datebucket_(week|month)_(.+)$/);
+    if (!match) return;
+    const [, period, source] = match;
+    const currentFilters = JSON.parse(String(paginationParams.filters ?? "{}"));
+    const mergeCondition = (condition: Record<string, unknown>) => {
+      paginationParams.filters = JSON.stringify(
+        Object.keys(currentFilters).length ? { and: [currentFilters, condition] } : condition
+      );
+    };
+
+    if (groupId === "None") {
+      mergeCondition({ [`${source}__isnull`]: true });
+      return;
+    }
+
+    const start = new Date(`${groupId}T00:00:00`);
+    const end = new Date(start);
+    if (period === "week") end.setDate(end.getDate() + 6);
+    else end.setMonth(end.getMonth() + 1, 0);
+    const endValue = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
+
+    if (source.startsWith("customproperty_")) {
+      mergeCondition({ [`${source}__range`]: [groupId, endValue] });
+    } else if (source === "start_date" || source === "target_date") {
+      paginationParams[source] = `${groupId};after,${endValue};before`;
+    }
   }
 }

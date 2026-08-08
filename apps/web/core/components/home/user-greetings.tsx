@@ -5,7 +5,7 @@
  */
 
 // plane types
-import { useTranslation } from "@plane/i18n";
+import { formatLocalizedDate, getIntlLocale, useTranslation } from "@plane/i18n";
 import type { IUser } from "@plane/types";
 // plane ui
 // hooks
@@ -20,23 +20,22 @@ export function UserGreetingsView(props: IUserGreetingsView) {
   // current time hook
   const { currentTime } = useCurrentTime();
   // store hooks
-  const { t } = useTranslation();
+  const { t, currentLocale } = useTranslation();
+  const intlLocale = getIntlLocale(currentLocale);
 
-  const hour = new Intl.DateTimeFormat("en-US", {
+  const hour = new Intl.DateTimeFormat(intlLocale, {
+    timeZone: user?.user_timezone,
     hour12: false,
     hour: "numeric",
   }).format(currentTime);
 
-  const date = new Intl.DateTimeFormat("en-US", {
-    month: "short",
-    day: "numeric",
-  }).format(currentTime);
+  const date = formatLocalizedDate(currentTime, currentLocale);
 
-  const weekDay = new Intl.DateTimeFormat("en-US", {
+  const weekDay = new Intl.DateTimeFormat(intlLocale, {
     weekday: "long",
   }).format(currentTime);
 
-  const timeString = new Intl.DateTimeFormat("en-US", {
+  const timeString = new Intl.DateTimeFormat(intlLocale, {
     timeZone: user?.user_timezone,
     hour12: false, // Use 24-hour format
     hour: "2-digit",

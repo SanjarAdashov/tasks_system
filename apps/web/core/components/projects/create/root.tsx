@@ -19,6 +19,7 @@ import ProjectCreateButtons from "@/components/project/create/project-create-but
 import { getCoverImageType, uploadCoverImage } from "@/helpers/cover-image.helper";
 import { useProject } from "@/hooks/store/use-project";
 import { usePlatformOS } from "@/hooks/use-platform-os";
+import { useCreationQuotas } from "@/hooks/use-creation-quotas";
 // plane web types
 import type { TProject } from "@plane/types";
 import { ProjectAttributes } from "./attributes";
@@ -41,6 +42,9 @@ export const CreateProjectForm = observer(function CreateProjectForm(props: TCre
   const { addProjectToFavorites, createProject, updateProject } = useProject();
   // states
   const [shouldAutoSyncIdentifier, setShouldAutoSyncIdentifier] = useState(true);
+  const { data: creationQuotas, mutate: mutateCreationQuotas } = useCreationQuotas();
+  const projectQuota = creationQuotas?.projects.find((quota) => quota.workspace_slug === workspaceSlug);
+  const canCreateProject = Boolean(projectQuota?.can_create);
   // form info
   const methods = useForm<TProject>({
     defaultValues: { ...getProjectFormValues(), ...data },
@@ -61,6 +65,10 @@ export const CreateProjectForm = observer(function CreateProjectForm(props: TCre
   };
 
   const onSubmit = async (formData: Partial<TProject>) => {
+    if (!canCreateProject) {
+      setToast({ type: TOAST_TYPE.ERROR, title: t("toast.error"), message: t("creation_quotas.project_reached") });
+      return;
+    }
     // Upper case identifier
     formData.identifier = formData.identifier?.toUpperCase();
     const coverImage = formData.cover_image_url;
@@ -94,6 +102,7 @@ export const CreateProjectForm = observer(function CreateProjectForm(props: TCre
 
     return createProject(workspaceSlug.toString(), formData)
       .then(async (res) => {
+        await mutateCreationQuotas();
         if (uploadedAssetUrl) {
           await updateCoverImageStatus(res.id, uploadedAssetUrl);
           await updateProject(workspaceSlug.toString(), res.id, { cover_image_url: uploadedAssetUrl });
@@ -186,7 +195,12 @@ export const CreateProjectForm = observer(function CreateProjectForm(props: TCre
           />
           <ProjectAttributes isMobile={isMobile} />
         </div>
-        <ProjectCreateButtons handleClose={handleClose} />
+        {!canCreateProject && creationQuotas && (
+          <div className="rounded-md bg-warning-subtle p-3 text-12 text-warning-primary">
+            {t("creation_quotas.unavailable", { used: projectQuota?.used ?? 0, limit: projectQuota?.limit ?? 0 })}
+          </div>
+        )}
+        <ProjectCreateButtons handleClose={handleClose} disabled={!canCreateProject} />
       </form>
     </FormProvider>
   );

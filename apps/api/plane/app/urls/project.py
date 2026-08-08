@@ -26,6 +26,9 @@ from plane.app.views import (
     ProjectStateTransitionPreviewEndpoint,
     ProjectStateTransitionRuleViewSet,
     ProjectStateTransitionSettingsEndpoint,
+    ProjectUserGroupViewSet,
+    ProjectCustomGroupingPreferenceEndpoint,
+    ProjectCustomGroupingViewSet,
 )
 
 
@@ -208,5 +211,42 @@ urlpatterns = [
         "workspaces/<str:slug>/projects/<uuid:project_id>/state-transitions/available/",
         ProjectAvailableStateTransitionsEndpoint.as_view(),
         name="project-state-transition-available",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/user-groups/",
+        ProjectUserGroupViewSet.as_view({"get": "list", "post": "create"}),
+        name="project-user-group",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/custom-groupings/",
+        ProjectCustomGroupingViewSet.as_view({"get": "list", "post": "create"}),
+        name="project-custom-grouping",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/custom-groupings/<uuid:pk>/",
+        ProjectCustomGroupingViewSet.as_view({"patch": "partial_update", "delete": "destroy"}),
+        name="project-custom-grouping-detail",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/custom-groupings/preference/",
+        ProjectCustomGroupingPreferenceEndpoint.as_view(),
+        name="project-custom-grouping-preference",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/user-groups/<uuid:pk>/",
+        ProjectUserGroupViewSet.as_view(
+            {"get": "retrieve", "patch": "partial_update", "delete": "destroy"}
+        ),
+        name="project-user-group-detail",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/user-groups/<uuid:pk>/restore/",
+        ProjectUserGroupViewSet.as_view({"post": "restore"}),
+        name="project-user-group-restore",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/user-groups/<uuid:pk>/members/",
+        ProjectUserGroupViewSet.as_view({"patch": "update_members"}),
+        name="project-user-group-members",
     ),
 ]

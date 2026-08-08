@@ -2,13 +2,14 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 
+from datetime import date, timedelta
 from uuid import UUID
 
 # Django imports
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.fields import ArrayField
-from django.db.models import JSONField, Q, UUIDField, Value, QuerySet, OuterRef, Subquery
-from django.db.models.functions import Coalesce
+from django.db.models import DateField, F, Func, JSONField, Q, TextField, UUIDField, Value, QuerySet, OuterRef, Subquery
+from django.db.models.functions import Cast, Coalesce, TruncMonth, TruncWeek
 
 # Module imports
 from plane.db.models import (
@@ -29,6 +30,24 @@ from plane.db.models import (
 )
 from plane.utils.work_item_fields import serialize_work_item_property_values_for_issues
 from typing import Optional, Dict, Tuple, Any, Union, List
+
+
+class JsonScalarText(Func):
+    template = "(%(expressions)s #>> '{}')"
+    output_field = TextField()
+
+
+def date_bucket_group(field):
+    prefix = "datebucket_"
+    if not isinstance(field, str) or not field.startswith(prefix):
+        return None
+    remainder = field.removeprefix(prefix)
+    period, separator, source = remainder.partition("_")
+    if not separator or period not in {"week", "month"}:
+        return None
+    if source not in {"start_date", "target_date"} and not custom_property_group_id(source):
+        return None
+    return period, source
 
 
 def issue_queryset_grouper(
@@ -94,6 +113,28 @@ def issue_queryset_grouper(
         default_annotations[key] = expression
 
     for group_key in {group_by, sub_group_by}:
+        bucket = date_bucket_group(group_key)
+        if bucket:
+            period, source = bucket
+            if source in {"start_date", "target_date"}:
+                date_expression = F(source)
+            else:
+                property_id = custom_property_group_id(source)
+                json_value = Subquery(
+                    WorkItemPropertyValue.objects.filter(
+                        issue_id=OuterRef("pk"),
+                        property_id=property_id,
+                        deleted_at__isnull=True,
+                    ).values("value")[:1],
+                    output_field=JSONField(),
+                )
+                date_expression = Cast(JsonScalarText(json_value), output_field=DateField())
+            default_annotations[group_key] = (
+                TruncWeek(date_expression, output_field=DateField())
+                if period == "week"
+                else TruncMonth(date_expression, output_field=DateField())
+            )
+            continue
         property_id = custom_property_group_id(group_key)
         if property_id:
             default_annotations[group_key] = Subquery(
@@ -157,7 +198,7 @@ def issue_on_results(
 
     required_fields.extend(original_list)
     for group_key in {group_by, sub_group_by}:
-        if custom_property_group_id(group_key):
+        if custom_property_group_id(group_key) or date_bucket_group(group_key):
             required_fields.append(group_key)
     serialized_issues = list(issues.values(*required_fields))
     values_by_issue = serialize_work_item_property_values_for_issues([issue["id"] for issue in serialized_issues])
@@ -173,6 +214,36 @@ def issue_group_values(
     filters: Dict[str, Any] = {},
     queryset: Optional[QuerySet] = None,
 ) -> List[Union[str, Any]]:
+    bucket = date_bucket_group(field)
+    if bucket:
+        period, source = bucket
+        values = []
+        if source in {"start_date", "target_date"}:
+            value_queryset = queryset
+            if project_id:
+                value_queryset = value_queryset.filter(project_id=project_id)
+            values = list(value_queryset.values_list(source, flat=True).distinct())
+        else:
+            property_id = custom_property_group_id(source)
+            value_queryset = WorkItemPropertyValue.objects.filter(
+                property_id=property_id,
+                deleted_at__isnull=True,
+            )
+            if queryset is not None:
+                value_queryset = value_queryset.filter(issue_id__in=queryset.values("id"))
+            values = list(value_queryset.values_list("value", flat=True))
+        grouped_values = []
+        for value in values:
+            if not value:
+                continue
+            parsed = value if hasattr(value, "year") else date.fromisoformat(str(value))
+            if period == "week":
+                parsed = parsed - timedelta(days=parsed.weekday())
+            else:
+                parsed = parsed.replace(day=1)
+            grouped_values.append(parsed.isoformat())
+        return list(dict.fromkeys(grouped_values)) + ["None"]
+
     property_id = custom_property_group_id(field)
     if property_id:
         property_instance = ProjectWorkItemProperty.objects.filter(
@@ -186,15 +257,45 @@ def issue_group_values(
         property_instance = property_instance.first()
         if not property_instance:
             return []
-        if property_instance.property_type == WorkItemPropertyType.SINGLE_SELECT:
-            return list(
-                property_instance.options.filter(
-                    archived_at__isnull=True,
-                    deleted_at__isnull=True,
-                ).values_list("id", flat=True)
-            ) + ["None"]
+        value_queryset = WorkItemPropertyValue.objects.filter(
+            property=property_instance,
+            deleted_at__isnull=True,
+        )
+        if queryset is not None:
+            value_queryset = value_queryset.filter(issue_id__in=queryset.values("id"))
+        historical_values = list(value_queryset.values_list("value", flat=True))
+        if property_instance.property_type in {
+            WorkItemPropertyType.SINGLE_SELECT,
+            WorkItemPropertyType.MULTI_SELECT,
+        }:
+            current_values = []
+            if property_instance.select_source == "MEMBERS":
+                current_values = list(
+                    ProjectMember.objects.filter(
+                        project=property_instance.project,
+                        is_active=True,
+                        member__is_active=True,
+                        member__blocked_at__isnull=True,
+                    ).values_list("member_id", flat=True)
+                )
+            else:
+                current_values = list(
+                    property_instance.options.filter(
+                        archived_at__isnull=True,
+                        deleted_at__isnull=True,
+                    ).values_list("id", flat=True)
+                )
+            flattened_historical = []
+            for value in historical_values:
+                if isinstance(value, list):
+                    flattened_historical.extend(value)
+                elif value not in (None, ""):
+                    flattened_historical.append(value)
+            return list(dict.fromkeys([str(value) for value in current_values + flattened_historical])) + ["None"]
         if property_instance.property_type == WorkItemPropertyType.CHECKBOX:
             return [True, False, "None"]
+        if property_instance.property_type == WorkItemPropertyType.DATE:
+            return list(dict.fromkeys(str(value) for value in historical_values if value)) + ["None"]
         return []
 
     if field == "state_id":

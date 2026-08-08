@@ -12,6 +12,7 @@ from plane.db.models import (
     ProjectStateTransitionAuditLog,
     ProjectStateTransitionRule,
     ProjectStateTransitionSettings,
+    ProjectUserGroup,
     ProjectWorkItemProperty,
     StateTransitionAuditAction,
     StateTransitionSourceType,
@@ -58,6 +59,12 @@ ACTOR_TRANSITION_FIELDS = {
     "actor.is_assignee",
     "actor.is_creator",
 }
+GROUP_TRANSITION_FIELDS = {
+    "actor.group",
+    "created_by.group",
+    "assignees.group_any",
+    "assignees.group_all",
+}
 MAX_CONDITION_DEPTH = 8
 MAX_CONDITION_NODES = 200
 
@@ -68,7 +75,22 @@ def _get_audit_actor(serializer):
     return actor if getattr(actor, "is_authenticated", False) else None
 
 
-def validate_transition_condition_tree(value, *, project):
+def _referenced_group_ids(tree):
+    if not isinstance(tree, dict):
+        return set()
+    if tree.get("kind") == "condition":
+        field = tree.get("field", "")
+        if (
+            field in GROUP_TRANSITION_FIELDS
+            or field.startswith("custom.group_any:")
+            or field.startswith("custom.group_all:")
+        ):
+            return {str(tree.get("value"))}
+        return set()
+    return set().union(*(_referenced_group_ids(child) for child in tree.get("children") or []), set())
+
+
+def validate_transition_condition_tree(value, *, project, allow_archived_group_ids=None):
     if not isinstance(value, dict):
         raise serializers.ValidationError("Condition tree must be an object.")
 
@@ -112,7 +134,20 @@ def validate_transition_condition_tree(value, *, project):
         if operator not in CONDITION_OPERATORS:
             raise serializers.ValidationError(f"Unsupported condition operator: {operator}.")
 
-        if field.startswith("custom:"):
+        if field.startswith("custom.group_any:") or field.startswith("custom.group_all:"):
+            try:
+                property_id = UUID(field.rsplit(":", 1)[1])
+            except (ValueError, TypeError) as error:
+                raise serializers.ValidationError("Group member fields must contain a valid property UUID.") from error
+            if not ProjectWorkItemProperty.all_objects.filter(
+                id=property_id,
+                project=project,
+                property_type__in=["SINGLE_SELECT", "MULTI_SELECT"],
+                select_source="MEMBERS",
+                deleted_at__isnull=True,
+            ).exists():
+                raise serializers.ValidationError("Group conditions require a member-backed project property.")
+        elif field.startswith("custom:"):
             try:
                 property_id = UUID(field.split(":", 1)[1])
             except (ValueError, TypeError) as error:
@@ -138,7 +173,7 @@ def validate_transition_condition_tree(value, *, project):
                 deleted_at__isnull=True,
             ).exists():
                 raise serializers.ValidationError("Actor member property is not a member-backed project property.")
-        elif field not in BUILT_IN_TRANSITION_FIELDS | ACTOR_TRANSITION_FIELDS:
+        elif field not in BUILT_IN_TRANSITION_FIELDS | ACTOR_TRANSITION_FIELDS | GROUP_TRANSITION_FIELDS:
             raise serializers.ValidationError(f"Unsupported condition field: {field}.")
 
         value_required = operator not in {
@@ -168,6 +203,25 @@ def validate_transition_condition_tree(value, *, project):
             values = node["value"] if isinstance(node["value"], list) else [node["value"]]
             if any(value not in {5, 15, 20} for value in values):
                 raise serializers.ValidationError("Actor role must be Guest, Member, or Project Admin.")
+
+        if (
+            field in GROUP_TRANSITION_FIELDS
+            or field.startswith("custom.group_any:")
+            or field.startswith("custom.group_all:")
+        ):
+            try:
+                group_id = UUID(str(node.get("value")))
+            except (ValueError, TypeError) as error:
+                raise serializers.ValidationError("A valid project user group is required.") from error
+            groups = ProjectUserGroup.objects.filter(id=group_id, project=project)
+            if str(group_id) in (allow_archived_group_ids or set()):
+                groups = ProjectUserGroup.all_objects.filter(
+                    id=group_id,
+                    project=project,
+                    deleted_at__isnull=True,
+                )
+            if not groups.exists():
+                raise serializers.ValidationError("The selected active user group does not belong to this project.")
 
         normalized = {
             "kind": "condition",
@@ -293,6 +347,15 @@ class ProjectStateTransitionRuleSerializer(BaseSerializer):
         if duplicates.exists():
             raise serializers.ValidationError("An active rule for this transition already exists.")
 
+        archived_group_ids = set()
+        if self.instance:
+            for tree in (
+                self.instance.allow_conditions,
+                self.instance.deny_conditions,
+                self.instance.validation_conditions,
+            ):
+                archived_group_ids.update(_referenced_group_ids(tree))
+
         for field_name in (
             "allow_conditions",
             "deny_conditions",
@@ -302,7 +365,11 @@ class ProjectStateTransitionRuleSerializer(BaseSerializer):
                 field_name,
                 getattr(self.instance, field_name) if self.instance else None,
             )
-            attrs[field_name] = validate_transition_condition_tree(tree, project=project)
+            attrs[field_name] = validate_transition_condition_tree(
+                tree,
+                project=project,
+                allow_archived_group_ids=archived_group_ids,
+            )
         return attrs
 
     @staticmethod

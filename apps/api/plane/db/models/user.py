@@ -110,6 +110,9 @@ class User(AbstractBaseUser, PermissionsMixin):
         related_name="blocked_users",
     )
     blocked_reason = models.TextField(null=True, blank=True)
+    # Maximum number of non-deleted workspaces this user may own. ``None``
+    # means unlimited; zero is the safe default for all regular users.
+    workspace_creation_limit = models.PositiveIntegerField(null=True, blank=True, default=0)
     # random token generated
     token = models.CharField(max_length=64, blank=True)
 

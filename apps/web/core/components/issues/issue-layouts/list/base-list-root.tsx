@@ -4,7 +4,7 @@
  * See the LICENSE file for details.
  */
 
-import type { FC } from "react";
+import type { FC, ReactNode } from "react";
 import { useCallback, useEffect } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
@@ -46,6 +46,11 @@ interface IBaseListRoot {
   viewId?: string | undefined;
   isCompletedCycle?: boolean;
   isEpic?: boolean;
+  layout?: EIssueLayoutTypes;
+  header?: ReactNode;
+  collapsedGroupsOverride?: string[];
+  onCollapsedGroupToggle?: (groupId: string) => void;
+  disableGroupDrag?: boolean;
 }
 export const BaseListRoot = observer(function BaseListRoot(props: IBaseListRoot) {
   const {
@@ -55,6 +60,11 @@ export const BaseListRoot = observer(function BaseListRoot(props: IBaseListRoot)
     canEditPropertiesBasedOnProject,
     isCompletedCycle = false,
     isEpic = false,
+    layout = EIssueLayoutTypes.LIST,
+    header,
+    collapsedGroupsOverride,
+    onCollapsedGroupToggle,
+    disableGroupDrag = false,
   } = props;
   // router
   const storeType = useIssueStoreType() as ListStoreType;
@@ -83,8 +93,9 @@ export const BaseListRoot = observer(function BaseListRoot(props: IBaseListRoot)
 
   const { workspaceSlug, projectId } = useParams();
   const { updateFilters } = useIssuesActions(storeType);
-  const collapsedGroups =
-    issuesFilter?.issueFilters?.kanbanFilters || ({ group_by: [], sub_group_by: [] } as TIssueKanbanFilters);
+  const collapsedGroups = collapsedGroupsOverride
+    ? { group_by: collapsedGroupsOverride, sub_group_by: [] }
+    : issuesFilter?.issueFilters?.kanbanFilters || ({ group_by: [], sub_group_by: [] } as TIssueKanbanFilters);
 
   useEffect(() => {
     fetchIssues("init-loader", { canGroup: true, perPageCount: group_by ? 50 : 100 }, viewId);
@@ -108,7 +119,13 @@ export const BaseListRoot = observer(function BaseListRoot(props: IBaseListRoot)
     [canEditPropertiesBasedOnProject, enableInlineEditing, isEditingAllowed]
   );
 
-  const handleOnDrop = useGroupIssuesDragNDrop(storeType, orderBy, group_by);
+  const handleOnDrop = useGroupIssuesDragNDrop(
+    storeType,
+    orderBy,
+    group_by,
+    undefined,
+    layout === EIssueLayoutTypes.CUSTOM_GROUPING
+  );
 
   const renderQuickActions: TRenderQuickActions = useCallback(
     ({ issue, parentRef }) => (
@@ -137,6 +154,10 @@ export const BaseListRoot = observer(function BaseListRoot(props: IBaseListRoot)
   // kanbanFilters and EIssueFilterType.KANBAN_FILTERS are used because the state is shared between kanban view and list view
   const handleCollapsedGroups = useCallback(
     (value: string) => {
+      if (onCollapsedGroupToggle) {
+        onCollapsedGroupToggle(value);
+        return;
+      }
       if (workspaceSlug) {
         let collapsedGroups = issuesFilter?.issueFilters?.kanbanFilters?.group_by || [];
         if (collapsedGroups.includes(value)) {
@@ -149,34 +170,38 @@ export const BaseListRoot = observer(function BaseListRoot(props: IBaseListRoot)
         } as TIssueKanbanFilters);
       }
     },
-    [workspaceSlug, issuesFilter, projectId, updateFilters]
+    [workspaceSlug, issuesFilter, projectId, updateFilters, onCollapsedGroupToggle]
   );
 
   return (
-    <IssueLayoutHOC layout={EIssueLayoutTypes.LIST}>
-      <div className={`relative size-full bg-surface-2`}>
-        <List
-          issuesMap={issueMap}
-          displayProperties={displayProperties}
-          group_by={group_by}
-          orderBy={orderBy}
-          updateIssue={updateIssue}
-          quickActions={renderQuickActions}
-          groupedIssueIds={groupedIssueIds ?? {}}
-          loadMoreIssues={loadMoreIssues}
-          showEmptyGroup={showEmptyGroup}
-          quickAddCallback={quickAddIssue}
-          enableIssueQuickAdd={!!enableQuickAdd}
-          canEditProperties={canEditProperties}
-          disableIssueCreation={!enableIssueCreation || !isEditingAllowed}
-          addIssuesToView={addIssuesToView}
-          isCompletedCycle={isCompletedCycle}
-          handleOnDrop={handleOnDrop}
-          handleCollapsedGroups={handleCollapsedGroups}
-          collapsedGroups={collapsedGroups}
-          isEpic={isEpic}
-        />
-      </div>
-    </IssueLayoutHOC>
+    <div className="flex size-full flex-col bg-surface-2">
+      {header}
+      <IssueLayoutHOC layout={layout}>
+        <div className={`relative min-h-0 flex-1 bg-surface-2`}>
+          <List
+            issuesMap={issueMap}
+            displayProperties={displayProperties}
+            group_by={group_by}
+            orderBy={orderBy}
+            updateIssue={updateIssue}
+            quickActions={renderQuickActions}
+            groupedIssueIds={groupedIssueIds ?? {}}
+            loadMoreIssues={loadMoreIssues}
+            showEmptyGroup={showEmptyGroup}
+            quickAddCallback={quickAddIssue}
+            enableIssueQuickAdd={!!enableQuickAdd}
+            canEditProperties={canEditProperties}
+            disableIssueCreation={!enableIssueCreation || !isEditingAllowed}
+            addIssuesToView={addIssuesToView}
+            isCompletedCycle={isCompletedCycle}
+            handleOnDrop={handleOnDrop}
+            handleCollapsedGroups={handleCollapsedGroups}
+            collapsedGroups={collapsedGroups}
+            isEpic={isEpic}
+            disableGroupDrag={disableGroupDrag}
+          />
+        </div>
+      </IssueLayoutHOC>
+    </div>
   );
 });

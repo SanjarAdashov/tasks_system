@@ -6,7 +6,7 @@
 
 import { useMemo, useState } from "react";
 import useSWR from "swr";
-import { Search, ShieldCheck, UserRound, UserX } from "lucide-react";
+import { Gauge, Search, ShieldCheck, UserRound, UserX } from "lucide-react";
 // plane imports
 import { Button } from "@plane/propel/button";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
@@ -17,6 +17,7 @@ import { cn } from "@plane/utils";
 // components
 import { PageWrapper } from "@/components/common/page-wrapper";
 import { UserAccessModal, type TUserAccessAction } from "@/components/user/user-access-modal";
+import { UserCreationQuotaModal } from "@/components/user/user-creation-quota-modal";
 // hooks
 import { useUser } from "@/hooks/store";
 // types
@@ -49,6 +50,7 @@ const UserManagementPage = function UserManagementPage(_props: Route.ComponentPr
   const [cursor, setCursor] = useState("");
   const [selectedUser, setSelectedUser] = useState<IInstanceUser>();
   const [selectedAction, setSelectedAction] = useState<TUserAccessAction>("block");
+  const [quotaUser, setQuotaUser] = useState<IInstanceUser>();
 
   const { data, error, isLoading, mutate } = useSWR(["INSTANCE_USERS", search, cursor], () =>
     instanceService.users(search, cursor)
@@ -239,7 +241,10 @@ const UserManagementPage = function UserManagementPage(_props: Route.ComponentPr
                       </span>
                     </div>
 
-                    <div className="flex w-full justify-end sm:w-28">
+                    <div className="flex w-full justify-end gap-2 sm:w-auto">
+                      <Button variant="secondary" size="lg" onClick={() => setQuotaUser(user)}>
+                        <Gauge className="mr-1 size-4" /> Quotas
+                      </Button>
                       {user.status === "active" ? (
                         <Button
                           variant="error-outline"
@@ -301,6 +306,7 @@ const UserManagementPage = function UserManagementPage(_props: Route.ComponentPr
         onSubmit={handleAccessChange}
         user={selectedUser}
       />
+      <UserCreationQuotaModal user={quotaUser} onClose={() => setQuotaUser(undefined)} />
     </PageWrapper>
   );
 };

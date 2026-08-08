@@ -1,0 +1,34 @@
+{
+  "command_k": {
+    "empty_state": {
+      "search": {
+        "title": "Hech qanday natija topilmadi"
+      }
+    }
+  },
+  "sidebar": {
+    "stickies": "Yopishqoqlar",
+    "your_work": "Sizning ishingiz",
+    "projects": "Loyihalar",
+    "pages": "Sahifalar",
+    "new_work_item": "Yangi ish elementi",
+    "home": "Uy",
+    "inbox": "Kiruvchi quti",
+    "workspace": "Ish maydoni",
+    "views": "Koʻrishlar",
+    "analytics": "Analitika",
+    "work_items": "Ish elementlari",
+    "cycles": "Velosipedlar",
+    "modules": "Modullar",
+    "intake": "Qabul qilish",
+    "drafts": "Qoralamalar",
+    "favorites": "Sevimlilar",
+    "pro": "Pro",
+    "upgrade": "Yangilash",
+    "pi_chat": "Plane AI",
+    "epics": "Dostonlar",
+    "upgrade_plan": "Yangilash rejasi",
+    "plane_pro": "Plane Pro",
+    "business": "Biznes"
+  }
+}

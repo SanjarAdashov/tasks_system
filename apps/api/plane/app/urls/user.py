@@ -56,6 +56,11 @@ urlpatterns = [
         UserEndpoint.as_view({"get": "retrieve_instance_admin"}),
         name="users",
     ),
+    path(
+        "users/me/creation-quotas/",
+        UserEndpoint.as_view({"get": "retrieve_creation_quotas"}),
+        name="user-creation-quotas",
+    ),
     path("users/me/onboard/", UpdateUserOnBoardedEndpoint.as_view(), name="user-onboard"),
     path(
         "users/me/tour-completed/",

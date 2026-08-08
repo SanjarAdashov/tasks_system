@@ -16,6 +16,10 @@ import type {
   IInstanceUser,
   IInstanceUserAccessPayload,
   IInstanceUserPagination,
+  IUserCreationQuotaSnapshot,
+  IInstanceProjectUserGroupContext,
+  TProjectUserGroup,
+  TProjectUserGroupPayload,
 } from "@plane/types";
 // api service
 import { APIService } from "../api.service";
@@ -112,6 +116,86 @@ export class InstanceService extends APIService {
       .catch((error) => {
         throw error?.response?.data;
       });
+  }
+
+  async userCreationQuotas(userId: string): Promise<IUserCreationQuotaSnapshot> {
+    return this.get(`/api/instances/users/${userId}/creation-quotas/`)
+      .then((response) => response.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async updateUserCreationQuotas(
+    userId: string,
+    data: { workspace_limit?: number | null; project_quota?: { workspace_id: string; limit: number | null } }
+  ): Promise<IUserCreationQuotaSnapshot> {
+    return this.patch(`/api/instances/users/${userId}/creation-quotas/`, data)
+      .then((response) => response.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async projectUserGroupContext(projectId?: string, includeArchived = true): Promise<IInstanceProjectUserGroupContext> {
+    return this.get("/api/instances/project-user-groups/", {
+      params: { project_id: projectId, include_archived: includeArchived },
+    })
+      .then((response) => response.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async createProjectUserGroup(
+    workspaceSlug: string,
+    projectId: string,
+    data: TProjectUserGroupPayload
+  ): Promise<TProjectUserGroup> {
+    return this.post(`/api/workspaces/${workspaceSlug}/projects/${projectId}/user-groups/`, data).then(
+      (response) => response.data
+    );
+  }
+
+  async updateProjectUserGroup(
+    workspaceSlug: string,
+    projectId: string,
+    groupId: string,
+    data: Partial<TProjectUserGroupPayload>
+  ): Promise<TProjectUserGroup> {
+    return this.patch(`/api/workspaces/${workspaceSlug}/projects/${projectId}/user-groups/${groupId}/`, data).then(
+      (response) => response.data
+    );
+  }
+
+  async updateProjectUserGroupMembers(
+    workspaceSlug: string,
+    projectId: string,
+    groupId: string,
+    data: { add_member_ids?: string[]; remove_member_ids?: string[] }
+  ): Promise<TProjectUserGroup> {
+    return this.patch(
+      `/api/workspaces/${workspaceSlug}/projects/${projectId}/user-groups/${groupId}/members/`,
+      data
+    ).then((response) => response.data);
+  }
+
+  async archiveProjectUserGroup(workspaceSlug: string, projectId: string, groupId: string): Promise<void> {
+    return this.delete(`/api/workspaces/${workspaceSlug}/projects/${projectId}/user-groups/${groupId}/`).then(
+      () => undefined
+    );
+  }
+
+  async restoreProjectUserGroup(workspaceSlug: string, projectId: string, groupId: string): Promise<TProjectUserGroup> {
+    return this.post(`/api/workspaces/${workspaceSlug}/projects/${projectId}/user-groups/${groupId}/restore/`).then(
+      (response) => response.data
+    );
+  }
+
+  async deleteProjectUserGroup(workspaceSlug: string, projectId: string, groupId: string): Promise<void> {
+    return this.delete(`/api/workspaces/${workspaceSlug}/projects/${projectId}/user-groups/${groupId}/`, undefined, {
+      params: { permanent: true, include_archived: true },
+    }).then(() => undefined);
   }
 
   /**

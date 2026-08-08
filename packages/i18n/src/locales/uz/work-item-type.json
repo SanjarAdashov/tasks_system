@@ -1,0 +1,477 @@
+{
+  "work_item_types": {
+    "label": "Ish elementi turlari",
+    "label_lowercase": "ish elementi turlari",
+    "settings": {
+      "description": "Uni jamoangiz ehtiyojlariga moslashtirish uchun shaxsiy xususiyatlaringizni sozlang va qo'shing.",
+      "cant_delete_default_message": "Bu ish elementi turini oʻchirib boʻlmaydi, chunki u ushbu loyiha uchun birlamchi sifatida oʻrnatilgan",
+      "set_as_default": "Standart sifatida o'rnating",
+      "cant_set_default_inactive_message": "Sukut bo'yicha o'rnatishdan oldin ushbu turni faollashtiring",
+      "set_default_confirmation": {
+        "title": "Standart ish elementi turi sifatida o'rnating",
+        "description": "{name} sukut boʻyicha oʻrnatilsa, uni ushbu ish maydonidagi barcha loyihalarga import qiladi. Barcha yangi ish elementlari sukut bo'yicha ushbu turdan foydalanadi.",
+        "confirm_button": "Standart sifatida o'rnating"
+      },
+      "properties": {
+        "title": "Xususiyatlari",
+        "description": "Xususiyatlarni yarating va sozlang.",
+        "tooltip": "Har bir ish elementi turi sarlavha, tavsif, tayinlovchi, davlat, ustuvorlik, boshlanish sanasi, tugash sanasi, modul, sikl va boshqalar kabi birlamchi xususiyatlar toʻplami bilan birga keladi. Shuningdek, uni jamoangiz ehtiyojlariga moslashtirish uchun oʻz xususiyatlaringizni sozlashingiz va qoʻshishingiz mumkin.",
+        "add_button": "Yangi mulk qo'shing",
+        "project": {
+          "add_button": {
+            "import_from_workspace": "Ish joyidan import qilish"
+          }
+        },
+        "dropdown": {
+          "label": "Mulk turi",
+          "placeholder": "Turni tanlang"
+        },
+        "property_type": {
+          "text": {
+            "label": "Matn"
+          },
+          "number": {
+            "label": "Raqam"
+          },
+          "dropdown": {
+            "label": "Ochiladigan"
+          },
+          "boolean": {
+            "label": "Mantiqiy"
+          },
+          "date": {
+            "label": "Sana"
+          },
+          "member_picker": {
+            "label": "A'zo tanlash"
+          },
+          "formula": {
+            "label": "Formula"
+          }
+        },
+        "attributes": {
+          "label": "Atributlar",
+          "text": {
+            "single_line": {
+              "label": "Yagona qator"
+            },
+            "multi_line": {
+              "label": "paragraf"
+            },
+            "readonly": {
+              "label": "Faqat o'qing",
+              "header": "Faqat o'qiladigan ma'lumotlar"
+            },
+            "invalid_text_format": {
+              "label": "Matn formati noto‘g‘ri"
+            }
+          },
+          "number": {
+            "default": {
+              "placeholder": "Raqam qo'shing"
+            }
+          },
+          "relation": {
+            "single_select": {
+              "label": "Yagona tanlov"
+            },
+            "multi_select": {
+              "label": "Ko'p tanlov"
+            },
+            "no_default_value": {
+              "label": "Standart qiymat yo'q"
+            }
+          },
+          "boolean": {
+            "label": "To'g'ri | Yolg'on",
+            "no_default": "Standart qiymat yo'q"
+          },
+          "option": {
+            "create_update": {
+              "label": "Variantlar",
+              "form": {
+                "placeholder": "Variant qo'shish",
+                "errors": {
+                  "name": {
+                    "required": "Variant nomi talab qilinadi.",
+                    "integrity": "Xuddi shu nomdagi variant allaqachon mavjud."
+                  }
+                }
+              }
+            },
+            "select": {
+              "placeholder": {
+                "single": "Variantni tanlang",
+                "multi": {
+                  "default": "Variantlarni tanlang",
+                  "variable": "{count} opsiya tanlandi"
+                }
+              }
+            }
+          }
+        },
+        "toast": {
+          "create": {
+            "success": {
+              "title": "Muvaffaqiyat!",
+              "message": "{name} mulki muvaffaqiyatli yaratildi."
+            },
+            "error": {
+              "title": "Xato!",
+              "message": "Mulk yaratib bo‘lmadi. Iltimos, qayta urinib ko'ring!"
+            }
+          },
+          "update": {
+            "success": {
+              "title": "Muvaffaqiyat!",
+              "message": "{name} mulki muvaffaqiyatli yangilandi."
+            },
+            "error": {
+              "title": "Xato!",
+              "message": "Mulk yangilanmadi. Iltimos, qayta urinib ko'ring!"
+            }
+          },
+          "delete": {
+            "success": {
+              "title": "Muvaffaqiyat!",
+              "message": "{name} mulki muvaffaqiyatli oʻchirildi."
+            },
+            "error": {
+              "title": "Xato!",
+              "message": "Mulkni o‘chirib bo‘lmadi. Iltimos, qayta urinib ko'ring!"
+            }
+          },
+          "enable_disable": {
+            "loading": "{action} {name} mulki",
+            "success": {
+              "title": "Muvaffaqiyat!",
+              "message": "Mulk {name} {action} muvaffaqiyatli."
+            },
+            "error": {
+              "title": "Xato!",
+              "message": "{action} xususiyatiga erishilmadi. Iltimos, qayta urinib ko'ring!"
+            }
+          }
+        },
+        "create_update": {
+          "title": {
+            "create": "Yangi maxsus xususiyat yarating",
+            "update": "Maxsus xususiyatni yangilang"
+          },
+          "form": {
+            "display_name": {
+              "placeholder": "Sarlavha"
+            },
+            "description": {
+              "placeholder": "Tavsif"
+            }
+          },
+          "errors": {
+            "name": {
+              "required": "Mulkingizni nomlashingiz kerak.",
+              "max_length": "Mulk nomi 255 belgidan oshmasligi kerak."
+            },
+            "property_type": {
+              "required": "Mulk turini tanlashingiz kerak."
+            },
+            "options": {
+              "required": "Siz kamida bitta variantni qo'shishingiz kerak."
+            },
+            "formula": {
+              "required": "Formulani ifodalash talab qilinadi.",
+              "invalid": "Noto'g'ri formula: {error}",
+              "circular_reference": "Doiraviy havola aniqlandi. Formula to'g'ridan-to'g'ri yoki bilvosita o'ziga havola qila olmaydi.",
+              "invalid_reference": "Formula mavjud bo'lmagan xususiyatga murojaat qiladi."
+            }
+          }
+        },
+        "formula": {
+          "field_label": "Formula maydoni",
+          "tooltip": "'{'Field Name'}' sintaksisi yordamida formula kiriting. +, -, *, /, & operatorlarini qo'llab-quvvatlaydi.",
+          "placeholder": "Formulani yozing",
+          "test_button": "Sinov",
+          "validating": "Tasdiqlanmoqda",
+          "validation_success": "Formula amal qiladi! {resultType} qaytaradi",
+          "validation_success_with_refs": "Formula amal qiladi! {resultType} qaytaradi ({count} maydon(lar)ga havola qilingan)",
+          "error": {
+            "empty": "Iltimos, formulani kiriting",
+            "missing_context": "Ish maydoni, loyiha yoki ish elementi turi konteksti yetishmayapti",
+            "validation_failed": "Tasdiqlash amalga oshmadi"
+          },
+          "picker": {
+            "no_match": "Mos xususiyatlar yo'q",
+            "no_available": "Mavjud mulklar mavjud emas"
+          }
+        },
+        "enable_disable": {
+          "label": "Faol",
+          "tooltip": {
+            "disabled": "O'chirish uchun bosing",
+            "enabled": "Yoqish uchun bosing"
+          }
+        },
+        "delete_confirmation": {
+          "title": "Ushbu xususiyatni o'chirib tashlang",
+          "description": "Xususiyatlarni o'chirish mavjud ma'lumotlarning yo'qolishiga olib kelishi mumkin.",
+          "secondary_description": "Buning o'rniga mulkni o'chirib qo'ymoqchimisiz?",
+          "primary_button": "{action}, oʻchirib tashlang",
+          "secondary_button": "Ha, uni o'chirib qo'ying"
+        },
+        "mandate_confirmation": {
+          "label": "Majburiy mulk",
+          "content": "Bu xususiyat uchun birlamchi variant mavjud. Mulkni majburiy qilish standart qiymatni olib tashlaydi va foydalanuvchilar o'zlari tanlagan qiymatni qo'shishlari kerak bo'ladi.",
+          "tooltip": {
+            "disabled": "Ushbu mulk turini majburiy qilib bo'lmaydi",
+            "enabled": "Maydonni ixtiyoriy deb belgilash uchun belgini olib tashlang",
+            "checked": "Maydonni majburiy deb belgilash uchun belgilang"
+          }
+        },
+        "empty_state": {
+          "title": "Maxsus xususiyatlarni qo'shing",
+          "description": "Bu ish elementi turi uchun siz qoʻshgan yangi xususiyatlar shu yerda koʻrsatiladi."
+        }
+      },
+      "types": {
+        "title": "Turlari",
+        "description": "Xususiyatlari bilan ish elementi turlarini yarating va sozlang.",
+        "sort_options": {
+          "project_count": "Loyihalar qismi soni"
+        },
+        "filter_options": {
+          "show_active": "Faol ko'rsatish",
+          "show_inactive": "Faol emasligini ko'rsatish"
+        },
+        "project": {
+          "add_button": {
+            "create_new": "Yangi yaratish",
+            "import_from_workspace": "Ish joyidan import qilish"
+          },
+          "banner": {
+            "with_access": "Ish maydoni darajasidan turlarni import qilish uchun ish elementi turlarini yoqing",
+            "without_access": "Ish elementi turlari o‘chirib qo‘yilgan. Ularni ish maydoni sozlamalarida yoqish uchun ish maydoni administratoriga murojaat qiling."
+          }
+        }
+      },
+      "linked_properties": {
+        "title": "Maxsus xususiyatlar",
+        "add_button": "Xususiyatlarni qo'shing",
+        "modal": {
+          "title": "Xususiyatlarni qo'shing",
+          "empty": {
+            "title": "Hech qanday mulk mavjud emas",
+            "description": "Barcha xususiyatlar allaqachon ushbu turga bog'langan."
+          }
+        },
+        "unlink_confirmation": {
+          "title": "Mulkni ajratish",
+          "description": "Bu xususiyat ajratilsa, ushbu turdagi ish elementi boʻyicha uning barcha qiymatlari butunlay oʻchiriladi. Bu amalni ortga qaytarib bo‘lmaydi.",
+          "input_label": "Turi",
+          "input_label_suffix": "davom ettirish uchun:",
+          "confirm": "Mulkni ajratish",
+          "loading": "Ulanish uzilmoqda"
+        }
+      },
+      "item_delete_confirmation": {
+        "title": "Ushbu turni o'chiring",
+        "description": "Turlarni o'chirish mavjud ma'lumotlarning yo'qolishiga olib kelishi mumkin.",
+        "can_disable_warning": "Buning o'rniga turni o'chirib qo'ymoqchimisiz?",
+        "primary_button": "Ha, o'chirib tashlang",
+        "toast": {
+          "success": {
+            "title": "Muvaffaqiyat!",
+            "message": "Ish elementi turi muvaffaqiyatli oʻchirildi."
+          },
+          "error": {
+            "title": "Xato!",
+            "message": "Ish elementi turini o‘chirib bo‘lmadi. Iltimos, qayta urinib ko'ring!"
+          }
+        },
+        "errors": {
+          "cannot_delete_default_work_item_type": "Standart ish elementi turini oʻchirib boʻlmaydi",
+          "cannot_delete_work_item_type_with_associated_work_items": "Bog‘langan ish elementlari bilan ish elementi turini o‘chirib bo‘lmaydi"
+        }
+      }
+    },
+    "create": {
+      "title": "Ish elementi turini yarating",
+      "button": "Ish elementi turini qo'shing",
+      "toast": {
+        "success": {
+          "title": "Muvaffaqiyat!",
+          "message": "Ish elementi turi muvaffaqiyatli yaratildi."
+        },
+        "error": {
+          "title": "Xato!",
+          "message": {
+            "default": "Ish elementi turini yaratib bo‘lmadi. Iltimos, qayta urinib ko'ring!",
+            "conflict": "{name} turi allaqachon mavjud. Boshqa nom tanlang."
+          }
+        }
+      }
+    },
+    "update": {
+      "title": "Ish elementi turini yangilang",
+      "button": "Ish elementi turini yangilang",
+      "toast": {
+        "success": {
+          "title": "Muvaffaqiyat!",
+          "message": "Ish elementi turi {name} muvaffaqiyatli yangilandi."
+        },
+        "error": {
+          "title": "Xato!",
+          "message": {
+            "default": "Ish elementi turini yangilab bo‘lmadi. Iltimos, qayta urinib ko'ring!",
+            "conflict": "{name} turi allaqachon mavjud. Boshqa nom tanlang."
+          }
+        }
+      }
+    },
+    "create_update": {
+      "form": {
+        "name": {
+          "placeholder": "Ushbu ish elementi turiga noyob nom bering"
+        },
+        "description": {
+          "placeholder": "Ushbu ish elementi turi nimaga mo‘ljallanganligini va qachon ishlatilishini tasvirlab bering."
+        }
+      }
+    },
+    "enable_disable": {
+      "toast": {
+        "loading": "{action} {name} ish elementi turi",
+        "success": {
+          "title": "Muvaffaqiyat!",
+          "message": "Ish elementi turi {name} {action} muvaffaqiyatli."
+        },
+        "error": {
+          "title": "Xato!",
+          "message": "{action} ish elementi turi bajarilmadi. Iltimos, qayta urinib ko'ring!"
+        }
+      },
+      "tooltip": "{action} uchun bosing"
+    },
+    "change_confirmation": {
+      "title": "Ish elementi turi oʻzgartirilsinmi?",
+      "description": "Ish elementi turini o'zgartirish joriy turga xos bo'lgan maxsus xususiyat qiymatlarining yo'qolishiga olib kelishi mumkin. Bu amalni ortga qaytarib bo‘lmaydi.",
+      "button": {
+        "loading": "O'zgartirish",
+        "default": "Turni o'zgartirish"
+      }
+    },
+    "empty_state": {
+      "enable": {
+        "title": "Ish elementi turlarini yoqing",
+        "description": "Ish elementi turlari bilan ish elementlarini ishingiz uchun shakllang. Belgilar, fon va xususiyatlar bilan moslashtiring va ularni ushbu loyiha uchun sozlang.",
+        "primary_button": {
+          "text": "Yoqish"
+        },
+        "confirmation": {
+          "title": "Yoqilgandan so‘ng, Ishchi element turlarini o‘chirib bo‘lmaydi.",
+          "description": "Plane ning Ish elementi ushbu loyiha uchun birlamchi ish elementi turiga aylanadi va bu loyihada uning belgisi va fonida ko‘rsatiladi.",
+          "button": {
+            "default": "Yoqish",
+            "loading": "Sozlanmoqda"
+          }
+        }
+      },
+      "get_pro": {
+        "title": "Work element turlarini yoqish uchun Pro ilovasini oling.",
+        "description": "Ish elementi turlari bilan ish elementlarini ishingiz uchun shakllang. Belgilar, fon va xususiyatlar bilan moslashtiring va ularni ushbu loyiha uchun sozlang.",
+        "primary_button": {
+          "text": "Pro yuklab oling"
+        }
+      },
+      "upgrade": {
+        "title": "Ishchi element turlarini yoqish uchun yangilang.",
+        "description": "Ish elementi turlari bilan ish elementlarini ishingiz uchun shakllang. Belgilar, fon va xususiyatlar bilan moslashtiring va ularni ushbu loyiha uchun sozlang.",
+        "primary_button": {
+          "text": "Yangilash"
+        }
+      }
+    }
+  },
+  "work_item_type_hierarchy": {
+    "settings": {
+      "title": "Ierarxiya",
+      "tab_label": "Ierarxiya",
+      "description": "Ishingizni tartibga solish uchun ierarxiya darajalarini o'rnating. Har bir daraja to'g'ridan-to'g'ri yuqoridagi element bilan ota-ona munosabatlarini va to'g'ridan-to'g'ri ostidagi element bilan bolalar munosabatlarini belgilaydi.",
+      "sidebar_label": "Ierarxiya",
+      "enable_control": {
+        "title": "Ierarxiyani yoqish",
+        "description": "Turli xil ish ob'ektlari turlari o'rtasida ota-ona munosabatlarini yarating.",
+        "tooltip": "Ierarxiya yoqilgandan keyin uni o'chira olmaysiz."
+      },
+      "workspace_work_item_types_disabled_banner": {
+        "content": "Yangi ierarxiya yaratish uchun avvalo ish elementi turlarini aniqlang.",
+        "cta": "Ish elementi turlari sozlamalari"
+      }
+    },
+    "levels": {
+      "max_level_placeholder": "Yangi ierarxiya darajasini qo'shish uchun turini sudrab olib tashlang",
+      "empty_level_placeholder": "Ishchi element turini {level} darajasiga sudrab olib tashlang",
+      "drag_tooltip": "Darajani o'zgartirish uchun torting",
+      "quick_actions": {
+        "set_as_default": {
+          "label": "Standart sifatida o'rnating",
+          "toast": {
+            "loading": "Standart sifatida sozlanmoqda...",
+            "success": {
+              "title": "Muvaffaqiyat!",
+              "message": "Ierarxiya darajasi {level} sukut boʻyicha muvaffaqiyatli oʻrnatildi."
+            },
+            "error": {
+              "title": "Xato!",
+              "message": "Ierarxiya darajasini {level} sukut bo‘yicha o‘rnatib bo‘lmadi. Iltimos, qayta urinib koʻring."
+            }
+          }
+        }
+      },
+      "update_level_toast": {
+        "loading": "{workItemTypeName} {level} darajasiga ko‘chirilmoqda...",
+        "success": {
+          "title": "Muvaffaqiyat!",
+          "message": "{workItemTypeName} {level} darajasiga muvaffaqiyatli o‘tdi."
+        }
+      }
+    },
+    "break_hierarchy_modal": {
+      "title": "Tasdiqlash xatosi!",
+      "content": {
+        "intro": "Ish elementi turi {workItemTypeName} quyidagilarga ega:",
+        "parent_items": "{hisoblash, koʻplik, bitta {parent work item} boshqa {parent work items}}",
+        "child_items": "{hisoblash, koʻplik, bitta {sub-work item} boshqa {sub-work items}}",
+        "parent_line_suffix_when_also_children": ", va",
+        "footer": "Bu oʻzgartirish {workItemTypeName} ish elementi turidagi mavjud ish elementlaridan ota-ona va bolalar munosabatlarini olib tashlaydi."
+      },
+      "confirm_input": {
+        "label": "Davom etish uchun \"Tasdiqlash\" ni kiriting.",
+        "placeholder": "Tasdiqlang"
+      },
+      "error_toast": {
+        "title": "Xato!",
+        "message": "Ierarxiyani buzib bo‘lmadi. Iltimos, qayta urinib koʻring."
+      },
+      "confirm_button": {
+        "loading": "Murojaat qilinmoqda",
+        "default": "Qo‘llash va ajratish"
+      }
+    },
+    "work_item_modal": {
+      "invalid_work_item_type_create_toast": {
+        "title": "Xato!",
+        "message": "Tanlangan ish elementi turini yangi ish elementi yaratish uchun ishlatib bo‘lmaydi, chunki u ierarxiya qoidalarini buzadi."
+      },
+      "invalid_work_item_type_update_toast": {
+        "title": "Xato!",
+        "message": "Ish elementi turini yangilab bo‘lmaydi, chunki u ierarxiya qoidalarini buzadi."
+      }
+    },
+    "work_item_type_modal": {
+      "level": "Ierarxiya darajasi",
+      "invalid_level_toast": {
+        "title": "Xato!",
+        "message": "Ish elementi turini yangilab bo‘lmaydi, chunki u ierarxiya qoidalarini buzadi."
+      }
+    }
+  }
+}

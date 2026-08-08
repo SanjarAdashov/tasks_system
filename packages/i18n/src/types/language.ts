@@ -12,6 +12,7 @@ export type TLanguage =
   | "zh-CN"
   | "zh-TW"
   | "ru"
+  | "uz"
   | "it"
   | "cs"
   | "sk"

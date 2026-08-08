@@ -8,6 +8,7 @@ import { useEffect, useRef } from "react";
 import { combine } from "@atlaskit/pragmatic-drag-and-drop/combine";
 import { autoScrollForElements } from "@atlaskit/pragmatic-drag-and-drop-auto-scroll/element";
 import { observer } from "mobx-react";
+import { useTranslation } from "@plane/i18n";
 // plane constants
 import { ALL_ISSUES } from "@plane/constants";
 // types
@@ -57,6 +58,7 @@ export interface IList {
   handleCollapsedGroups: (value: string) => void;
   collapsedGroups: TIssueKanbanFilters;
   isEpic?: boolean;
+  disableGroupDrag?: boolean;
 }
 
 export const List = observer(function List(props: IList) {
@@ -80,12 +82,14 @@ export const List = observer(function List(props: IList) {
     handleCollapsedGroups,
     collapsedGroups,
     isEpic = false,
+    disableGroupDrag = false,
   } = props;
 
   const storeType = useIssueStoreType();
   // plane web hooks
   const isBulkOperationsEnabled = useBulkOperationStatus();
   const customProperties = useProjectWorkItemProperties();
+  const { t, currentLocale } = useTranslation();
 
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -95,6 +99,17 @@ export const List = observer(function List(props: IList) {
     isWorkspaceLevel: isWorkspaceLevel(storeType),
     isEpic: isEpic,
     customProperties,
+    issuesMap,
+    locale: currentLocale,
+    labels: {
+      none: t("common.none"),
+      yes: t("common.yes"),
+      no: t("common.no"),
+      inactiveSuffix: t("issue.custom_grouping.historical.inactive"),
+      archivedSuffix: t("issue.custom_grouping.historical.archived"),
+      inactiveDropError: t("issue.custom_grouping.historical.inactive_drop_error"),
+      archivedDropError: t("issue.custom_grouping.historical.archived_drop_error"),
+    },
   });
 
   // Enable Auto Scroll for Main Kanban
@@ -171,6 +186,7 @@ export const List = observer(function List(props: IList) {
                     handleCollapsedGroups={handleCollapsedGroups}
                     collapsedGroups={collapsedGroups}
                     isEpic={isEpic}
+                    disableGroupDrag={disableGroupDrag}
                   />
                 ))}
               </div>

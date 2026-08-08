@@ -1,0 +1,273 @@
+{
+  "automations": {
+    "settings": {
+      "title": "Maxsus avtomatlashtirish",
+      "create_automation": "Avtomatlashtirishni yaratish"
+    },
+    "scope": {
+      "label": "Qo'llash doirasi",
+      "run_on": "Yugurish"
+    },
+    "trigger": {
+      "label": "Ishga tushiruvchi",
+      "add_trigger": "Trigger qo'shing",
+      "sidebar_header": "Trigger konfiguratsiyasi",
+      "input_label": "Ushbu avtomatlashtirish uchun sabab nima?",
+      "input_placeholder": "Variantni tanlang",
+      "section_plane_events": "Plane hodisalari",
+      "section_time_based": "Vaqtga asoslangan",
+      "fixed_schedule": "Ruxsat etilgan jadval",
+      "schedule": {
+        "frequency": "Chastotasi",
+        "select_day": "Kunni tanlang",
+        "day_of_month": "Oy kuni",
+        "monthly_every": "Har",
+        "monthly_day_aria": "{day} kun",
+        "time": "Vaqt",
+        "hour": "Soat",
+        "minute": "Daqiqa",
+        "hour_suffix": "soat",
+        "minute_suffix": "min",
+        "am": "AM",
+        "pm": "PM",
+        "timezone": "Vaqt mintaqasi",
+        "timezone_placeholder": "Vaqt mintaqasini tanlang",
+        "frequency_daily": "Kundalik",
+        "frequency_weekly": "Haftalik",
+        "frequency_monthly": "Oylik",
+        "on": "Yoniq",
+        "validation_weekly_day_required": "Haftaning kamida bir kunini tanlang.",
+        "validation_monthly_date_required": "Oyning bir kunini tanlang.",
+        "main_content_schedule_summary_daily": "Har kuni {time} ({timezone}) da.",
+        "main_content_schedule_summary_weekly": "Har hafta {days} kuni {time} ({timezone}).",
+        "main_content_schedule_summary_monthly": "Har oy {day} kuni {time} ({timezone}) da.",
+        "schedule_mode": "Jadval rejimi",
+        "schedule_mode_fixed": "Tugallangan",
+        "schedule_mode_cron": "Cron",
+        "cron_expression_label": "Cron ifodasini kiriting",
+        "cron_expression_placeholder": "0 9 * * 1-5",
+        "cron_invalid": "Cron ifodasi yaroqsiz.",
+        "cron_preview": "Ushbu Cron ifodasi \"{description}\" bilan ishlaydi.",
+        "main_content_cron_summary": "{description} ({timezone})."
+      },
+      "button": {
+        "previous": "Orqaga",
+        "next": "Amal qo'shish"
+      },
+      "warning": {
+        "disabled_trigger_switching": "Siz yaratganingizdan so'ng trigger turini o'zgartira olmaysiz"
+      }
+    },
+    "condition": {
+      "label": "Taqdim etilgan",
+      "add_condition": "Shart qo'shing",
+      "adding_condition": "Qo'shish sharti"
+    },
+    "action": {
+      "label": "Harakat",
+      "add_action": "Amal qo'shish",
+      "sidebar_header": "Harakatlar",
+      "input_label": "Avtomatlashtirish nima qiladi?",
+      "input_placeholder": "Variantni tanlang",
+      "handler_name": {
+        "add_comment": "Fikr qo'shing",
+        "change_property": "Mulkni o'zgartirish",
+        "run_script": "Skriptni ishga tushirish"
+      },
+      "configuration": {
+        "label": "Konfiguratsiya",
+        "change_property": {
+          "placeholders": {
+            "property_name": "Mulkni tanlang",
+            "change_type": "Tanlang",
+            "property_value_select": "{hisoblash, koʻplik, bir{Select value} boshqa{Select values}}",
+            "property_value_select_date": "Sanani tanlang"
+          },
+          "validation": {
+            "property_name_required": "Mulk nomi talab qilinadi",
+            "change_type_required": "Turni o'zgartirish talab qilinadi",
+            "property_value_required": "Mulk qiymati talab qilinadi"
+          }
+        }
+      },
+      "comment_block": {
+        "title": "Fikr qo'shing"
+      },
+      "run_script_block": {
+        "title": "Skriptni ishga tushirish"
+      },
+      "change_property_block": {
+        "title": "Mulkni o'zgartirish"
+      },
+      "validation": {
+        "delete_only_action": "Uning yagona harakatini o'chirishdan oldin avtomatlashtirishni o'chiring."
+      }
+    },
+    "conjunctions": {
+      "and": "Va",
+      "or": "Yoki",
+      "if": "Agar",
+      "then": "Keyin"
+    },
+    "enable": {
+      "alert": "Avtomatlashtirish tugallangandan so'ng \"Yoqish\" tugmasini bosing. Yoqilgandan so'ng, avtomatlashtirish ishga tayyor bo'ladi.",
+      "validation": {
+        "required": "Avtomatlashtirishda tetik va kamida bitta harakatni yoqish kerak."
+      }
+    },
+    "delete": {
+      "validation": {
+        "enabled": "Avtomatlashtirishni o'chirishdan oldin uni o'chirib qo'yish kerak."
+      }
+    },
+    "table": {
+      "title": "Avtomatlashtirish sarlavhasi",
+      "scope": "Qo'llash doirasi",
+      "projects": "Loyihalar",
+      "last_run_on": "Oxirgi yugurish",
+      "created_on": "Yaratilgan sanasi",
+      "last_updated_on": "Oxirgi yangilangan sana",
+      "last_run_status": "Oxirgi ishga tushirish holati",
+      "average_duration": "O'rtacha davomiylik",
+      "owner": "Egasi",
+      "executions": "Qatl qilishlar"
+    },
+    "create_modal": {
+      "heading": {
+        "create": "Avtomatlashtirishni yaratish",
+        "update": "Avtomatlashtirishni yangilash"
+      },
+      "title": {
+        "placeholder": "Avtomatlashtirishga nom bering.",
+        "required_error": "Sarlavha kerak"
+      },
+      "description": {
+        "placeholder": "Avtomatlashtirishingizni tavsiflang."
+      },
+      "submit_button": {
+        "create": "Avtomatlashtirishni yaratish",
+        "update": "Avtomatlashtirishni yangilash"
+      }
+    },
+    "delete_modal": {
+      "heading": "Avtomatlashtirishni o'chirish"
+    },
+    "activity": {
+      "filters": {
+        "show_fails": "Ko'rsatuv muvaffaqiyatsiz tugadi",
+        "all": "Hammasi",
+        "only_activity": "Faqat faoliyat",
+        "only_run_history": "Faqat tarixni ishga tushiring"
+      },
+      "run_history": {
+        "initiator": "Tashabbuschi"
+      }
+    },
+    "toasts": {
+      "create": {
+        "success": {
+          "title": "Muvaffaqiyat!",
+          "message": "Avtomatlashtirish muvaffaqiyatli yaratildi."
+        },
+        "error": {
+          "title": "Xato!",
+          "message": "Avtomatlashtirishni yaratish amalga oshmadi."
+        }
+      },
+      "update": {
+        "success": {
+          "title": "Muvaffaqiyat!",
+          "message": "Avtomatlashtirish muvaffaqiyatli yangilandi."
+        },
+        "error": {
+          "title": "Xato!",
+          "message": "Avtomatlashtirish yangilanmadi."
+        }
+      },
+      "enable": {
+        "success": {
+          "title": "Muvaffaqiyat!",
+          "message": "Avtomatlashtirish muvaffaqiyatli yoqildi."
+        },
+        "error": {
+          "title": "Xato!",
+          "message": "Avtomatlashtirish yoqilmadi."
+        }
+      },
+      "disable": {
+        "success": {
+          "title": "Muvaffaqiyat!",
+          "message": "Avtomatlashtirish muvaffaqiyatli o'chirildi."
+        },
+        "error": {
+          "title": "Xato!",
+          "message": "Avtomatlashtirishni o‘chirib bo‘lmadi."
+        }
+      },
+      "delete": {
+        "success": {
+          "title": "Avtomatlashtirish o'chirildi",
+          "message": "{name}, avtomatlashtirish endi loyihangizdan oʻchirib tashlandi."
+        },
+        "error": {
+          "title": "Bu safar avtomatlashtirishni oʻchirib boʻlmadi.",
+          "message": "Uni qayta oʻchirib koʻring yoki keyinroq qayting. Agar uni o'chira olmasangiz, biz bilan bog'laning."
+        }
+      },
+      "action": {
+        "create": {
+          "error": {
+            "title": "Xato!",
+            "message": "Amal yaratib bo‘lmadi. Iltimos, qayta urinib ko'ring!"
+          }
+        },
+        "update": {
+          "error": {
+            "title": "Xato!",
+            "message": "Amalni yangilab bo‘lmadi. Iltimos, qayta urinib ko'ring!"
+          }
+        }
+      }
+    },
+    "empty_state": {
+      "no_automations": {
+        "title": "Hali ko'rsatish uchun avtomatizatsiya yo'q.",
+        "description": "Avtomatlashtirish triggerlar, shartlar va harakatlarni o'rnatish orqali takroriy vazifalarni bartaraf etishga yordam beradi. Vaqtni tejash va ishni osonlikcha davom ettirish uchun uni yarating."
+      },
+      "upgrade": {
+        "title": "Avtomatlashtirish",
+        "description": "Avtomatlashtirish - bu loyihangizdagi vazifalarni avtomatlashtirish usuli.",
+        "sub_description": "Avtomatlashtirish vositalaridan foydalanganda administrator vaqtining 80 foizini qaytarib oling."
+      }
+    },
+    "global_automations": {
+      "project_select": {
+        "label": "Ushbu avtomatlashtirishni ishga tushirish uchun loyihalarni tanlang",
+        "all_projects": {
+          "label": "Barcha loyihalar",
+          "description": "Avtomatlashtirish ish joyidagi barcha loyihalar uchun ishlaydi."
+        },
+        "select_projects": {
+          "label": "Loyihalarni tanlang",
+          "description": "Avtomatlashtirish ish joyidagi tanlangan loyihalar uchun ishlaydi.",
+          "placeholder": "Loyihalarni tanlang"
+        }
+      },
+      "settings": {
+        "sidebar_label": "Avtomatlashtirish",
+        "title": "Avtomatlashtirish",
+        "description": "Global avtomatlashtirish yordamida ish joyingizdagi jarayonlarni standartlashtiring."
+      },
+      "table": {
+        "scope": {
+          "global": "Global miqyosda",
+          "project": {
+            "label": "Loyiha",
+            "multiple": "Bir nechta",
+            "all": "Hammasi"
+          }
+        }
+      }
+    }
+  }
+}

@@ -33,6 +33,7 @@ import { useProjectEstimates } from "@/hooks/store/estimates";
 import { useCommandPalette } from "@/hooks/store/use-command-palette";
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useProject } from "@/hooks/store/use-project";
+import { useProjectWorkItemFieldVisibility } from "@/hooks/use-project-work-item-field-visibility";
 import { useUser } from "@/hooks/store/user";
 
 export const usePowerKWorkItemContextBasedCommands = (): TPowerKCommandConfig[] => {
@@ -63,6 +64,10 @@ export const usePowerKWorkItemContextBasedCommands = (): TPowerKCommandConfig[] 
   // derived values
   const entityId = entityIdentifier ? getIssueIdByIdentifier(entityIdentifier.toString()) : null;
   const entityDetails = entityId ? getIssueById(entityId) : null;
+  const { isFieldVisible } = useProjectWorkItemFieldVisibility(
+    workspaceSlug?.toString(),
+    entityDetails?.project_id ?? undefined
+  );
   const isEpic = !!entityDetails?.is_epic;
   const projectDetails = entityDetails?.project_id ? getProjectById(entityDetails?.project_id) : undefined;
   const isCurrentUserAssigned = !!entityDetails?.assignee_ids?.includes(currentUser?.id ?? "");
@@ -287,8 +292,8 @@ export const usePowerKWorkItemContextBasedCommands = (): TPowerKCommandConfig[] 
         });
       },
       modifierShortcut: "shift+e",
-      isEnabled: () => isEstimateEnabled && isEditingAllowed,
-      isVisible: () => isEstimateEnabled && isEditingAllowed,
+      isEnabled: () => isFieldVisible("estimate") && isEstimateEnabled && isEditingAllowed,
+      isVisible: () => isFieldVisible("estimate") && isEstimateEnabled && isEditingAllowed,
       closeOnSelect: true,
     },
     {
@@ -327,8 +332,8 @@ export const usePowerKWorkItemContextBasedCommands = (): TPowerKCommandConfig[] 
         }
       },
       modifierShortcut: "shift+c",
-      isEnabled: () => Boolean(projectDetails?.cycle_view && isEditingAllowed),
-      isVisible: () => Boolean(projectDetails?.cycle_view && isEditingAllowed),
+      isEnabled: () => Boolean(isFieldVisible("cycle") && projectDetails?.cycle_view && isEditingAllowed),
+      isVisible: () => Boolean(isFieldVisible("cycle") && projectDetails?.cycle_view && isEditingAllowed),
       closeOnSelect: true,
     },
     {
@@ -359,8 +364,8 @@ export const usePowerKWorkItemContextBasedCommands = (): TPowerKCommandConfig[] 
         }
       },
       modifierShortcut: "shift+m",
-      isEnabled: () => Boolean(projectDetails?.module_view && isEditingAllowed),
-      isVisible: () => Boolean(projectDetails?.module_view && isEditingAllowed),
+      isEnabled: () => Boolean(isFieldVisible("module") && projectDetails?.module_view && isEditingAllowed),
+      isVisible: () => Boolean(isFieldVisible("module") && projectDetails?.module_view && isEditingAllowed),
       closeOnSelect: false,
     },
     {

@@ -5,8 +5,8 @@
  */
 
 import { observer } from "mobx-react";
+import { useParams } from "next/navigation";
 // plane imports
-import { EUserPermissionsLevel, EUserPermissions } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import { EmptyStateDetailed } from "@plane/propel/empty-state";
 import { ContentWrapper } from "@plane/ui";
@@ -17,7 +17,7 @@ import { ProjectsLoader } from "@/components/ui/loader/projects-loader";
 import { useCommandPalette } from "@/hooks/store/use-command-palette";
 import { useProject } from "@/hooks/store/use-project";
 import { useProjectFilter } from "@/hooks/store/use-project-filter";
-import { useUserPermissions } from "@/hooks/store/user";
+import { useCreationQuotas } from "@/hooks/use-creation-quotas";
 // local imports
 import { ProjectCard } from "./card";
 
@@ -40,16 +40,16 @@ export const ProjectCardList = observer(function ProjectCardList(props: TProject
     getProjectById,
   } = useProject();
   const { currentWorkspaceDisplayFilters, currentWorkspaceFilters } = useProjectFilter();
-  const { allowPermissions } = useUserPermissions();
+  const { workspaceSlug } = useParams<{ workspaceSlug: string }>();
+  const { data: creationQuotas } = useCreationQuotas();
 
   // derived values
   const workspaceProjectIds = totalProjectIdsProps ?? storeWorkspaceProjectIds;
   const filteredProjectIds = filteredProjectIdsProps ?? storeFilteredProjectIds;
 
   // permissions
-  const canPerformEmptyStateActions = allowPermissions(
-    [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
-    EUserPermissionsLevel.WORKSPACE
+  const canPerformEmptyStateActions = Boolean(
+    creationQuotas?.projects.find((quota) => quota.workspace_slug === workspaceSlug)?.can_create
   );
 
   if (!filteredProjectIds || !workspaceProjectIds || loader === "init-loader" || fetchStatus !== "complete")

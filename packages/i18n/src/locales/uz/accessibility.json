@@ -1,0 +1,34 @@
+{
+  "aria_labels": {
+    "projects_sidebar": {
+      "workspace_logo": "Ish maydoni logotipi",
+      "open_workspace_switcher": "Ish joyini o'zgartirgichni oching",
+      "open_user_menu": "Foydalanuvchi menyusini oching",
+      "open_command_palette": "Buyruqlar palitrasini oching",
+      "open_extended_sidebar": "Kengaytirilgan yon panelni oching",
+      "close_extended_sidebar": "Kengaytirilgan yon panelni yoping",
+      "create_favorites_folder": "Sevimlilar papkasini yarating",
+      "open_folder": "Jildni oching",
+      "close_folder": "Jildni yoping",
+      "open_favorites_menu": "Sevimlilar menyusini oching",
+      "close_favorites_menu": "Sevimlilar menyusini yoping",
+      "enter_folder_name": "Jild nomini kiriting",
+      "create_new_project": "Yangi loyiha yarating",
+      "open_projects_menu": "Loyihalar menyusini oching",
+      "close_projects_menu": "Loyihalar menyusini yoping",
+      "toggle_quick_actions_menu": "Tez amallar menyusini oʻzgartirish",
+      "open_project_menu": "Loyiha menyusini oching",
+      "close_project_menu": "Loyiha menyusini yoping",
+      "collapse_sidebar": "Yon panelni yig‘ish",
+      "expand_sidebar": "Yon panelni kengaytirish",
+      "edition_badge": "Ochiq pullik rejalar modali"
+    },
+    "auth_forms": {
+      "clear_email": "Elektron pochtani tozalash",
+      "show_password": "Parolni ko'rsatish",
+      "hide_password": "Parolni yashirish",
+      "close_alert": "Ogohlantirishni yopish",
+      "close_popover": "Popoverni yoping"
+    }
+  }
+}

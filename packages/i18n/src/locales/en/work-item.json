@@ -1,6 +1,7 @@
 {
   "issue": {
     "label": "{count, plural, one {Work item} other {Work items}}",
+    "identifier": "Work item number",
     "all": "All Work items",
     "edit": "Edit work item",
     "title": {
@@ -75,12 +76,59 @@
       "calendar": "Calendar",
       "spreadsheet": "Table",
       "gantt": "Timeline",
+      "custom_grouping": "Custom grouping",
       "title": {
         "list": "List Layout",
         "kanban": "Board Layout",
         "calendar": "Calendar Layout",
         "spreadsheet": "Table Layout",
-        "gantt": "Timeline Layout"
+        "gantt": "Timeline Layout",
+        "custom_grouping": "Custom grouping"
+      }
+    },
+    "custom_grouping": {
+      "new": "New configuration",
+      "access": { "personal": "Personal", "project": "Shared with project" },
+      "fields": {
+        "state": "Status",
+        "assignees": "Assignees",
+        "priority": "Priority",
+        "labels": "Labels",
+        "cycle": "Cycle",
+        "module": "Module",
+        "created_by": "Creator",
+        "start_date": "Start date",
+        "target_date": "Due date"
+      },
+      "form": {
+        "create_title": "Create grouping configuration",
+        "edit_title": "Edit grouping configuration",
+        "description": "Choose the field used to arrange tasks into vertical groups.",
+        "name": "Configuration name",
+        "field": "Group tasks by",
+        "system_fields": "System fields",
+        "custom_fields": "Custom fields",
+        "date_grouping": "Date grouping",
+        "visibility": "Visibility",
+        "save": "Save"
+      },
+      "date_bucket": { "exact": "Exact date", "day": "Day", "week": "Week", "month": "Month" },
+      "historical": {
+        "inactive": "inactive",
+        "archived": "archived",
+        "inactive_drop_error": "This user is no longer an active project member.",
+        "archived_drop_error": "This option is archived."
+      },
+      "empty": {
+        "title": "No grouping configurations",
+        "description": "Create a personal configuration or, if you are a project administrator, a shared one."
+      },
+      "delete_confirm": "Delete the configuration ‘{name}’?",
+      "toast": {
+        "saved": "Grouping configuration saved.",
+        "save_error": "Could not save the grouping configuration.",
+        "delete_error": "Could not delete the grouping configuration.",
+        "moved": "Task moved"
       }
     },
     "states": {

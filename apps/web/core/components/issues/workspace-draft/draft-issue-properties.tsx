@@ -28,6 +28,7 @@ import { useProject } from "@/hooks/store/use-project";
 import { useProjectState } from "@/hooks/store/use-project-state";
 import { useWorkspaceDraftIssues } from "@/hooks/store/workspace-draft";
 import { usePlatformOS } from "@/hooks/use-platform-os";
+import { useProjectWorkItemFieldVisibility } from "@/hooks/use-project-work-item-field-visibility";
 import { IssuePropertyLabels } from "../issue-layouts/properties";
 // local components
 
@@ -52,6 +53,10 @@ export const DraftIssueProperties = observer(function DraftIssueProperties(props
 
   // router
   const { workspaceSlug } = useParams();
+  const { isFieldVisible } = useProjectWorkItemFieldVisibility(
+    workspaceSlug?.toString(),
+    issue.project_id ?? undefined
+  );
   // derived values
   const stateDetails = getStateById(issue.state_id);
 
@@ -176,38 +181,42 @@ export const DraftIssueProperties = observer(function DraftIssueProperties(props
       />
 
       {/* start date */}
-      <div className="h-5" onClick={handleEventPropagation}>
-        <DateDropdown
-          value={issue.start_date ?? null}
-          onChange={handleStartDate}
-          maxDate={maxDate}
-          placeholder="Start date"
-          icon={<StartDatePropertyIcon className="h-3 w-3 flex-shrink-0" />}
-          buttonVariant={issue.start_date ? "border-with-text" : "border-without-text"}
-          optionsClassName="z-10"
-          renderByDefault={isMobile}
-          showTooltip
-        />
-      </div>
+      {isFieldVisible("start_date") && (
+        <div className="h-5" onClick={handleEventPropagation}>
+          <DateDropdown
+            value={issue.start_date ?? null}
+            onChange={handleStartDate}
+            maxDate={maxDate}
+            placeholder="Start date"
+            icon={<StartDatePropertyIcon className="h-3 w-3 flex-shrink-0" />}
+            buttonVariant={issue.start_date ? "border-with-text" : "border-without-text"}
+            optionsClassName="z-10"
+            renderByDefault={isMobile}
+            showTooltip
+          />
+        </div>
+      )}
 
       {/* target/due date */}
-      <div className="h-5" onClick={handleEventPropagation}>
-        <DateDropdown
-          value={issue?.target_date ?? null}
-          onChange={handleTargetDate}
-          minDate={minDate}
-          placeholder="Due date"
-          icon={<DueDatePropertyIcon className="h-3 w-3 flex-shrink-0" />}
-          buttonVariant={issue.target_date ? "border-with-text" : "border-without-text"}
-          buttonClassName={
-            shouldHighlightIssueDueDate(issue?.target_date || null, stateDetails?.group) ? "text-danger-primary" : ""
-          }
-          clearIconClassName="!text-primary"
-          optionsClassName="z-10"
-          renderByDefault={isMobile}
-          showTooltip
-        />
-      </div>
+      {isFieldVisible("target_date") && (
+        <div className="h-5" onClick={handleEventPropagation}>
+          <DateDropdown
+            value={issue?.target_date ?? null}
+            onChange={handleTargetDate}
+            minDate={minDate}
+            placeholder="Due date"
+            icon={<DueDatePropertyIcon className="h-3 w-3 flex-shrink-0" />}
+            buttonVariant={issue.target_date ? "border-with-text" : "border-without-text"}
+            buttonClassName={
+              shouldHighlightIssueDueDate(issue?.target_date || null, stateDetails?.group) ? "text-danger-primary" : ""
+            }
+            clearIconClassName="!text-primary"
+            optionsClassName="z-10"
+            renderByDefault={isMobile}
+            showTooltip
+          />
+        </div>
+      )}
 
       {/* assignee */}
       <div className="h-5" onClick={handleEventPropagation}>
@@ -227,7 +236,7 @@ export const DraftIssueProperties = observer(function DraftIssueProperties(props
       </div>
 
       {/* modules */}
-      {projectDetails?.module_view && (
+      {isFieldVisible("module") && projectDetails?.module_view && (
         <div className="h-5" onClick={handleEventPropagation}>
           <ModuleDropdown
             buttonContainerClassName="truncate max-w-40"
@@ -244,7 +253,7 @@ export const DraftIssueProperties = observer(function DraftIssueProperties(props
       )}
 
       {/* cycles */}
-      {projectDetails?.cycle_view && (
+      {isFieldVisible("cycle") && projectDetails?.cycle_view && (
         <div className="h-5" onClick={handleEventPropagation}>
           <CycleDropdown
             buttonContainerClassName="truncate max-w-40"
@@ -259,18 +268,20 @@ export const DraftIssueProperties = observer(function DraftIssueProperties(props
       )}
 
       {/* estimates */}
-      {issue.project_id && areEstimateEnabledByProjectId(issue.project_id?.toString()) && (
-        <div className="h-5" onClick={handleEventPropagation}>
-          <EstimateDropdown
-            value={issue.estimate_point ?? undefined}
-            onChange={handleEstimate}
-            projectId={issue.project_id}
-            buttonVariant="border-with-text"
-            renderByDefault={isMobile}
-            showTooltip
-          />
-        </div>
-      )}
+      {isFieldVisible("estimate") &&
+        issue.project_id &&
+        areEstimateEnabledByProjectId(issue.project_id?.toString()) && (
+          <div className="h-5" onClick={handleEventPropagation}>
+            <EstimateDropdown
+              value={issue.estimate_point ?? undefined}
+              onChange={handleEstimate}
+              projectId={issue.project_id}
+              buttonVariant="border-with-text"
+              renderByDefault={isMobile}
+              showTooltip
+            />
+          </div>
+        )}
     </div>
   );
 });

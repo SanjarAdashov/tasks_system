@@ -1,9 +1,195 @@
 {
   "project_settings": {
+    "sidebar_title": "Project settings",
     "work_item_fields": {
       "label": "Work item fields",
       "heading": "Work item fields",
-      "description": "Choose the built-in fields shown when work items are created and define project-specific properties."
+      "description": "Choose the built-in fields shown when work items are created and define project-specific properties.",
+      "errors": {
+        "try_again": "Please review the configuration and try again."
+      },
+      "system_fields": {
+        "title": "System fields",
+        "description": "Project and title always remain visible and required. Hidden fields are removed only from the creation form and remain API-compatible.",
+        "columns": {
+          "field": "Field",
+          "visible": "Visible",
+          "required": "Required"
+        },
+        "always": "Always",
+        "save": "Save system fields",
+        "fields": {
+          "project": "Project",
+          "title": "Title",
+          "description": "Description",
+          "state": "State",
+          "priority": "Priority",
+          "assignees": "Assignees",
+          "labels": "Labels",
+          "start_date": "Start date",
+          "target_date": "Due date",
+          "cycle": "Cycle",
+          "module": "Module",
+          "estimate": "Estimate",
+          "parent": "Parent work item"
+        },
+        "toast": {
+          "success_title": "System fields updated",
+          "success_message": "The work-item form configuration has been saved for this project.",
+          "error_title": "Could not update system fields"
+        }
+      },
+      "property_types": {
+        "short_text": "Short text",
+        "long_text": "Multi-line text",
+        "number": "Number",
+        "date": "Date",
+        "checkbox": "Checkbox",
+        "single_select": "Single select",
+        "multi_select": "Multi-select"
+      },
+      "custom_properties": {
+        "title": "Custom properties",
+        "description": "Properties are project-specific. Archive a property to remove it from new work items without deleting historical values.",
+        "new": "New property",
+        "required_badge": "Required",
+        "edit": "Edit",
+        "archive": "Archive",
+        "archive_confirm": "Archive \"{name}\"? Existing values will be preserved.",
+        "empty_title": "No custom properties yet",
+        "empty_description": "Create the first property for this project.",
+        "toast": {
+          "archived_title": "Property archived",
+          "archived_message": "Historical values remain available.",
+          "archive_error_title": "Could not archive property"
+        }
+      },
+      "form": {
+        "edit_title": "Edit property",
+        "new_title": "New property",
+        "description": "The property belongs only to this project. Its type cannot be changed after creation.",
+        "name_label": "Name",
+        "name_placeholder": "e.g. Customer tier",
+        "type_label": "Type",
+        "select_source_label": "Select source",
+        "manual_list": "Manual list",
+        "project_members": "Project members",
+        "select_source_description": "Project members are loaded dynamically and always use their current profile names.",
+        "description_label": "Description",
+        "description_placeholder": "Explain how this property should be used",
+        "required_title": "Required",
+        "required_description": "A value must be supplied before the work item can be saved.",
+        "options_title": "Options",
+        "options_description": "At least one active option is required.",
+        "add_option": "Add option",
+        "option_placeholder": "Option {number}",
+        "remove_option": "Remove option",
+        "empty_options": "Add the first option to save this property.",
+        "default_value_title": "Default value",
+        "default_value_description": "Used when a new work item does not provide a value.",
+        "default_value_placeholder": "Default value",
+        "checked": "Checked",
+        "unchecked": "Unchecked",
+        "untitled_option": "Untitled option",
+        "select_member": "Select a project member",
+        "select_option": "Select an option",
+        "select_members": "Select project members",
+        "select_options": "Select options",
+        "cancel": "Cancel",
+        "save_changes": "Save changes",
+        "create_property": "Create property",
+        "toast": {
+          "updated_title": "Property updated",
+          "created_title": "Property created",
+          "ready_message": "\"{name}\" is ready to use in this project.",
+          "error_title": "Could not save property",
+          "error_message": "The property could not be saved."
+        }
+      }
+    },
+    "user_groups": {
+      "label": "User groups",
+      "heading": "User groups",
+      "description": "Create reusable project-scoped lists for transition rules and access conditions.",
+      "name": "Group name",
+      "description_label": "Description",
+      "description_placeholder": "Optional description",
+      "create": "Create group",
+      "save": "Save",
+      "edit": "Edit",
+      "archive": "Archive",
+      "restore": "Restore",
+      "delete": "Delete permanently",
+      "active_tab": "Active",
+      "archived_tab": "Archived",
+      "archived": "Archived",
+      "members": "Members",
+      "selected": "selected",
+      "search_members": "Search members by name or email",
+      "no_members": "No members have been added to this group.",
+      "no_members_found": "No available members match your search.",
+      "no_description": "No description",
+      "not_in_project": "Not in project",
+      "unavailable_members": "Unavailable group members",
+      "unavailable_members_help": "These accounts remain in the group history and will become active here again if they return to the project.",
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive",
+        "blocked": "Blocked"
+      },
+      "empty": {
+        "active": {
+          "title": "No active groups yet",
+          "description": "Create a group to reuse a team roster in transition rules and access conditions."
+        },
+        "archived": {
+          "title": "The archive is empty",
+          "description": "Archived groups will appear here and can be restored at any time."
+        }
+      },
+      "editor": {
+        "create_title": "Create user group",
+        "edit_title": "Edit user group",
+        "description": "Set the group details and choose active project members.",
+        "members_help": "Membership can only be changed from this window."
+      },
+      "confirm": {
+        "archive": {
+          "title": "Archive group?",
+          "description": "The group will move to the Archive tab. Existing rules will keep their references, but the group cannot be selected in new rules until it is restored.",
+          "action": "Archive group",
+          "success_title": "Group archived",
+          "success_message": "The group has been moved to the archive."
+        },
+        "restore": {
+          "title": "Restore group?",
+          "description": "The group will return to the active list and can be selected in new rules again.",
+          "action": "Restore group",
+          "success_title": "Group restored",
+          "success_message": "The group is active again."
+        },
+        "delete": {
+          "title": "Delete group permanently?",
+          "description": "This action cannot be undone. Permanent deletion is available only when the group is not used by existing rules.",
+          "action": "Delete permanently",
+          "success_title": "Group deleted",
+          "success_message": "The archived group has been permanently deleted."
+        }
+      },
+      "toast": {
+        "created": {
+          "title": "Group created",
+          "message": "The new user group is ready to use."
+        },
+        "updated": {
+          "title": "Group updated",
+          "message": "Group details and membership have been saved."
+        },
+        "error": {
+          "title": "Could not update the group",
+          "message": "Please review the data and try again."
+        }
+      }
     },
     "attachments": {
       "label": "File uploads",
@@ -111,6 +297,83 @@
       }
     },
     "state_transitions": {
+      "editor": {
+        "transition_type": "Transition type",
+        "nested_group": "Nested group",
+        "all_conditions": "AND · all conditions",
+        "any_condition": "OR · any condition",
+        "yes": "Yes",
+        "no": "No",
+        "guest": "Guest",
+        "member": "Member",
+        "project_admin": "Project Admin",
+        "unknown_status": "Unknown status",
+        "remove_condition": "Remove condition",
+        "remove_group": "Remove group",
+        "optional_message": "Optional custom failure message",
+        "value": "Value",
+        "user_uuid": "User UUID",
+        "actor_group": "Current user belongs to group",
+        "creator_group": "Creator belongs to group",
+        "any_assignee_group": "Any assignee belongs to group",
+        "all_assignee_group": "All assignees belong to group",
+        "any_property_group": "Any user in {property} belongs to group",
+        "all_property_group": "All users in {property} belong to group",
+        "current_user_property": "Current user is selected in {property}",
+        "admin_bypass_short": "Admin bypass",
+        "system_bypass_short": "System bypass",
+        "refresh": "Refresh",
+        "denied_transition": "Denied transition",
+        "configuration_changed": "Configuration changed",
+        "actor": "Actor",
+        "system": "System",
+        "work_item": "Work item",
+        "audit_empty": "The audit log is empty.",
+        "preview_creation": "Preview work-item creation",
+        "work_item_uuid": "Work-item UUID",
+        "user_uuid_self": "User UUID (leave empty to use yourself)",
+        "target_status": "Target status",
+        "run_preview": "Run preview",
+        "allowed": "Transition allowed",
+        "denied": "Transition denied",
+        "archived_group": "archived",
+        "try_again": "Please try again.",
+        "fields": {
+          "title": "Title",
+          "description": "Description",
+          "priority": "Priority",
+          "status": "Status",
+          "assignees": "Assignees",
+          "labels": "Labels",
+          "start_date": "Start date",
+          "due_date": "Due date",
+          "cycle": "Cycle",
+          "module": "Module",
+          "estimate": "Estimate",
+          "parent": "Parent work item",
+          "creator": "Creator",
+          "attachments": "Attachments",
+          "comments": "Comments",
+          "subtasks": "Subtasks",
+          "dependencies": "Dependencies",
+          "current_user": "Current user",
+          "current_user_role": "Current user's project role",
+          "current_user_assignee": "Current user is an assignee",
+          "current_user_creator": "Current user created the work item"
+        }
+      },
+      "operators": {
+        "is_set": "Filled in",
+        "is_not_set": "Not filled in",
+        "eq": "Equals",
+        "neq": "Does not equal",
+        "before": "Date is before",
+        "after": "Date is after",
+        "contains": "Contains",
+        "not_contains": "Does not contain",
+        "all_completed": "All are completed",
+        "has_incomplete": "Has incomplete items"
+      },
       "label": "State transition rules",
       "heading": "State transition rules",
       "description": "Configure permissions and required conditions for moving work items between states in this project.",

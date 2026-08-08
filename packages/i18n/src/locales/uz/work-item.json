@@ -1,0 +1,474 @@
+{
+  "issue": {
+    "label": "{hisoblash, koʻplik, bitta {Work item} boshqa {Work items}}",
+    "identifier": "Vazifa raqami",
+    "all": "Barcha ish elementlari",
+    "edit": "Ish elementini tahrirlash",
+    "title": {
+      "label": "Ish elementi nomi",
+      "required": "Ish elementi nomi shart."
+    },
+    "add": {
+      "press_enter": "Boshqa ish elementini qo'shish uchun \"Enter\" tugmasini bosing",
+      "label": "Ish elementini qo'shing",
+      "cycle": {
+        "failed": "Ish elementini tsiklga qoʻshib boʻlmadi. Iltimos, qayta urinib koʻring.",
+        "success": "{hisoblash, koʻplik, bitta {Work item} boshqa {Work items}} siklga muvaffaqiyatli qoʻshildi.",
+        "loading": "Tsiklga {hisob, koʻplik, bitta {work item} boshqa {work items}} qoʻshilmoqda"
+      },
+      "assignee": "Ishtirokchilarni qo'shing",
+      "start_date": "Boshlanish sanasini qo'shing",
+      "due_date": "Tugash sanasini qo'shing",
+      "parent": "Asosiy ish elementini qo'shing",
+      "sub_issue": "Qo'shimcha ish elementini qo'shing",
+      "dependency": "Qaramlikni qo'shing",
+      "relation": "Aloqa qo'shish",
+      "link": "Havolani qo'shish",
+      "existing": "Mavjud ish elementini qo'shing"
+    },
+    "remove": {
+      "label": "Ish elementini olib tashlang",
+      "cycle": {
+        "loading": "Ish elementini tsikldan olib tashlash",
+        "success": "Ish elementi sikldan muvaffaqiyatli olib tashlandi.",
+        "failed": "Ish elementini tsikldan olib tashlab bo'lmadi. Iltimos, qayta urinib koʻring."
+      },
+      "module": {
+        "loading": "Ish elementini moduldan olib tashlash",
+        "success": "Ish elementi moduldan muvaffaqiyatli olib tashlandi.",
+        "failed": "Ish elementini moduldan olib tashlab bo‘lmadi. Iltimos, qayta urinib koʻring."
+      },
+      "parent": {
+        "label": "Asosiy ish elementini olib tashlang"
+      }
+    },
+    "new": "Yangi ish elementi",
+    "adding": "Ish elementi qo'shilmoqda",
+    "create": {
+      "success": "Ish elementi yaratildi"
+    },
+    "priority": {
+      "urgent": "Shoshilinch",
+      "high": "Yuqori",
+      "medium": "O'rta",
+      "low": "Past"
+    },
+    "display": {
+      "properties": {
+        "label": "Displey xususiyatlari",
+        "id": "ID",
+        "issue_type": "Ish elementi turi",
+        "sub_issue_count": "Qo'shimcha ish elementlari soni",
+        "attachment_count": "Qo'shiqlar soni",
+        "created_on": "Yaratilgan sanasi",
+        "sub_issue": "Qo'shimcha ish elementi",
+        "work_item_count": "Ish elementlari soni"
+      },
+      "extra": {
+        "show_sub_issues": "Qo'shimcha ish elementlarini ko'rsatish",
+        "show_empty_groups": "Bo'sh guruhlarni ko'rsatish"
+      }
+    },
+    "layouts": {
+      "ordered_by_label": "Bu tartib tomonidan buyurtma qilingan",
+      "list": "Roʻyxat",
+      "kanban": "Kengash",
+      "calendar": "Kalendar",
+      "spreadsheet": "Jadval",
+      "gantt": "Vaqt jadvali",
+      "custom_grouping": "Moslashtiriladigan guruhlash",
+      "title": {
+        "list": "Ro'yxat tartibi",
+        "kanban": "Kengash tartibi",
+        "calendar": "Kalendar tartibi",
+        "spreadsheet": "Jadval tartibi",
+        "gantt": "Vaqt jadvali tartibi",
+        "custom_grouping": "Moslashtiriladigan guruhlash"
+      }
+    },
+    "custom_grouping": {
+      "new": "Yangi konfiguratsiya",
+      "access": { "personal": "Shaxsiy", "project": "Loyiha uchun umumiy" },
+      "fields": {
+        "state": "Holat",
+        "assignees": "Tayinlanganlar",
+        "priority": "Ustuvorlik",
+        "labels": "Belgilar",
+        "cycle": "Sikl",
+        "module": "Modul",
+        "created_by": "Yaratuvchi",
+        "start_date": "Boshlanish sanasi",
+        "target_date": "Muddat"
+      },
+      "form": {
+        "create_title": "Guruhlash konfiguratsiyasini yaratish",
+        "edit_title": "Konfiguratsiyani tahrirlash",
+        "description": "Vazifalarni vertikal guruhlarga ajratish maydonini tanlang.",
+        "name": "Konfiguratsiya nomi",
+        "field": "Vazifalarni guruhlash",
+        "system_fields": "Tizim maydonlari",
+        "custom_fields": "Maxsus maydonlar",
+        "date_grouping": "Sana bo‘yicha guruhlash",
+        "visibility": "Kirish",
+        "save": "Saqlash"
+      },
+      "date_bucket": { "exact": "Aniq sana", "day": "Kun", "week": "Hafta", "month": "Oy" },
+      "historical": {
+        "inactive": "faol emas",
+        "archived": "arxivlangan",
+        "inactive_drop_error": "Bu foydalanuvchi endi loyihaning faol ishtirokchisi emas.",
+        "archived_drop_error": "Bu variant arxivlangan."
+      },
+      "empty": {
+        "title": "Guruhlash konfiguratsiyalari yo‘q",
+        "description": "Shaxsiy yoki loyiha administratori bo‘lsangiz, umumiy konfiguratsiya yarating."
+      },
+      "delete_confirm": "‘{name}’ konfiguratsiyasi o‘chirilsinmi?",
+      "toast": {
+        "saved": "Guruhlash konfiguratsiyasi saqlandi.",
+        "save_error": "Guruhlash konfiguratsiyasini saqlab bo‘lmadi.",
+        "delete_error": "Guruhlash konfiguratsiyasini o‘chirib bo‘lmadi.",
+        "moved": "Vazifa ko‘chirildi"
+      }
+    },
+    "states": {
+      "active": "Faol",
+      "backlog": "Orqaga tushish"
+    },
+    "comments": {
+      "placeholder": "Fikr qo'shing",
+      "switch": {
+        "private": "Shaxsiy fikrga o'tish",
+        "public": "Ommaviy fikrga oʻtish"
+      },
+      "create": {
+        "success": "Fikr yaratildi",
+        "error": "Fikr yaratib bo‘lmadi. Keyinroq qayta urinib ko‘ring."
+      },
+      "update": {
+        "success": "Fikr muvaffaqiyatli yangilandi",
+        "error": "Fikr yangilanmadi. Keyinroq qayta urinib ko‘ring."
+      },
+      "remove": {
+        "success": "Fikr olib tashlandi",
+        "error": "Fikrni olib tashlab bo‘lmadi. Keyinroq qayta urinib ko‘ring."
+      },
+      "upload": {
+        "error": "Obyekt yuklanmadi. Keyinroq qayta urinib ko‘ring."
+      },
+      "copy_link": {
+        "success": "Sharh havolasi vaqtinchalik xotiraga nusxalandi",
+        "error": "Fikr havolasini nusxalashda xatolik yuz berdi. Keyinroq qayta urinib ko‘ring."
+      },
+      "replies": {
+        "create": {
+          "submit_button": "Javob qo'shing",
+          "placeholder": "Javob qo'shing"
+        },
+        "toast": {
+          "fetch": {
+            "error": {
+              "message": "Javoblarni olib bo‘lmadi"
+            }
+          },
+          "create": {
+            "success": {
+              "message": "Javob muvaffaqiyatli yaratildi"
+            },
+            "error": {
+              "message": "Javob yaratib bo‘lmadi"
+            }
+          },
+          "update": {
+            "success": {
+              "message": "Javob muvaffaqiyatli yangilandi"
+            },
+            "error": {
+              "message": "Javobni yangilab bo‘lmadi"
+            }
+          },
+          "delete": {
+            "success": {
+              "message": "Javob muvaffaqiyatli oʻchirildi"
+            },
+            "error": {
+              "message": "Javobni o‘chirib bo‘lmadi"
+            }
+          }
+        }
+      }
+    },
+    "empty_state": {
+      "issue_detail": {
+        "title": "Ish elementi mavjud emas",
+        "description": "Siz izlayotgan ish elementi mavjud emas, arxivlangan yoki oʻchirilgan.",
+        "primary_button": {
+          "text": "Boshqa ish elementlarini ko'rish"
+        }
+      }
+    },
+    "sibling": {
+      "label": "Birodarlarning ish buyumlari"
+    },
+    "archive": {
+      "description": "Faqat tugallangan yoki bekor qilingan ish elementlarini arxivlash mumkin",
+      "label": "Arxiv ish elementi",
+      "confirm_message": "Ishchi elementni arxivlashni xohlaysizmi? Arxivlangan barcha ishlaringiz keyinroq tiklanishi mumkin.",
+      "success": {
+        "label": "Arxiv muvaffaqiyati",
+        "message": "Arxivlaringizni loyiha arxivlarida topish mumkin."
+      },
+      "failed": {
+        "message": "Ishchi elementni arxivlab bo‘lmadi. Iltimos, qayta urinib koʻring."
+      }
+    },
+    "restore": {
+      "success": {
+        "title": "Muvaffaqiyatni tiklash",
+        "message": "Sizning ish elementingizni loyiha ish elementlarida topish mumkin."
+      },
+      "failed": {
+        "message": "Ish elementini tiklab boʻlmadi. Iltimos, qayta urinib koʻring."
+      }
+    },
+    "relation": {
+      "relates_to": "ga tegishli",
+      "duplicate": "dublikati",
+      "blocked_by": "tomonidan bloklangan",
+      "blocking": "Bloklash",
+      "start_before": "Oldindan boshlanadi",
+      "start_after": "Keyin boshlanadi",
+      "finish_before": "Oldin tugaydi",
+      "finish_after": "Keyin tugaydi",
+      "implements": "Amalga oshirish",
+      "implemented_by": "Amalga oshirilgan"
+    },
+    "copy_link": "Ish elementi havolasini nusxalash",
+    "delete": {
+      "label": "Ish elementini o'chirish",
+      "error": "Ish elementini oʻchirishda xatolik yuz berdi"
+    },
+    "subscription": {
+      "actions": {
+        "subscribed": "Ish elementi obuna boʻldi",
+        "unsubscribed": "Ish elementi obunasi muvaffaqiyatli bekor qilindi"
+      }
+    },
+    "select": {
+      "error": "Kamida bitta ish elementini tanlang",
+      "empty": "Hech qanday ish elementi tanlanmagan",
+      "add_selected": "Tanlangan ish elementlarini qo'shing",
+      "select_all": "Hammasini tanlang",
+      "deselect_all": "Barchasini bekor qiling"
+    },
+    "open_in_full_screen": "Ish elementini toʻliq ekranda oching",
+    "duplicate": {
+      "modal": {
+        "title": "Boshqa loyihaga nusxa oling",
+        "description1": "Bu ish elementining nusxasini yaratadi.",
+        "description2": "Koʻpaytirish paytida barcha mulk maʼlumotlari oʻchirib tashlanadi.",
+        "placeholder": "Loyihani tanlang"
+      }
+    },
+    "toast": {
+      "duplicate": {
+        "success": {
+          "message": "Ish elementi muvaffaqiyatli takrorlandi"
+        },
+        "error": {
+          "message": "Ish elementini takrorlab bo‘lmadi"
+        }
+      }
+    },
+    "pages": {
+      "link_pages": "Bog'lanish sahifalari",
+      "show_wiki_pages": "Wiki sahifalarini ko'rsatish",
+      "link_pages_to": "Sahifalarni bog'lash",
+      "linked_pages": "Bog'langan sahifalar",
+      "no_description": "Bu boʻsh sahifa. Nima uchun ichkariga biror narsa yozmaysiz va u bu erda mana shu to'ldiruvchi kabi ko'rsatilishini ko'rmaysiz",
+      "toasts": {
+        "link": {
+          "success": {
+            "title": "Sahifalar yangilandi",
+            "message": "Sahifalar muvaffaqiyatli yangilandi"
+          },
+          "error": {
+            "title": "Sahifalar yangilanmadi",
+            "message": "Sahifalar yangilanmadi"
+          }
+        },
+        "remove": {
+          "success": {
+            "title": "Sahifa olib tashlandi",
+            "message": "Sahifa muvaffaqiyatli olib tashlandi"
+          },
+          "error": {
+            "title": "Sahifani olib tashlash amalga oshmadi",
+            "message": "Sahifani olib tashlash amalga oshmadi"
+          }
+        }
+      }
+    },
+    "vote": {
+      "click_to_upvote": "Ovoz berish uchun bosing",
+      "click_to_downvote": "Past ovoz berish uchun bosing",
+      "click_to_view_upvotes": "Ijobiy ovozlarni ko'rish uchun bosing",
+      "click_to_view_downvotes": "Past baholarni ko'rish uchun bosing"
+    }
+  },
+  "sub_work_item": {
+    "update": {
+      "success": "Quyi ish elementi muvaffaqiyatli yangilandi",
+      "error": "Quyi ish elementini yangilashda xatolik yuz berdi"
+    },
+    "remove": {
+      "success": "Quyi ish elementi muvaffaqiyatli olib tashlandi",
+      "error": "Quyi ish elementini olib tashlashda xatolik yuz berdi"
+    },
+    "empty_state": {
+      "sub_list_filters": {
+        "title": "Siz qo‘llagan filtrlarga mos keladigan qo‘shimcha ish elementlari yo‘q.",
+        "description": "Barcha qo'shimcha ish elementlarini ko'rish uchun barcha qo'llaniladigan filtrlarni tozalang.",
+        "action": "Filtrlarni tozalash"
+      },
+      "list_filters": {
+        "title": "Siz qo‘llagan filtrlarga mos ish elementlari yo‘q.",
+        "description": "Barcha ish elementlarini ko'rish uchun barcha qo'llaniladigan filtrlarni tozalang.",
+        "action": "Filtrlarni tozalash"
+      }
+    }
+  },
+  "issue_relation": {
+    "empty_state": {
+      "search": {
+        "title": "Hech qanday mos ish elementi topilmadi"
+      },
+      "no_issues": {
+        "title": "Hech qanday ish elementi topilmadi"
+      }
+    }
+  },
+  "issue_comment": {
+    "empty_state": {
+      "general": {
+        "title": "Hozircha izohlar yo‘q",
+        "description": "Sharhlar ish elementlari uchun muhokama va kuzatish maydoni sifatida ishlatilishi mumkin"
+      }
+    }
+  },
+  "bulk_operations": {
+    "error_details": {
+      "invalid_archive_state_group": {
+        "title": "Ish elementlarini arxivlab bo‘lmadi",
+        "message": "Faqat Tugallangan yoki Bekor qilingan holat guruhlariga tegishli ish elementlari arxivlanishi mumkin."
+      },
+      "invalid_issue_start_date": {
+        "title": "Ish elementlarini yangilab bo‘lmadi",
+        "message": "Tanlangan boshlanish sanasi baʼzi ish elementlari uchun yakuniy sanaga mos keladi. Boshlanish sanasi muddatidan oldin bo'lishiga ishonch hosil qiling."
+      },
+      "invalid_issue_target_date": {
+        "title": "Ish elementlarini yangilab bo‘lmadi",
+        "message": "Tanlangan tugash sanasi baʼzi ish elementlari uchun boshlanish sanasidan oldin tanlanadi. To'lov muddati boshlanish sanasidan keyin bo'lishiga ishonch hosil qiling."
+      },
+      "invalid_state_transition": {
+        "title": "Ish elementlarini yangilab bo‘lmadi",
+        "message": "Ayrim ish ob'ektlari uchun holatni o'zgartirishga ruxsat berilmaydi. Davlat o'zgarishiga ruxsat berilganligiga ishonch hosil qiling."
+      }
+    }
+  },
+  "recurring_work_items": {
+    "settings": {
+      "heading": "Takroriy ish elementlari",
+      "description": "Takrorlanadigan ishingizni bir marta o'rnating va biz takrorlash bilan shug'ullanamiz. Vaqti kelganda hammasini shu yerda ko'rasiz.",
+      "new_recurring_work_item": "Yangi takrorlanuvchi ish elementi",
+      "update_recurring_work_item": "Takroriy ish elementini yangilang",
+      "form": {
+        "interval": {
+          "title": "Jadval",
+          "start_date": {
+            "validation": {
+              "required": "Boshlanish sanasi talab qilinadi"
+            }
+          },
+          "interval_type": {
+            "validation": {
+              "required": "Interval turi talab qilinadi"
+            }
+          }
+        },
+        "button": {
+          "create": "Takroriy ish elementini yarating",
+          "update": "Takroriy ish elementini yangilang"
+        }
+      },
+      "create_button": {
+        "label": "Takroriy ish elementini yarating",
+        "no_permission": "Takroriy ish elementlarini yaratish uchun loyiha administratoringizga murojaat qiling"
+      }
+    },
+    "empty_state": {
+      "upgrade": {
+        "title": "Sizning ishingiz, avtopilotda",
+        "description": "Uni bir marta o'rnating. Muddati kelganda qaytarib beramiz. Takroriy ishni oson qilish uchun Biznesga yangilang."
+      },
+      "no_templates": {
+        "button": "Birinchi takrorlanadigan ish elementingizni yarating"
+      }
+    },
+    "toasts": {
+      "create": {
+        "success": {
+          "title": "Takroriy ish elementi yaratildi",
+          "message": "{name}, takrorlanuvchi ish elementi endi ish joyingiz uchun mavjud."
+        },
+        "error": {
+          "title": "Biz bu safar takrorlanuvchi ish elementini yarata olmadik.",
+          "message": "Tafsilotlaringizni qayta saqlashga urinib ko'ring yoki ularni yangi takrorlanuvchi ish elementiga, yaxshisi boshqa varaqda nusxa ko'chiring."
+        }
+      },
+      "update": {
+        "success": {
+          "title": "Takroriy ish elementi o'zgartirildi",
+          "message": "{name}, takrorlanuvchi ish elementi o'zgartirildi."
+        },
+        "error": {
+          "title": "Bu takrorlanuvchi ish elementiga kiritilgan oʻzgarishlarni saqlab boʻlmadi.",
+          "message": "Tafsilotlaringizni qayta saqlashga urinib koʻring yoki keyinroq bu takroriy ish elementiga qayting. Agar muammo hali ham mavjud bo'lsa, bizga murojaat qiling."
+        }
+      },
+      "delete": {
+        "success": {
+          "title": "Takroriy ish elementi oʻchirib tashlandi",
+          "message": "{name}, takrorlanuvchi ish elementi endi ish joyingizdan oʻchirib tashlandi."
+        },
+        "error": {
+          "title": "Bu takrorlanuvchi ish elementini oʻchirib boʻlmadi.",
+          "message": "Uni qayta oʻchirib koʻring yoki keyinroq qayting. Agar uni o'chira olmasangiz, biz bilan bog'laning."
+        }
+      }
+    },
+    "delete_confirmation": {
+      "title": "Takroriy ish elementini o'chirish",
+      "description": {
+        "prefix": "Haqiqatan ham takrorlanadigan ish elementini oʻchirib tashlamoqchimisiz-",
+        "suffix": "? Takroriy ish elementiga tegishli barcha maʼlumotlar butunlay oʻchirib tashlanadi. Bu amalni ortga qaytarib bo‘lmaydi."
+      }
+    }
+  },
+  "epic": {
+    "new": "Yangi epik",
+    "label": "{hisoblash, koʻplik, bitta {Epic} boshqa {Epics}}",
+    "adding": "Epik qo'shish",
+    "create": {
+      "success": "Epos muvaffaqiyatli yaratildi"
+    },
+    "add": {
+      "label": "Epic qo'shing",
+      "press_enter": "Boshqa epik qo'shish uchun \"Enter\" tugmasini bosing"
+    },
+    "title": {
+      "label": "Epik sarlavha",
+      "required": "Epik nom kerak."
+    }
+  }
+}

@@ -6,12 +6,14 @@
 
 import { useRef } from "react";
 import { observer } from "mobx-react";
+import { useParams } from "next/navigation";
 // types
 import type { IIssueDisplayProperties, TIssue } from "@plane/types";
 // constants
 import { SPREADSHEET_COLUMNS } from "../utils";
 // components
 import { shouldRenderColumn } from "@/helpers/issue-filter.helper";
+import { useProjectWorkItemFieldVisibility } from "@/hooks/use-project-work-item-field-visibility";
 import { WithDisplayPropertiesHOC } from "../properties/with-display-properties-HOC";
 
 type Props = {
@@ -24,9 +26,15 @@ type Props = {
 };
 
 export const IssueColumn = observer(function IssueColumn(props: Props) {
-  const { displayProperties, issueDetail, disableUserActions, property, updateIssue } = props;
+  const { displayProperties: storedDisplayProperties, issueDetail, disableUserActions, property, updateIssue } = props;
   // router
   const tableCellRef = useRef<HTMLTableCellElement | null>(null);
+  const { workspaceSlug } = useParams();
+  const { visibleDisplayProperties } = useProjectWorkItemFieldVisibility(
+    workspaceSlug?.toString(),
+    issueDetail.project_id ?? undefined
+  );
+  const displayProperties = visibleDisplayProperties(storedDisplayProperties) ?? {};
 
   const shouldRenderProperty = shouldRenderColumn(property);
 

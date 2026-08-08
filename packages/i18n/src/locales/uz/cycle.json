@@ -1,0 +1,41 @@
+{
+  "active_cycle": {
+    "empty_state": {
+      "progress": {
+        "title": "Davomini ko‘rish uchun tsiklga ish elementlarini qo‘shing"
+      },
+      "chart": {
+        "title": "Yonish jadvalini ko'rish uchun tsiklga ish elementlarini qo'shing."
+      },
+      "priority_issue": {
+        "title": "Bir qarashda tsiklda hal qilinadigan yuqori ustuvor ish masalalariga e'tibor bering."
+      },
+      "assignee": {
+        "title": "Ish beruvchilar boʻyicha ishlarning taqsimlanishini koʻrish uchun ish elementlariga tayinlanganlarni qoʻshing."
+      },
+      "label": {
+        "title": "Ishlarning yorliqlar boʻyicha taqsimlanishini koʻrish uchun ish elementlariga teg qoʻshing."
+      }
+    }
+  },
+  "cycle": {
+    "label": "{hisoblash, koʻplik, bitta {Cycle} boshqa {Cycles}}",
+    "no_cycle": "Tsikl yo'q"
+  },
+  "active_cycle_analytics": {
+    "empty_state": {
+      "progress": {
+        "title": "Uni ko‘rish uchun tsiklga ish elementlarini qo‘shing\n taraqqiyot"
+      },
+      "priority": {
+        "title": "Ko'rib chiqiladigan yuqori ustuvor ish masalalariga e'tibor bering\n bir qarashda tsikl."
+      },
+      "assignee": {
+        "title": "Koʻrish uchun ish elementlariga tayinlovchilarni qoʻshing\n topshiriqlar bo'yicha ishlarni taqsimlash."
+      },
+      "label": {
+        "title": "Ko‘rish uchun ish elementlariga teg qo‘shing\n yorliqlar bo'yicha ishlarni taqsimlash."
+      }
+    }
+  }
+}

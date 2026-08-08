@@ -6,6 +6,7 @@
 
 import { useState } from "react";
 import { observer } from "mobx-react";
+import { useParams } from "next/navigation";
 import { ETabIndices } from "@plane/constants";
 import { ParentPropertyIcon } from "@plane/propel/icons";
 import type { ISearchIssueResponse, TIssue } from "@plane/types";
@@ -25,6 +26,7 @@ import { IssueLabelSelect } from "@/components/issues/select";
 // hooks
 import { useProjectEstimates } from "@/hooks/store/estimates";
 import { usePlatformOS } from "@/hooks/use-platform-os";
+import { useProjectWorkItemFieldVisibility } from "@/hooks/use-project-work-item-field-visibility";
 
 type TInboxIssueProperties = {
   projectId: string;
@@ -38,6 +40,8 @@ export const InboxIssueProperties = observer(function InboxIssueProperties(props
   // hooks
   const { areEstimateEnabledByProjectId } = useProjectEstimates();
   const { isMobile } = usePlatformOS();
+  const { workspaceSlug } = useParams();
+  const { isFieldVisible } = useProjectWorkItemFieldVisibility(workspaceSlug?.toString(), projectId);
   // states
   const [parentIssueModalOpen, setParentIssueModalOpen] = useState(false);
   const [selectedParentIssue, setSelectedParentIssue] = useState<ISearchIssueResponse | undefined>(undefined);
@@ -102,7 +106,7 @@ export const InboxIssueProperties = observer(function InboxIssueProperties(props
       </div>
 
       {/* start date */}
-      {isVisible && (
+      {isVisible && isFieldVisible("start_date") && (
         <div className="h-7">
           <DateDropdown
             value={data?.start_date || null}
@@ -116,19 +120,21 @@ export const InboxIssueProperties = observer(function InboxIssueProperties(props
       )}
 
       {/* due date */}
-      <div className="h-7">
-        <DateDropdown
-          value={data?.target_date || null}
-          onChange={(date) => handleData("target_date", date ? renderFormattedPayloadDate(date) : "")}
-          buttonVariant="border-with-text"
-          minDate={minDate ?? undefined}
-          placeholder="Due date"
-          tabIndex={getIndex("target_date")}
-        />
-      </div>
+      {isFieldVisible("target_date") && (
+        <div className="h-7">
+          <DateDropdown
+            value={data?.target_date || null}
+            onChange={(date) => handleData("target_date", date ? renderFormattedPayloadDate(date) : "")}
+            buttonVariant="border-with-text"
+            minDate={minDate ?? undefined}
+            placeholder="Due date"
+            tabIndex={getIndex("target_date")}
+          />
+        </div>
+      )}
 
       {/* cycle */}
-      {isVisible && (
+      {isVisible && isFieldVisible("cycle") && (
         <div className="h-7">
           <CycleDropdown
             value={data?.cycle_id || ""}
@@ -142,7 +148,7 @@ export const InboxIssueProperties = observer(function InboxIssueProperties(props
       )}
 
       {/* module */}
-      {isVisible && (
+      {isVisible && isFieldVisible("module") && (
         <div className="h-7">
           <ModuleDropdown
             value={data?.module_ids || []}
@@ -158,7 +164,7 @@ export const InboxIssueProperties = observer(function InboxIssueProperties(props
       )}
 
       {/* estimate */}
-      {isVisible && projectId && areEstimateEnabledByProjectId(projectId) && (
+      {isVisible && isFieldVisible("estimate") && projectId && areEstimateEnabledByProjectId(projectId) && (
         <div className="h-7">
           <EstimateDropdown
             value={data?.estimate_point || undefined}
@@ -172,7 +178,7 @@ export const InboxIssueProperties = observer(function InboxIssueProperties(props
       )}
 
       {/* add parent */}
-      {isVisible && (
+      {isVisible && isFieldVisible("parent") && (
         <div className="h-7">
           {selectedParentIssue ? (
             <CustomMenu

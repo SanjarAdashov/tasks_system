@@ -1,0 +1,113 @@
+{
+  "wiki_collections": {
+    "predefined": {
+      "general": "Umumiy",
+      "private": "Shaxsiy",
+      "shared": "Ulashgan",
+      "archived": "Arxivlangan"
+    },
+    "fallback_name": "To'plam",
+    "form": {
+      "name_required": "Toʻplam nomi shart",
+      "name_max_length": "Toʻplam nomi 255 belgidan kam boʻlishi kerak",
+      "name_placeholder_create": "To'plamga nom bering",
+      "name_placeholder_edit": "To'plam nomi"
+    },
+    "create_modal": {
+      "title": "To'plam yarating",
+      "submit": "To'plam yaratish"
+    },
+    "edit_modal": {
+      "title": "To'plamni tahrirlash"
+    },
+    "delete_modal": {
+      "title": "To'plamni o'chirish",
+      "page_count": "Bu toʻplamda {pageCount} {pageCount, koʻplik, bitta {page} boshqa {pages}} mavjud. Ularga nima bo'lishini tanlang.",
+      "transfer_title": "Sahifalarni o'tkazing va to'plamni o'chiring",
+      "transfer_description": "O'chirishdan oldin barcha sahifalarni boshqa to'plamga ko'chiring. Sahifalar va ularning ruxsatlari saqlanadi.",
+      "transfer_warning": "Ko'chirilgan sahifalar tanlangan to'plamning ruxsatlarini meros qilib oladi.",
+      "transfer_target_label": "Sahifalarni koʻchirish",
+      "transfer_target_placeholder": "To'plamni tanlang",
+      "delete_with_pages_title": "To'plamni sahifalar bilan o'chirish",
+      "delete_with_pages_description": "To'plamni va uning barcha sahifalarini butunlay o'chirib tashlang. Bu amalni ortga qaytarib bo‘lmaydi.",
+      "submit": "To'plamni o'chirish"
+    },
+    "header": {
+      "add_page": "Sahifani qo'shish"
+    },
+    "menu": {
+      "create_new_page": "Yangi sahifa yarating",
+      "add_existing_page": "Mavjud sahifani qo'shing",
+      "edit_collection": "To'plamni tahrirlash",
+      "collection_options": "To'plam variantlari"
+    },
+    "add_existing_page_modal": {
+      "search_placeholder": "Sahifalarni qidirish",
+      "success_message": "{count} {hisoblash, koʻplik, bitta {page} boshqa {pages}} toʻplamga qoʻshildi.",
+      "error_message": "Sahifalarni ko‘chirib bo‘lmadi. Iltimos, qayta urinib koʻring.",
+      "no_pages_found": "Qidiruvingizga mos keladigan sahifalar topilmadi",
+      "no_pages_available": "Ko‘chirish uchun hech qanday sahifa yo‘q",
+      "submit": "Ko'chirish"
+    },
+    "list": {
+      "invite_only": "Faqat taklif qiling",
+      "remove_error": "To‘plamdan sahifani olib tashlab bo‘lmadi.",
+      "no_matching_pages": "Mos sahifalar topilmadi",
+      "remove_search_criteria": "Barcha sahifalarni ko'rish uchun qidiruv mezonlarini olib tashlang",
+      "remove_filters": "Barcha sahifalarni ko'rish uchun filtrlarni olib tashlang",
+      "no_pages_title": "Hali sahifalar yoʻq",
+      "no_pages_description": "Bu to‘plamda hozir hech qanday sahifa yo‘q.",
+      "untitled": "Sarlavhasiz",
+      "restricted_access": "Cheklangan kirish",
+      "collapse_page": "Sahifani yig‘ish",
+      "expand_page": "Sahifani kengaytirish",
+      "page_actions": "Sahifa harakatlari",
+      "page_link_copied": "Sahifa havolasi vaqtinchalik xotiraga nusxalandi.",
+      "columns": {
+        "page_name": "Sahifa nomi",
+        "owner": "Egasi",
+        "nested_pages": "Ichki sahifalar",
+        "last_activity": "Oxirgi faoliyat",
+        "actions": "Harakatlar"
+      }
+    },
+    "toasts": {
+      "created": "Toʻplam muvaffaqiyatli yaratildi.",
+      "create_error": "Toʻplamni yaratib boʻlmadi. Iltimos, qayta urinib koʻring.",
+      "renamed": "Toʻplam nomi muvaffaqiyatli oʻzgartirildi.",
+      "rename_error": "To‘plamni yangilab bo‘lmadi. Iltimos, qayta urinib koʻring.",
+      "transferred_deleted": "Sahifalar koʻchirildi va toʻplam oʻchirildi.",
+      "deleted_with_pages": "To'plam va uning sahifalari o'chirildi.",
+      "delete_error": "Toʻplamni oʻchirib boʻlmadi. Iltimos, qayta urinib koʻring.",
+      "target_required": "Iltimos, sahifalarni koʻchirish uchun toʻplamni tanlang.",
+      "create_page_error": "Sahifani yaratib bo‘lmadi. Iltimos, qayta urinib koʻring.",
+      "create_page_in_collection_error": "Sahifani yaratib boʻlmadi yoki toʻplamga qoʻshib boʻlmadi. Iltimos, qayta urinib koʻring.",
+      "collection_link_copied": "Toʻplam havolasi vaqtinchalik xotiraga nusxalandi."
+    }
+  },
+  "wiki": {
+    "upgrade_flow": {
+      "title": "Wiki qulfini ochish uchun yangilang",
+      "description": "Plane Pro bilan umumiy sahifalar, versiyalar tarixi, umumiy sahifalar, real vaqtda hamkorlik va vikilar, kompaniya boʻyicha hujjatlar va bilimlar bazalari uchun ish maydoni sahifalarini qulfdan chiqaring.",
+      "upgrade_button": {
+        "text": "Yangilash"
+      },
+      "learn_more_button": {
+        "text": "Batafsil maʼlumot"
+      },
+      "download_button": {
+        "text": "Ma'lumotlarni yuklab olish",
+        "loading": "Yuklab olinmoqda"
+      },
+      "tabs": {
+        "nested_pages": "Oʻrnatilgan sahifalar",
+        "add_embeds": "O'rnatishlarni qo'shing",
+        "publish_pages": "Sahifalarni nashr qilish",
+        "comments": "Fikrlar"
+      }
+    },
+    "nested_pages_download_banner": {
+      "title": "Ichki sahifalar pullik rejani talab qiladi. Qulfni ochish uchun yangilang."
+    }
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "updates": {
+    "progress": {
+      "title": "Taraqqiyot",
+      "since_last_update": "Oxirgi yangilanishdan beri",
+      "comments": "{hisoblash, koʻplik, bir{# Comment} boshqa{# Comments}}"
+    },
+    "add_update": "Yangilanish qo'shish",
+    "add_update_placeholder": "Yangilanishingizni shu yerga qoʻshing",
+    "empty": {
+      "title": "Hozircha yangilanishlar yo‘q",
+      "description": "Yangilanishlarni bu yerda ko'rishingiz mumkin."
+    },
+    "reaction": {
+      "create": {
+        "success": {
+          "title": "Reaktsiya yaratildi",
+          "message": "Reaksiya muvaffaqiyatli yaratildi"
+        },
+        "error": {
+          "title": "Reaktsiya yaratilmagan",
+          "message": "Reaktsiyani yaratib bo'lmadi"
+        }
+      },
+      "remove": {
+        "success": {
+          "title": "Reaktsiya olib tashlandi",
+          "message": "Reaktsiya muvaffaqiyatli olib tashlandi"
+        },
+        "error": {
+          "title": "Reaktsiya olib tashlanmadi",
+          "message": "Reaktsiyani olib tashlab bo'lmadi"
+        }
+      }
+    },
+    "create": {
+      "success": {
+        "title": "Yangilanish yaratildi",
+        "message": "Yangilanish muvaffaqiyatli yaratildi"
+      },
+      "error": {
+        "title": "Yangilanish yaratilmadi",
+        "message": "Yangilanishni yaratib boʻlmadi"
+      }
+    },
+    "delete": {
+      "title": "Yangilanishni o'chirish",
+      "confirmation": "Haqiqatan ham bu yangilanishni oʻchirib tashlamoqchimisiz? Bu qaytarib bo'lmaydigan harakat.",
+      "success": {
+        "title": "Yangilanish oʻchirildi",
+        "message": "Yangilanish muvaffaqiyatli o'chirildi"
+      },
+      "error": {
+        "title": "Yangilanish o'chirilmadi",
+        "message": "Yangilanishni oʻchirib boʻlmadi"
+      }
+    },
+    "update": {
+      "success": {
+        "title": "Yangilangan",
+        "message": "Yangilanish muvaffaqiyatli yangilandi"
+      },
+      "error": {
+        "title": "Yangilash yangilanmagan",
+        "message": "Yangilanishni yangilab boʻlmadi"
+      }
+    }
+  }
+}

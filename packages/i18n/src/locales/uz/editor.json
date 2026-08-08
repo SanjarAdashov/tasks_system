@@ -1,0 +1,65 @@
+{
+  "attachmentComponent": {
+    "uploader": {
+      "drag_and_drop": "Fayllarni shu yerga tashlang yoki yuklash uchun bosing"
+    },
+    "errors": {
+      "file_too_large": {
+        "title": "Fayl juda katta.",
+        "description": "Har bir faylning maksimal hajmi {maxFileSize}MB"
+      },
+      "unsupported_file_type": {
+        "title": "Qo'llab-quvvatlanmaydigan fayl turi.",
+        "description": "Qo'llab-quvvatlanadigan formatlarni ko'ring"
+      },
+      "default": {
+        "title": "Yuklab bo‘lmadi.",
+        "description": "Nimadir xato ketdi. Iltimos, qayta urinib koʻring."
+      }
+    },
+    "upgrade": {
+      "description": "Ushbu biriktirmani ko‘rish uchun rejangizni yangilang."
+    },
+    "aria": {
+      "click_to_upload": "Ilovani yuklash uchun bosing"
+    }
+  },
+  "externalEmbedComponent": {
+    "block_menu": {
+      "convert_to_embed": "O'rnatishga aylantirish",
+      "convert_to_link": "Havolaga aylantirish",
+      "convert_to_richcard": "Rich Card-ga aylantiring"
+    },
+    "placeholder": {
+      "insert_embed": "YouTube videosi, Figma dizayni va h.k. kabi oʻzingiz yoqtirgan joylashtirish havolasini bu yerga kiriting.",
+      "link": "Havolani kiriting yoki joylashtiring"
+    },
+    "input_modal": {
+      "embed": "Oʻrnatish",
+      "works_with_links": "YouTube, Figma, Google Docs va boshqalar bilan ishlaydi"
+    },
+    "error": {
+      "not_valid_link": "Yaroqli URL manzilini kiriting."
+    }
+  },
+  "ai_block": {
+    "content": {
+      "placeholder": "Ushbu blokning mazmunini tasvirlab bering",
+      "generated_here": "Sizning AI kontentingiz shu yerda yaratiladi"
+    },
+    "block_types": {
+      "placeholder": "Blok turini tanlang",
+      "summarize_page": "Xulosa sahifasi",
+      "custom_prompt": "Maxsus taklif"
+    },
+    "actions": {
+      "discard": "Bekor qilish",
+      "generate": "Yaratish",
+      "generating": "Yaratilmoqda",
+      "rewriting": "Qayta yozish",
+      "rewrite": "Qayta yozish",
+      "use_this": "Buni ishlating",
+      "refine": "Tozalash"
+    }
+  }
+}

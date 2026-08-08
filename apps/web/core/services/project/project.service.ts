@@ -23,6 +23,11 @@ import type {
   TStateTransitionEvaluation,
   TAvailableStateTransition,
   TProject,
+  TProjectUserGroup,
+  TProjectUserGroupPayload,
+  TProjectCustomGrouping,
+  TProjectCustomGroupingPayload,
+  TProjectCustomGroupingPreference,
   TPartialProject,
 } from "@plane/types";
 // helpers
@@ -103,6 +108,136 @@ export class ProjectService extends APIService {
   async deleteProject(workspaceSlug: string, projectId: string): Promise<any> {
     return this.delete(`/api/workspaces/${workspaceSlug}/projects/${projectId}/`)
       .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async getUserGroups(workspaceSlug: string, projectId: string, includeArchived = false): Promise<TProjectUserGroup[]> {
+    return this.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/user-groups/`, {
+      params: { include_archived: includeArchived || undefined },
+    })
+      .then((response) => response.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async createUserGroup(
+    workspaceSlug: string,
+    projectId: string,
+    data: TProjectUserGroupPayload
+  ): Promise<TProjectUserGroup> {
+    return this.post(`/api/workspaces/${workspaceSlug}/projects/${projectId}/user-groups/`, data)
+      .then((response) => response.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async updateUserGroup(
+    workspaceSlug: string,
+    projectId: string,
+    groupId: string,
+    data: Partial<TProjectUserGroupPayload>
+  ): Promise<TProjectUserGroup> {
+    return this.patch(`/api/workspaces/${workspaceSlug}/projects/${projectId}/user-groups/${groupId}/`, data)
+      .then((response) => response.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async updateUserGroupMembers(
+    workspaceSlug: string,
+    projectId: string,
+    groupId: string,
+    data: { add_member_ids?: string[]; remove_member_ids?: string[] }
+  ): Promise<TProjectUserGroup> {
+    return this.patch(`/api/workspaces/${workspaceSlug}/projects/${projectId}/user-groups/${groupId}/members/`, data)
+      .then((response) => response.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async archiveUserGroup(workspaceSlug: string, projectId: string, groupId: string): Promise<void> {
+    return this.delete(`/api/workspaces/${workspaceSlug}/projects/${projectId}/user-groups/${groupId}/`).then(
+      () => undefined
+    );
+  }
+
+  async restoreUserGroup(workspaceSlug: string, projectId: string, groupId: string): Promise<TProjectUserGroup> {
+    return this.post(`/api/workspaces/${workspaceSlug}/projects/${projectId}/user-groups/${groupId}/restore/`)
+      .then((response) => response.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async deleteUserGroup(workspaceSlug: string, projectId: string, groupId: string): Promise<void> {
+    return this.delete(`/api/workspaces/${workspaceSlug}/projects/${projectId}/user-groups/${groupId}/`, {
+      params: { permanent: true, include_archived: true },
+    }).then(() => undefined);
+  }
+
+  async getCustomGroupings(workspaceSlug: string, projectId: string): Promise<TProjectCustomGrouping[]> {
+    return this.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-groupings/`)
+      .then((response) => response.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async createCustomGrouping(
+    workspaceSlug: string,
+    projectId: string,
+    data: TProjectCustomGroupingPayload
+  ): Promise<TProjectCustomGrouping> {
+    return this.post(`/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-groupings/`, data)
+      .then((response) => response.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async updateCustomGrouping(
+    workspaceSlug: string,
+    projectId: string,
+    groupingId: string,
+    data: Partial<TProjectCustomGroupingPayload>
+  ): Promise<TProjectCustomGrouping> {
+    return this.patch(`/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-groupings/${groupingId}/`, data)
+      .then((response) => response.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async deleteCustomGrouping(workspaceSlug: string, projectId: string, groupingId: string): Promise<void> {
+    return this.delete(`/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-groupings/${groupingId}/`).then(
+      () => undefined
+    );
+  }
+
+  async getCustomGroupingPreference(
+    workspaceSlug: string,
+    projectId: string
+  ): Promise<TProjectCustomGroupingPreference> {
+    return this.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-groupings/preference/`)
+      .then((response) => response.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async updateCustomGroupingPreference(
+    workspaceSlug: string,
+    projectId: string,
+    data: Partial<TProjectCustomGroupingPreference>
+  ): Promise<TProjectCustomGroupingPreference> {
+    return this.patch(`/api/workspaces/${workspaceSlug}/projects/${projectId}/custom-groupings/preference/`, data)
+      .then((response) => response.data)
       .catch((error) => {
         throw error?.response?.data;
       });

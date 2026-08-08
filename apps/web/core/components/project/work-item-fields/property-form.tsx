@@ -7,6 +7,7 @@
 import { useMemo, useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
+import { useTranslation } from "@plane/i18n";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import type {
   TProjectWorkItemProperty,
@@ -81,19 +82,20 @@ const createEditorFromProperty = (property?: TProjectWorkItemProperty): TEditorS
   };
 };
 
-const errorMessage = (error: unknown): string => {
+const errorMessage = (error: unknown, fallback: string): string => {
   if (typeof error === "string") return error;
-  if (!error || typeof error !== "object") return "The property could not be saved.";
+  if (!error || typeof error !== "object") return fallback;
 
   const firstValue = Object.values(error)[0];
   if (typeof firstValue === "string") return firstValue;
   if (Array.isArray(firstValue) && typeof firstValue[0] === "string") return firstValue[0];
-  if (firstValue && typeof firstValue === "object") return errorMessage(firstValue);
-  return "The property could not be saved.";
+  if (firstValue && typeof firstValue === "object") return errorMessage(firstValue, fallback);
+  return fallback;
 };
 
 export function WorkItemPropertyForm(props: Props) {
   const { workspaceSlug, projectId, property, onCancel, onSaved } = props;
+  const { t } = useTranslation();
   const service = useMemo(() => new ProjectService(), []);
   const [editor, setEditor] = useState<TEditorState>(() => createEditorFromProperty(property));
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -213,15 +215,17 @@ export function WorkItemPropertyForm(props: Props) {
         : await service.createWorkItemProperty(workspaceSlug, projectId, payload);
       setToast({
         type: TOAST_TYPE.SUCCESS,
-        title: property ? "Property updated" : "Property created",
-        message: `"${savedProperty.name}" is ready to use in this project.`,
+        title: property
+          ? t("project_settings.work_item_fields.form.toast.updated_title")
+          : t("project_settings.work_item_fields.form.toast.created_title"),
+        message: t("project_settings.work_item_fields.form.toast.ready_message", { name: savedProperty.name }),
       });
       onSaved(savedProperty);
     } catch (error) {
       setToast({
         type: TOAST_TYPE.ERROR,
-        title: "Could not save property",
-        message: errorMessage(error),
+        title: t("project_settings.work_item_fields.form.toast.error_title"),
+        message: errorMessage(error, t("project_settings.work_item_fields.form.toast.error_message")),
       });
     } finally {
       setIsSubmitting(false);
@@ -238,7 +242,11 @@ export function WorkItemPropertyForm(props: Props) {
             value={Boolean(editor.default_value)}
             onChange={(value) => setEditor((current) => ({ ...current, default_value: value }))}
           />
-          <span className="text-13 text-secondary">{editor.default_value ? "Checked" : "Unchecked"}</span>
+          <span className="text-13 text-secondary">
+            {editor.default_value
+              ? t("project_settings.work_item_fields.form.checked")
+              : t("project_settings.work_item_fields.form.unchecked")}
+          </span>
         </div>
       );
     }
@@ -248,10 +256,17 @@ export function WorkItemPropertyForm(props: Props) {
         <WorkItemSingleSelectInput
           source={editor.select_source}
           projectId={projectId}
-          manualOptions={activeOptions.map((option) => ({ id: option.id, label: option.name || "Untitled option" }))}
+          manualOptions={activeOptions.map((option) => ({
+            id: option.id,
+            label: option.name || t("project_settings.work_item_fields.form.untitled_option"),
+          }))}
           value={typeof editor.default_value === "string" ? editor.default_value : null}
           onChange={(defaultValue) => setEditor((current) => ({ ...current, default_value: defaultValue }))}
-          placeholder={editor.select_source === "MEMBERS" ? "Select a project member" : "Select an option"}
+          placeholder={
+            editor.select_source === "MEMBERS"
+              ? t("project_settings.work_item_fields.form.select_member")
+              : t("project_settings.work_item_fields.form.select_option")
+          }
         />
       );
     }
@@ -262,10 +277,17 @@ export function WorkItemPropertyForm(props: Props) {
         <WorkItemMultiSelectInput
           source={editor.select_source}
           projectId={projectId}
-          manualOptions={activeOptions.map((option) => ({ id: option.id, label: option.name || "Untitled option" }))}
+          manualOptions={activeOptions.map((option) => ({
+            id: option.id,
+            label: option.name || t("project_settings.work_item_fields.form.untitled_option"),
+          }))}
           value={selectedValues}
           onChange={(defaultValue) => setEditor((current) => ({ ...current, default_value: defaultValue }))}
-          placeholder={editor.select_source === "MEMBERS" ? "Select project members" : "Select options"}
+          placeholder={
+            editor.select_source === "MEMBERS"
+              ? t("project_settings.work_item_fields.form.select_members")
+              : t("project_settings.work_item_fields.form.select_options")
+          }
         />
       );
     }
@@ -275,7 +297,7 @@ export function WorkItemPropertyForm(props: Props) {
         <TextArea
           value={typeof editor.default_value === "string" ? editor.default_value : ""}
           onChange={(event) => setEditor((current) => ({ ...current, default_value: event.target.value }))}
-          placeholder="Default value"
+          placeholder={t("project_settings.work_item_fields.form.default_value_placeholder")}
         />
       );
     }
@@ -290,7 +312,7 @@ export function WorkItemPropertyForm(props: Props) {
             : ""
         }
         onChange={(event) => setEditor((current) => ({ ...current, default_value: event.target.value }))}
-        placeholder="Default value"
+        placeholder={t("project_settings.work_item_fields.form.default_value_placeholder")}
       />
     );
   };
@@ -298,34 +320,36 @@ export function WorkItemPropertyForm(props: Props) {
   return (
     <div className="rounded-lg border border-subtle bg-surface-1 p-5">
       <div className="mb-5">
-        <h3 className="text-15 font-semibold text-primary">{property ? "Edit property" : "New property"}</h3>
-        <p className="mt-1 text-12 text-tertiary">
-          The property belongs only to this project. Its type cannot be changed after creation.
-        </p>
+        <h3 className="text-15 font-semibold text-primary">
+          {property
+            ? t("project_settings.work_item_fields.form.edit_title")
+            : t("project_settings.work_item_fields.form.new_title")}
+        </h3>
+        <p className="mt-1 text-12 text-tertiary">{t("project_settings.work_item_fields.form.description")}</p>
       </div>
 
       <div className="grid gap-5 sm:grid-cols-2">
         <label htmlFor="work-item-property-name" className="flex flex-col gap-1.5 text-12 font-medium text-secondary">
-          Name
+          {t("project_settings.work_item_fields.form.name_label")}
           <Input
             id="work-item-property-name"
             value={editor.name}
             onChange={(event) => setEditor((current) => ({ ...current, name: event.target.value }))}
-            placeholder="e.g. Customer tier"
+            placeholder={t("project_settings.work_item_fields.form.name_placeholder")}
             hasError={!editor.name.trim()}
           />
         </label>
         <label className="flex flex-col gap-1.5 text-12 font-medium text-secondary">
-          Type
+          {t("project_settings.work_item_fields.form.type_label")}
           <select
             className="rounded-md border-[0.5px] border-subtle-1 bg-layer-2 px-3 py-2 text-13 outline-none disabled:cursor-not-allowed disabled:opacity-60"
             value={editor.property_type}
             disabled={Boolean(property)}
             onChange={(event) => updateType(event.target.value as TWorkItemPropertyType)}
           >
-            {Object.entries(PROPERTY_TYPE_LABELS).map(([value, label]) => (
+            {Object.entries(PROPERTY_TYPE_LABELS).map(([value, labelKey]) => (
               <option key={value} value={value}>
-                {label}
+                {t(labelKey)}
               </option>
             ))}
           </select>
@@ -334,18 +358,18 @@ export function WorkItemPropertyForm(props: Props) {
 
       {isSelect && (
         <label className="mt-5 flex flex-col gap-1.5 text-12 font-medium text-secondary">
-          Select source
+          {t("project_settings.work_item_fields.form.select_source_label")}
           <select
             className="rounded-md border-[0.5px] border-subtle-1 bg-layer-2 px-3 py-2 text-13 outline-none disabled:cursor-not-allowed disabled:opacity-60"
             value={editor.select_source}
             disabled={Boolean(property)}
             onChange={(event) => updateSelectSource(event.target.value as TWorkItemSelectSource)}
           >
-            <option value="MANUAL">Manual list</option>
-            <option value="MEMBERS">Project members</option>
+            <option value="MANUAL">{t("project_settings.work_item_fields.form.manual_list")}</option>
+            <option value="MEMBERS">{t("project_settings.work_item_fields.form.project_members")}</option>
           </select>
           <span className="font-normal text-11 text-tertiary">
-            Project members are loaded dynamically and always use their current profile names.
+            {t("project_settings.work_item_fields.form.select_source_description")}
           </span>
         </label>
       )}
@@ -354,19 +378,23 @@ export function WorkItemPropertyForm(props: Props) {
         htmlFor="work-item-property-description"
         className="mt-5 flex flex-col gap-1.5 text-12 font-medium text-secondary"
       >
-        Description
+        {t("project_settings.work_item_fields.form.description_label")}
         <TextArea
           id="work-item-property-description"
           value={editor.description}
           onChange={(event) => setEditor((current) => ({ ...current, description: event.target.value }))}
-          placeholder="Explain how this property should be used"
+          placeholder={t("project_settings.work_item_fields.form.description_placeholder")}
         />
       </label>
 
       <div className="mt-5 flex items-center justify-between rounded-md border border-subtle p-3">
         <div>
-          <div className="text-13 font-medium text-primary">Required</div>
-          <div className="text-11 text-tertiary">A value must be supplied before the work item can be saved.</div>
+          <div className="text-13 font-medium text-primary">
+            {t("project_settings.work_item_fields.form.required_title")}
+          </div>
+          <div className="text-11 text-tertiary">
+            {t("project_settings.work_item_fields.form.required_description")}
+          </div>
         </div>
         <ToggleSwitch
           value={editor.is_required}
@@ -378,11 +406,15 @@ export function WorkItemPropertyForm(props: Props) {
         <div className="mt-5">
           <div className="mb-2 flex items-center justify-between">
             <div>
-              <div className="text-13 font-medium text-primary">Options</div>
-              <div className="text-11 text-tertiary">At least one active option is required.</div>
+              <div className="text-13 font-medium text-primary">
+                {t("project_settings.work_item_fields.form.options_title")}
+              </div>
+              <div className="text-11 text-tertiary">
+                {t("project_settings.work_item_fields.form.options_description")}
+              </div>
             </div>
             <Button variant="neutral-primary" size="sm" prependIcon={<Plus />} onClick={addOption}>
-              Add option
+              {t("project_settings.work_item_fields.form.add_option")}
             </Button>
           </div>
           <div className="flex flex-col gap-2">
@@ -392,14 +424,16 @@ export function WorkItemPropertyForm(props: Props) {
                   className="w-full"
                   value={option.name}
                   onChange={(event) => updateOption(option.id, event.target.value)}
-                  placeholder={`Option ${index + 1}`}
+                  placeholder={t("project_settings.work_item_fields.form.option_placeholder", {
+                    number: index + 1,
+                  })}
                   hasError={!option.name.trim()}
                 />
                 <button
                   type="button"
                   className="rounded p-2 text-tertiary hover:bg-surface-2 hover:text-danger-primary"
                   onClick={() => removeOption(option.id)}
-                  aria-label="Remove option"
+                  aria-label={t("project_settings.work_item_fields.form.remove_option")}
                 >
                   <Trash2 className="size-4" />
                 </button>
@@ -407,7 +441,7 @@ export function WorkItemPropertyForm(props: Props) {
             ))}
             {activeOptions.length === 0 && (
               <div className="rounded-md border border-dashed border-subtle px-3 py-4 text-center text-12 text-tertiary">
-                Add the first option to save this property.
+                {t("project_settings.work_item_fields.form.empty_options")}
               </div>
             )}
           </div>
@@ -417,8 +451,12 @@ export function WorkItemPropertyForm(props: Props) {
       <div className="mt-5 rounded-md border border-subtle p-3">
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-13 font-medium text-primary">Default value</div>
-            <div className="text-11 text-tertiary">Used when a new work item does not provide a value.</div>
+            <div className="text-13 font-medium text-primary">
+              {t("project_settings.work_item_fields.form.default_value_title")}
+            </div>
+            <div className="text-11 text-tertiary">
+              {t("project_settings.work_item_fields.form.default_value_description")}
+            </div>
           </div>
           <ToggleSwitch
             value={editor.has_default}
@@ -444,10 +482,12 @@ export function WorkItemPropertyForm(props: Props) {
 
       <div className="mt-6 flex justify-end gap-2">
         <Button variant="neutral-primary" onClick={onCancel} disabled={isSubmitting}>
-          Cancel
+          {t("project_settings.work_item_fields.form.cancel")}
         </Button>
         <Button onClick={submit} loading={isSubmitting} disabled={!canSubmit}>
-          {property ? "Save changes" : "Create property"}
+          {property
+            ? t("project_settings.work_item_fields.form.save_changes")
+            : t("project_settings.work_item_fields.form.create_property")}
         </Button>
       </div>
     </div>

@@ -9,7 +9,7 @@ import type { TIssue } from "./issues/issue";
 import type { LOGICAL_OPERATOR, TSupportedOperators } from "./rich-filters";
 import type { CompleteOrEmpty } from "./utils";
 
-export type TIssueLayouts = "list" | "kanban" | "calendar" | "spreadsheet" | "gantt_chart";
+export type TIssueLayouts = "list" | "kanban" | "calendar" | "spreadsheet" | "gantt_chart" | "custom_grouping";
 
 export type TCustomWorkItemGroupByOption = `customproperty_${string}`;
 
@@ -24,11 +24,14 @@ export type TIssueGroupByOptions =
   | "cycle"
   | "module"
   | "target_date"
+  | "start_date"
   | "team_project"
   | TCustomWorkItemGroupByOption
   | null;
 
 export type TIssueOrderByOptions =
+  | "sequence_id"
+  | "-sequence_id"
   | "-created_at"
   | "created_at"
   | "updated_at"
@@ -161,6 +164,7 @@ export interface IIssueDisplayFilterOptions {
   order_by?: TIssueOrderByOptions;
   show_empty_groups?: boolean;
   sub_issue?: boolean;
+  custom_grouping_id?: string | null;
 }
 export interface IIssueDisplayProperties {
   assignee?: boolean;

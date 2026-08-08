@@ -6,7 +6,7 @@
 
 import { useState, useEffect } from "react";
 import { observer } from "mobx-react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { LogOut, Settings, Settings2 } from "lucide-react";
 // plane imports
 import { GOD_MODE_URL } from "@plane/constants";
@@ -21,19 +21,23 @@ import { AppSidebarItem } from "@/components/sidebar/sidebar-item";
 import { useAppTheme } from "@/hooks/store/use-app-theme";
 import { useCommandPalette } from "@/hooks/store/use-command-palette";
 import { useUser } from "@/hooks/store/user";
+import { useCreationQuotas } from "@/hooks/use-creation-quotas";
 
 export const UserMenuRoot = observer(function UserMenuRoot() {
   // states
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   // router
   const router = useRouter();
+  const { workspaceSlug } = useParams<{ workspaceSlug?: string }>();
   // store hooks
   const { toggleAnySidebarDropdown } = useAppTheme();
   const { data: currentUser } = useUser();
   const { signOut } = useUser();
   const { toggleProfileSettingsModal } = useCommandPalette();
+  const { data: creationQuotas } = useCreationQuotas();
+  const projectQuota = creationQuotas?.projects.find((quota) => quota.workspace_slug === workspaceSlug);
   // derived values
-  const isUserInstanceAdmin = false;
+  const isUserInstanceAdmin = Boolean(creationQuotas?.is_instance_admin);
   // translation
   const { t } = useTranslation();
 
@@ -107,6 +111,19 @@ export const UserMenuRoot = observer(function UserMenuRoot() {
           </div>
         </div>
       </div>
+      {creationQuotas && (
+        <div className="rounded-md border border-subtle bg-layer-2 p-2 text-caption-md-regular text-secondary">
+          <div>
+            {t("common.workspaces")}: {creationQuotas.workspace.used}/
+            {creationQuotas.workspace.is_unlimited ? "∞" : creationQuotas.workspace.limit}
+          </div>
+          {projectQuota && (
+            <div>
+              {t("common.projects")}: {projectQuota.used}/{projectQuota.is_unlimited ? "∞" : projectQuota.limit}
+            </div>
+          )}
+        </div>
+      )}
       <div>
         <CustomMenu.MenuItem
           onClick={() =>

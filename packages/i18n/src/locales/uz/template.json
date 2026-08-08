@@ -1,0 +1,333 @@
+{
+  "templates": {
+    "settings": {
+      "title": "Shablonlar",
+      "description": "Shablonlardan foydalanganda loyihalar, ish elementlari va sahifalarni yaratishga sarflangan vaqtni 80% tejang.",
+      "new_project_template": "Yangi loyiha shablon",
+      "new_work_item_template": "Yangi ish elementi shabloni",
+      "new_page_template": "Yangi sahifa shablon",
+      "options": {
+        "project": {
+          "label": "Loyiha shablonlar"
+        },
+        "work_item": {
+          "label": "Ish elementi shablonlar"
+        },
+        "page": {
+          "label": "Sahifa shablonlari"
+        }
+      },
+      "create_template": {
+        "label": "Shablon yaratish",
+        "no_permission": {
+          "project": "Shablonlar yaratish uchun loyiha administratoriga murojaat qiling",
+          "workspace": "Shablonlar yaratish uchun ish joyi administratoriga murojaat qiling"
+        }
+      },
+      "use_template": {
+        "button": {
+          "default": "Shablondan foydalaning",
+          "loading": "Murojaat qilinmoqda"
+        }
+      },
+      "template_source": {
+        "workspace": {
+          "info": "Ish maydonidan olingan"
+        },
+        "project": {
+          "info": "Loyihadan olingan"
+        }
+      },
+      "form": {
+        "project": {
+          "template": {
+            "name": {
+              "placeholder": "Loyiha shabloniga nom bering.",
+              "validation": {
+                "required": "Shablon nomi talab qilinadi",
+                "maxLength": "Shablon nomi 255 belgidan kam boʻlishi kerak"
+              }
+            },
+            "description": {
+              "placeholder": "Ushbu shablonni qachon va qanday ishlatishni tasvirlab bering."
+            }
+          },
+          "name": {
+            "placeholder": "Loyihangizga nom bering.",
+            "validation": {
+              "required": "Loyiha nomi talab qilinadi",
+              "maxLength": "Loyiha nomi 255 belgidan kam bo'lishi kerak"
+            }
+          },
+          "description": {
+            "placeholder": "Ushbu loyihaning maqsadi va maqsadlarini tasvirlab bering."
+          },
+          "button": {
+            "create": "Loyiha shablonini yarating",
+            "update": "Loyiha shablonini yangilash"
+          }
+        },
+        "work_item": {
+          "template": {
+            "name": {
+              "placeholder": "Ish elementingiz shabloniga nom bering.",
+              "validation": {
+                "required": "Shablon nomi talab qilinadi",
+                "maxLength": "Shablon nomi 255 belgidan kam boʻlishi kerak"
+              }
+            },
+            "description": {
+              "placeholder": "Ushbu shablonni qachon va qanday ishlatishni tasvirlab bering."
+            }
+          },
+          "name": {
+            "placeholder": "Ushbu ish elementiga nom bering.",
+            "validation": {
+              "required": "Ish elementi nomi shart",
+              "maxLength": "Ish elementi nomi 255 belgidan kam boʻlishi kerak"
+            }
+          },
+          "description": {
+            "placeholder": "Ushbu ish elementini tasvirlab bering, shunda siz buni tugatganingizda nimaga erishasiz."
+          },
+          "button": {
+            "create": "Ish elementi shablonini yarating",
+            "update": "Ish elementi shablonini yangilang"
+          }
+        },
+        "page": {
+          "template": {
+            "name": {
+              "placeholder": "Sahifa shabloniga nom bering.",
+              "validation": {
+                "required": "Shablon nomi talab qilinadi",
+                "maxLength": "Shablon nomi 255 belgidan kam boʻlishi kerak"
+              }
+            },
+            "description": {
+              "placeholder": "Ushbu shablonni qachon va qanday ishlatishni tasvirlab bering."
+            }
+          },
+          "name": {
+            "placeholder": "Sarlavhasiz sahifa",
+            "validation": {
+              "maxLength": "Sahifa nomi 255 belgidan kam boʻlishi kerak"
+            }
+          },
+          "button": {
+            "create": "Sahifa shablonini yarating",
+            "update": "Sahifa shablonini yangilash"
+          }
+        },
+        "publish": {
+          "action": "{isPublished, tanlang, rost {Publish settings} boshqa {Publish to Marketplace}}",
+          "unpublish_action": "Marketplacedan nashrni bekor qilish",
+          "title": "Shabloningizni ko'rinadigan va taniqli qiling.",
+          "name": {
+            "label": "Shablon nomi",
+            "placeholder": "Shabloningizga nom bering",
+            "validation": {
+              "required": "Shablon nomi talab qilinadi",
+              "maxLength": "Shablon nomi 255 belgidan kam boʻlishi kerak"
+            }
+          },
+          "short_description": {
+            "label": "Qisqacha tavsif",
+            "placeholder": "Ushbu shablon bir vaqtning o'zida bir nechta loyihalarni boshqaradigan Loyiha menejerlari uchun juda yaxshi.",
+            "validation": {
+              "required": "Qisqa tavsif talab qilinadi"
+            }
+          },
+          "description": {
+            "label": "Tavsif",
+            "placeholder": "Nutqdan matnga integratsiyalashuvimiz yordamida unumdorlikni oshiring va muloqotni soddalashtiring.\n• Haqiqiy vaqtda transkripsiya: Og'zaki so'zlarni bir zumda aniq matnga aylantiring.\n• Vazifa va sharh yaratish: Ovozli buyruqlar orqali vazifalar, tavsiflar va sharhlar qo'shing.",
+            "validation": {
+              "required": "Tavsif talab qilinadi"
+            }
+          },
+          "category": {
+            "label": "Turkum",
+            "placeholder": "Bu eng mos keladigan joyni tanlang. Siz bir nechta variantni tanlashingiz mumkin.",
+            "validation": {
+              "required": "Kamida bitta toifa talab qilinadi"
+            }
+          },
+          "keywords": {
+            "label": "Kalit so'zlar",
+            "placeholder": "Ushbu shablonni qidirishda foydalanuvchilar qidiradi deb o'ylagan so'zlardan foydalaning.",
+            "helperText": "Odamlarga qidiruvdan topishga yordam beradigan vergul bilan ajratilgan kalit so'zlarni kiriting.",
+            "validation": {
+              "required": "Kamida bitta kalit so'z kerak"
+            }
+          },
+          "website": {
+            "label": "Veb-sayt URL",
+            "placeholder": "https://plane.so",
+            "validation": {
+              "invalid": "URL noto‘g‘ri",
+              "maxLength": "URL 800 belgidan kam bo'lishi kerak"
+            }
+          },
+          "company_name": {
+            "label": "Kompaniya nomi",
+            "placeholder": "Plane",
+            "validation": {
+              "required": "Kompaniya nomi talab qilinadi",
+              "maxLength": "Kompaniya nomi 255 belgidan kam bo'lishi kerak"
+            }
+          },
+          "contact_email": {
+            "label": "Aloqa elektron pochtasi",
+            "placeholder": "help@plane.so",
+            "validation": {
+              "invalid": "Email manzili noto‘g‘ri",
+              "maxLength": "Aloqa elektron pochtasi 255 belgidan kam bo'lishi kerak"
+            }
+          },
+          "privacy_policy_url": {
+            "label": "Maxfiylik siyosatingizga havola",
+            "placeholder": "https://planes.so/privacy-policy",
+            "validation": {
+              "invalid": "URL noto‘g‘ri",
+              "maxLength": "URL 800 belgidan kam bo'lishi kerak"
+            }
+          },
+          "terms_of_service_url": {
+            "label": "Foydalanish shartlariga havola",
+            "placeholder": "https://planes.so/terms-of-use",
+            "validation": {
+              "invalid": "URL noto‘g‘ri",
+              "maxLength": "URL 800 belgidan kam bo'lishi kerak"
+            }
+          },
+          "cover_image": {
+            "label": "Bozorda ko'rsatiladigan qopqoq rasmini qo'shing",
+            "upload_title": "Muqova rasmini yuklang",
+            "upload_placeholder": "Yuklash uchun bosing yoki qopqoq rasmini yuklash uchun sudrab olib tashlang",
+            "drop_here": "Bu yerga tushing",
+            "click_to_upload": "Yuklash uchun bosing",
+            "invalid_file_or_exceeds_size_limit": "Fayl noto‘g‘ri yoki o‘lcham chegarasidan oshib ketdi. Iltimos, qayta urinib koʻring.",
+            "upload_and_save": "Yuklab oling va saqlang",
+            "uploading": "Yuklanmoqda",
+            "remove": "O'chirish",
+            "removing": "O'chirish",
+            "validation": {
+              "required": "Muqova rasmi talab qilinadi"
+            }
+          },
+          "attach_screenshots": {
+            "label": "Ushbu shablonni tomoshabinga aylantiradi deb o'ylagan rasmlarni qo'shing.",
+            "validation": {
+              "required": "Kamida bitta skrinshot kerak"
+            }
+          }
+        }
+      }
+    },
+    "empty_state": {
+      "upgrade": {
+        "title": "Shablonlar",
+        "description": "Plane da loyiha, ish elementi va sahifa shablonlari bilan siz noldan loyiha yaratishingiz yoki ish elementi rekvizitlarini qoʻlda oʻrnatishingiz shart emas.",
+        "sub_description": "Shablonlardan foydalanganda administrator vaqtining 80 foizini qaytarib oling."
+      },
+      "no_templates": {
+        "button": "Birinchi shabloningizni yarating"
+      },
+      "no_labels": {
+        "description": "Hali teglar yoʻq. Loyihangizdagi ish elementlarini tartibga solish va filtrlash uchun teglar yarating."
+      },
+      "no_modules": {
+        "description": "Hali modul yo'q. Maxsus rahbarlar va topshiruvchilar bilan kichik loyihalar bo'yicha ishlarni tashkil qiling."
+      },
+      "no_work_items": {
+        "description": "Hali hech qanday ish elementi yoʻq. Ishingizni yaxshiroq tashkil qilish uchun bittasini qo'shing."
+      },
+      "no_sub_work_items": {
+        "description": "Hali hech qanday qo'shimcha ish elementi yo'q. Ishingizni yaxshiroq tashkil qilish uchun bittasini qo'shing."
+      },
+      "page": {
+        "no_templates": {
+          "title": "Siz kirishingiz mumkin bo'lgan andozalar yo'q.",
+          "description": "Iltimos, shablon yarating"
+        },
+        "no_results": {
+          "title": "Bu shablonga mos kelmadi.",
+          "description": "Boshqa soʻzlar boʻyicha qidirib koʻring."
+        }
+      }
+    },
+    "toasts": {
+      "create": {
+        "success": {
+          "title": "Shablon yaratilgan",
+          "message": "{templateName}, {templateType} andozasi endi ish joyingiz uchun mavjud."
+        },
+        "error": {
+          "title": "Bu safar shablonni yarata olmadik.",
+          "message": "Tafsilotlaringizni qayta saqlashga urinib ko'ring yoki ularni yangi shablonga, yaxshisi boshqa varaqda nusxa ko'chiring."
+        }
+      },
+      "update": {
+        "success": {
+          "title": "Shablon o'zgartirildi",
+          "message": "{templateName}, {templateType} andozasi oʻzgartirildi."
+        },
+        "error": {
+          "title": "Ushbu andozaga kiritilgan oʻzgarishlarni saqlab boʻlmadi.",
+          "message": "Tafsilotlaringizni qaytadan saqlashga harakat qiling yoki keyinroq ushbu shablonga qayting. Agar muammo hali ham mavjud bo'lsa, bizga murojaat qiling."
+        }
+      },
+      "delete": {
+        "success": {
+          "title": "Shablon oʻchirildi",
+          "message": "{templateName}, {templateType} andozasi endi ish joyingizdan oʻchirib tashlandi."
+        },
+        "error": {
+          "title": "Bu shablonni oʻchirib boʻlmadi.",
+          "message": "Uni qayta oʻchirib koʻring yoki keyinroq qayting. Agar uni o'chira olmasangiz, biz bilan bog'laning."
+        }
+      },
+      "unpublish": {
+        "success": {
+          "title": "Shablon nashrdan olib tashlandi",
+          "message": "{templateName}, {templateType} andozasi endi nashrdan olib tashlandi."
+        },
+        "error": {
+          "title": "Bu shablonni nashrdan olib tashlab bo‘lmadi.",
+          "message": "Uni qaytadan olib tashlashga harakat qiling yoki keyinroq qayting. Agar nashrni bekor qila olmasangiz, biz bilan bog'laning."
+        }
+      }
+    },
+    "delete_confirmation": {
+      "title": "Shablonni o'chirish",
+      "description": {
+        "prefix": "Haqiqatan ham shablonni oʻchirib tashlamoqchimisiz-",
+        "suffix": "? Shablonga tegishli barcha maʼlumotlar butunlay oʻchirib tashlanadi. Bu amalni ortga qaytarib bo‘lmaydi."
+      }
+    },
+    "unpublish_confirmation": {
+      "title": "Shablonni nashr etishni bekor qilish",
+      "description": {
+        "prefix": "Haqiqatan ham shablonni nashr qilishni bekor qilmoqchimisiz-",
+        "suffix": "? Bu andoza endi bozordagi foydalanuvchilar uchun mavjud bo‘lmaydi."
+      }
+    },
+    "dropdown": {
+      "add": {
+        "work_item": "Yangi shablon qo'shing",
+        "project": "Yangi shablon qo'shing"
+      },
+      "label": {
+        "project": "Loyiha shablonini tanlang",
+        "page": "Shablondan tanlang"
+      },
+      "tooltip": {
+        "work_item": "Ish elementi shablonini tanlang"
+      },
+      "no_results": {
+        "work_item": "Hech qanday shablon topilmadi.",
+        "project": "Hech qanday shablon topilmadi."
+      }
+    }
+  }
+}

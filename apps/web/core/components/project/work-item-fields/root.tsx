@@ -7,6 +7,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Archive, Pencil, Plus } from "lucide-react";
 import useSWR from "swr";
+import { useTranslation } from "@plane/i18n";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import type { TProjectWorkItemProperty, TWorkItemBuiltInFieldKey, TWorkItemBuiltInFieldSettings } from "@plane/types";
 import { Button, Loader, ToggleSwitch } from "@plane/ui";
@@ -27,16 +28,17 @@ type Props = {
   projectId: string;
 };
 
-const formatError = (error: unknown): string => {
+const formatError = (error: unknown, fallback: string): string => {
   if (typeof error === "string") return error;
-  if (!error || typeof error !== "object") return "Please try again.";
+  if (!error || typeof error !== "object") return fallback;
   const firstValue = Object.values(error)[0];
   if (typeof firstValue === "string") return firstValue;
   if (Array.isArray(firstValue) && typeof firstValue[0] === "string") return firstValue[0];
-  return "Please review the configuration and try again.";
+  return fallback;
 };
 
 export function WorkItemFieldsSettings({ workspaceSlug, projectId }: Props) {
+  const { t } = useTranslation();
   const service = useMemo(() => new ProjectService(), []);
   const configurationKey = `WORK_ITEM_FIELD_CONFIGURATION_${workspaceSlug}_${projectId}`;
   const propertiesKey = `WORK_ITEM_PROPERTIES_${workspaceSlug}_${projectId}`;
@@ -85,14 +87,14 @@ export function WorkItemFieldsSettings({ workspaceSlug, projectId }: Props) {
       await mutateConfiguration(savedConfiguration, { revalidate: false });
       setToast({
         type: TOAST_TYPE.SUCCESS,
-        title: "System fields updated",
-        message: "The work-item form configuration has been saved for this project.",
+        title: t("project_settings.work_item_fields.system_fields.toast.success_title"),
+        message: t("project_settings.work_item_fields.system_fields.toast.success_message"),
       });
     } catch (error) {
       setToast({
         type: TOAST_TYPE.ERROR,
-        title: "Could not update system fields",
-        message: formatError(error),
+        title: t("project_settings.work_item_fields.system_fields.toast.error_title"),
+        message: formatError(error, t("project_settings.work_item_fields.errors.try_again")),
       });
     } finally {
       setIsSavingConfiguration(false);
@@ -100,7 +102,10 @@ export function WorkItemFieldsSettings({ workspaceSlug, projectId }: Props) {
   };
 
   const archiveProperty = async (property: TProjectWorkItemProperty) => {
-    if (!window.confirm(`Archive "${property.name}"? Existing values will be preserved.`)) return;
+    if (
+      !window.confirm(t("project_settings.work_item_fields.custom_properties.archive_confirm", { name: property.name }))
+    )
+      return;
     setArchivingPropertyId(property.id);
     try {
       await service.archiveWorkItemProperty(workspaceSlug, projectId, property.id);
@@ -108,14 +113,14 @@ export function WorkItemFieldsSettings({ workspaceSlug, projectId }: Props) {
       if (editingProperty?.id === property.id) setEditingProperty(null);
       setToast({
         type: TOAST_TYPE.SUCCESS,
-        title: "Property archived",
-        message: "Historical values remain available.",
+        title: t("project_settings.work_item_fields.custom_properties.toast.archived_title"),
+        message: t("project_settings.work_item_fields.custom_properties.toast.archived_message"),
       });
     } catch (error) {
       setToast({
         type: TOAST_TYPE.ERROR,
-        title: "Could not archive property",
-        message: formatError(error),
+        title: t("project_settings.work_item_fields.custom_properties.toast.archive_error_title"),
+        message: formatError(error, t("project_settings.work_item_fields.errors.try_again")),
       });
     } finally {
       setArchivingPropertyId(null);
@@ -140,10 +145,11 @@ export function WorkItemFieldsSettings({ workspaceSlug, projectId }: Props) {
     <div className="flex flex-col gap-8 pb-12">
       <section>
         <div className="mb-3">
-          <h3 className="text-15 font-semibold text-primary">System fields</h3>
+          <h3 className="text-15 font-semibold text-primary">
+            {t("project_settings.work_item_fields.system_fields.title")}
+          </h3>
           <p className="mt-1 text-12 text-tertiary">
-            Project and title always remain visible and required. Hidden fields are removed only from the creation form
-            and remain API-compatible.
+            {t("project_settings.work_item_fields.system_fields.description")}
           </p>
         </div>
 
@@ -156,9 +162,13 @@ export function WorkItemFieldsSettings({ workspaceSlug, projectId }: Props) {
         ) : (
           <div className="overflow-hidden rounded-lg border border-subtle">
             <div className="grid grid-cols-[minmax(0,1fr)_7rem_7rem] border-b border-subtle bg-surface-2 px-4 py-2 text-11 font-medium text-tertiary uppercase">
-              <span>Field</span>
-              <span className="text-center">Visible</span>
-              <span className="text-center">Required</span>
+              <span>{t("project_settings.work_item_fields.system_fields.columns.field")}</span>
+              <span className="text-center">
+                {t("project_settings.work_item_fields.system_fields.columns.visible")}
+              </span>
+              <span className="text-center">
+                {t("project_settings.work_item_fields.system_fields.columns.required")}
+              </span>
             </div>
             {BUILT_IN_FIELD_ORDER.map((fieldKey) => {
               const settings = builtInFields[fieldKey];
@@ -171,7 +181,7 @@ export function WorkItemFieldsSettings({ workspaceSlug, projectId }: Props) {
                   key={fieldKey}
                   className="grid grid-cols-[minmax(0,1fr)_7rem_7rem] items-center border-b border-subtle px-4 py-3 last:border-b-0"
                 >
-                  <span className="text-13 font-medium text-primary">{BUILT_IN_FIELD_LABELS[fieldKey]}</span>
+                  <span className="text-13 font-medium text-primary">{t(BUILT_IN_FIELD_LABELS[fieldKey])}</span>
                   <div className="flex justify-center">
                     {canHide ? (
                       <ToggleSwitch
@@ -179,7 +189,9 @@ export function WorkItemFieldsSettings({ workspaceSlug, projectId }: Props) {
                         onChange={(visible) => updateBuiltInField(fieldKey, { visible })}
                       />
                     ) : (
-                      <span className="text-11 text-tertiary">Always</span>
+                      <span className="text-11 text-tertiary">
+                        {t("project_settings.work_item_fields.system_fields.always")}
+                      </span>
                     )}
                   </div>
                   <div className="flex justify-center">
@@ -200,7 +212,7 @@ export function WorkItemFieldsSettings({ workspaceSlug, projectId }: Props) {
             loading={isSavingConfiguration}
             disabled={isConfigurationLoading || !configuration}
           >
-            Save system fields
+            {t("project_settings.work_item_fields.system_fields.save")}
           </Button>
         </div>
       </section>
@@ -208,10 +220,11 @@ export function WorkItemFieldsSettings({ workspaceSlug, projectId }: Props) {
       <section>
         <div className="mb-3 flex items-start justify-between gap-4">
           <div>
-            <h3 className="text-15 font-semibold text-primary">Custom properties</h3>
+            <h3 className="text-15 font-semibold text-primary">
+              {t("project_settings.work_item_fields.custom_properties.title")}
+            </h3>
             <p className="mt-1 text-12 text-tertiary">
-              Properties are project-specific. Archive a property to remove it from new work items without deleting
-              historical values.
+              {t("project_settings.work_item_fields.custom_properties.description")}
             </p>
           </div>
           <Button
@@ -222,7 +235,7 @@ export function WorkItemFieldsSettings({ workspaceSlug, projectId }: Props) {
             }}
             disabled={isCreatingProperty}
           >
-            New property
+            {t("project_settings.work_item_fields.custom_properties.new")}
           </Button>
         </div>
 
@@ -244,15 +257,15 @@ export function WorkItemFieldsSettings({ workspaceSlug, projectId }: Props) {
                     <span className="truncate text-13 font-medium text-primary">{property.name}</span>
                     {property.is_required && (
                       <span className="rounded bg-danger-subtle px-1.5 py-0.5 text-10 font-medium text-danger-primary">
-                        Required
+                        {t("project_settings.work_item_fields.custom_properties.required_badge")}
                       </span>
                     )}
                   </div>
                   <div className="mt-0.5 text-11 text-tertiary">
-                    {PROPERTY_TYPE_LABELS[property.property_type]}
+                    {t(PROPERTY_TYPE_LABELS[property.property_type])}
                     {(property.property_type === "SINGLE_SELECT" || property.property_type === "MULTI_SELECT") &&
                     property.select_source === "MEMBERS"
-                      ? " · Project members"
+                      ? ` · ${t("project_settings.work_item_fields.form.project_members")}`
                       : ""}
                     {property.description ? ` · ${property.description}` : ""}
                   </div>
@@ -267,7 +280,7 @@ export function WorkItemFieldsSettings({ workspaceSlug, projectId }: Props) {
                       setEditingProperty(property);
                     }}
                   >
-                    Edit
+                    {t("project_settings.work_item_fields.custom_properties.edit")}
                   </Button>
                   <Button
                     variant="link-danger"
@@ -276,7 +289,7 @@ export function WorkItemFieldsSettings({ workspaceSlug, projectId }: Props) {
                     loading={archivingPropertyId === property.id}
                     onClick={() => archiveProperty(property)}
                   >
-                    Archive
+                    {t("project_settings.work_item_fields.custom_properties.archive")}
                   </Button>
                 </div>
               </div>
@@ -284,8 +297,12 @@ export function WorkItemFieldsSettings({ workspaceSlug, projectId }: Props) {
           </div>
         ) : (
           <div className="rounded-lg border border-dashed border-subtle px-5 py-10 text-center">
-            <div className="text-13 font-medium text-primary">No custom properties yet</div>
-            <div className="mt-1 text-12 text-tertiary">Create the first property for this project.</div>
+            <div className="text-13 font-medium text-primary">
+              {t("project_settings.work_item_fields.custom_properties.empty_title")}
+            </div>
+            <div className="mt-1 text-12 text-tertiary">
+              {t("project_settings.work_item_fields.custom_properties.empty_description")}
+            </div>
           </div>
         )}
       </section>

@@ -5,6 +5,7 @@
  */
 
 import { observer } from "mobx-react";
+import { useParams } from "next/navigation";
 // plane imports
 import { EUserPermissionsLevel } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
@@ -14,6 +15,7 @@ import { EIssuesStoreType, EUserWorkspaceRoles } from "@plane/types";
 import { useCommandPalette } from "@/hooks/store/use-command-palette";
 import { useProject } from "@/hooks/store/use-project";
 import { useUserPermissions } from "@/hooks/store/user";
+import { useCreationQuotas } from "@/hooks/use-creation-quotas";
 
 export const GlobalViewEmptyState = observer(function GlobalViewEmptyState() {
   // plane imports
@@ -22,10 +24,15 @@ export const GlobalViewEmptyState = observer(function GlobalViewEmptyState() {
   const { workspaceProjectIds } = useProject();
   const { toggleCreateIssueModal, toggleCreateProjectModal } = useCommandPalette();
   const { allowPermissions } = useUserPermissions();
+  const { workspaceSlug } = useParams<{ workspaceSlug: string }>();
+  const { data: creationQuotas } = useCreationQuotas();
   // derived values
   const hasMemberLevelPermission = allowPermissions(
     [EUserWorkspaceRoles.ADMIN, EUserWorkspaceRoles.MEMBER],
     EUserPermissionsLevel.WORKSPACE
+  );
+  const canCreateProject = Boolean(
+    creationQuotas?.projects.find((quota) => quota.workspace_slug === workspaceSlug)?.can_create
   );
 
   if (workspaceProjectIds?.length === 0) {
@@ -41,7 +48,7 @@ export const GlobalViewEmptyState = observer(function GlobalViewEmptyState() {
             onClick: () => {
               toggleCreateProjectModal(true);
             },
-            disabled: !hasMemberLevelPermission,
+            disabled: !canCreateProject,
             variant: "primary",
           },
         ]}

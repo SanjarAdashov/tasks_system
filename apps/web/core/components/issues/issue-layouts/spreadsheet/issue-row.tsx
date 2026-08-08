@@ -247,6 +247,36 @@ const IssueRowDetails = observer(function IssueRowDetails(props: IssueRowDetails
   const projectIdentifier = getProjectIdentifierById(issueDetail.project_id);
 
   const canSelectIssues = !disableUserActions && !selectionHelpers.isSelectionDisabled;
+  const showIdentifierColumn = !!displayProperties.key;
+
+  const selectionAction =
+    projectId && canSelectIssues ? (
+      <Tooltip
+        tooltipContent={
+          <>
+            Only work items within the current
+            <br />
+            project can be selected.
+          </>
+        }
+        disabled={issueDetail.project_id === projectId}
+      >
+        <div className="absolute left-1 z-10 mr-1 grid w-3.5 flex-shrink-0 place-items-center">
+          <MultipleSelectEntityAction
+            className={cn(
+              "pointer-events-none opacity-0 transition-opacity group-hover/list-block:pointer-events-auto group-hover/list-block:opacity-100",
+              {
+                "pointer-events-auto opacity-100": isIssueSelected,
+              }
+            )}
+            groupId={SPREADSHEET_SELECT_GROUP}
+            id={issueDetail.id}
+            selectionHelpers={selectionHelpers}
+            disabled={issueDetail.project_id !== projectId}
+          />
+        </div>
+      </Tooltip>
+    ) : null;
 
   const workItemLink = generateWorkItemLink({
     workspaceSlug: workspaceSlug?.toString(),
@@ -259,12 +289,52 @@ const IssueRowDetails = observer(function IssueRowDetails(props: IssueRowDetails
 
   return (
     <>
-      {/* Single sticky column containing both identifier and workitem */}
+      {showIdentifierColumn && (
+        <td
+          id={`issue-${issueId}`}
+          tabIndex={0}
+          className="group/list-block relative left-0 z-10 w-56 max-w-56 min-w-56 bg-surface-1 md:sticky"
+        >
+          <ControlLink
+            href={workItemLink}
+            onClick={() => handleIssuePeekOverview(issueDetail)}
+            className="outline-none"
+            disabled={!!issueDetail?.tempId}
+          >
+            <Row
+              className={cn(
+                "clickable relative flex h-11 w-full cursor-pointer items-center border-r-[0.5px] border-subtle-1 bg-transparent px-3 text-13 group-[.selected-issue-row]:bg-accent-primary/5 group-[.selected-issue-row]:hover:bg-accent-primary/10",
+                {
+                  "border-b-[0.5px]": !getIsIssuePeeked(issueDetail.id),
+                  "border border-accent-strong hover:border-accent-strong":
+                    getIsIssuePeeked(issueDetail.id) && nestingLevel === peekIssue?.nestingLevel,
+                  "shadow-[8px_22px_22px_10px_rgba(0,0,0,0.05)]": isScrolled.current,
+                  "pl-7": canSelectIssues,
+                }
+              )}
+            >
+              {selectionAction}
+              {issueDetail.project_id && (
+                <IssueIdentifier
+                  issueId={issueDetail.id}
+                  projectId={issueDetail.project_id}
+                  size="xs"
+                  variant="tertiary"
+                  displayProperties={displayProperties}
+                />
+              )}
+            </Row>
+          </ControlLink>
+        </td>
+      )}
+
       <td
-        id={`issue-${issueId}`}
+        id={showIdentifierColumn ? undefined : `issue-${issueId}`}
         ref={cellRef}
         tabIndex={0}
-        className="group/list-block relative left-0 z-10 max-w-lg bg-surface-1 md:sticky"
+        className={cn("group/list-block relative min-w-[28rem] bg-surface-1", {
+          "left-0 z-10 md:sticky": !showIdentifierColumn,
+        })}
       >
         <ControlLink
           href={workItemLink}
@@ -274,67 +344,17 @@ const IssueRowDetails = observer(function IssueRowDetails(props: IssueRowDetails
         >
           <Row
             className={cn(
-              "group clickable z-10 flex h-11 w-full cursor-pointer items-center border-r-[0.5px] border-subtle-1 bg-transparent text-13 group-[.selected-issue-row]:bg-accent-primary/5 after:absolute group-[.selected-issue-row]:hover:bg-accent-primary/10",
+              "clickable z-10 flex h-11 w-full cursor-pointer items-center border-r-[0.5px] border-subtle-1 bg-transparent px-page-x text-13 group-[.selected-issue-row]:bg-accent-primary/5 after:absolute group-[.selected-issue-row]:hover:bg-accent-primary/10",
               {
                 "border-b-[0.5px]": !getIsIssuePeeked(issueDetail.id),
                 "border border-accent-strong hover:border-accent-strong":
                   getIsIssuePeeked(issueDetail.id) && nestingLevel === peekIssue?.nestingLevel,
-                "shadow-[8px_22px_22px_10px_rgba(0,0,0,0.05)]": isScrolled.current,
+                "shadow-[8px_22px_22px_10px_rgba(0,0,0,0.05)]": !showIdentifierColumn && isScrolled.current,
               }
             )}
           >
-            {/* Identifier section - conditionally rendered */}
-            {displayProperties?.key && (
-              <div className="flex h-full min-w-24 flex-shrink-0 items-center">
-                <div className="relative flex cursor-pointer items-center text-11 hover:text-primary">
-                  {issueDetail.project_id && (
-                    <IssueIdentifier
-                      issueId={issueDetail.id}
-                      projectId={issueDetail.project_id}
-                      size="xs"
-                      variant="tertiary"
-                      displayProperties={displayProperties}
-                    />
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Workitem section */}
-            <div
-              className={cn("flex flex-grow items-center gap-0.5 py-2", {
-                "min-w-[360px]": !displayProperties?.key,
-                "min-w-60": displayProperties?.key,
-              })}
-            >
-              {/* select checkbox */}
-              {projectId && canSelectIssues && (
-                <Tooltip
-                  tooltipContent={
-                    <>
-                      Only work items within the current
-                      <br />
-                      project can be selected.
-                    </>
-                  }
-                  disabled={issueDetail.project_id === projectId}
-                >
-                  <div className="absolute left-1 mr-1 grid w-3.5 flex-shrink-0 place-items-center">
-                    <MultipleSelectEntityAction
-                      className={cn(
-                        "pointer-events-none opacity-0 transition-opacity group-hover/list-block:pointer-events-auto group-hover/list-block:opacity-100",
-                        {
-                          "pointer-events-auto opacity-100": isIssueSelected,
-                        }
-                      )}
-                      groupId={SPREADSHEET_SELECT_GROUP}
-                      id={issueDetail.id}
-                      selectionHelpers={selectionHelpers}
-                      disabled={issueDetail.project_id !== projectId}
-                    />
-                  </div>
-                </Tooltip>
-              )}
+            <div className="flex min-w-0 flex-grow items-center gap-0.5 py-2">
+              {!showIdentifierColumn && selectionAction}
 
               {/* sub issues indentation */}
               {nestingLevel !== 0 && <div style={{ width: subIssueIndentation }} />}

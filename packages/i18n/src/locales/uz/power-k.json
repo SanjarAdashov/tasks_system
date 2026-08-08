@@ -1,0 +1,192 @@
+{
+  "power_k": {
+    "actions_commands": {
+      "bulk_delete_work_items": "Ish elementlarini ommaviy o'chirish"
+    },
+    "contextual_actions": {
+      "work_item": {
+        "title": "Ish elementi harakatlari",
+        "indicator": "Vazifa",
+        "change_state": "Holatni o'zgartirish",
+        "change_priority": "Ustuvorlikni o'zgartirish",
+        "change_assignees": "tayinlash",
+        "assign_to_me": "Menga tayinlang",
+        "unassign_from_me": "Mendan tayinlashni bekor qiling",
+        "change_estimate": "Taxminiy o'zgartirish",
+        "add_to_cycle": "Tsiklga qo'shing",
+        "add_to_modules": "Modullarga qo'shish",
+        "add_labels": "Yorliqlar qo'shing",
+        "subscribe": "Bildirishnomalarga obuna bo'ling",
+        "unsubscribe": "Bildirishnomalarga obunani bekor qilish",
+        "delete": "Oʻchirish",
+        "copy_id": "ID nusxasi",
+        "copy_id_toast_success": "Ish elementi identifikatori vaqtinchalik xotiraga nusxalandi.",
+        "copy_id_toast_error": "Ish elementi identifikatorini vaqtinchalik xotiraga nusxalashda xatolik yuz berdi.",
+        "copy_title": "Sarlavhani nusxalash",
+        "copy_title_toast_success": "Ish elementi nomi vaqtinchalik xotiraga nusxalandi.",
+        "copy_title_toast_error": "Ish elementi nomini vaqtinchalik xotiraga nusxalashda xatolik yuz berdi.",
+        "copy_url": "URL manzilini nusxalash",
+        "copy_url_toast_success": "Ish elementi URL manzili vaqtinchalik xotiraga nusxalandi.",
+        "copy_url_toast_error": "Ishchi element URL manzilini vaqtinchalik xotiraga nusxalashda xatolik yuz berdi."
+      },
+      "cycle": {
+        "title": "Tsikl harakatlari",
+        "indicator": "Sikl",
+        "add_to_favorites": "Sevimlilarga qo'shing",
+        "remove_from_favorites": "Sevimlilardan olib tashlang",
+        "copy_url": "URL manzilini nusxalash",
+        "copy_url_toast_success": "Tsikl URL manzili vaqtinchalik xotiraga nusxalandi.",
+        "copy_url_toast_error": "Tsikl URL manzilini vaqtinchalik xotiraga nusxalashda xatolik yuz berdi."
+      },
+      "module": {
+        "title": "Modul harakatlari",
+        "indicator": "Modul",
+        "add_remove_members": "A'zolarni qo'shish/o'chirish",
+        "change_status": "Holatni o'zgartirish",
+        "add_to_favorites": "Sevimlilarga qo'shing",
+        "remove_from_favorites": "Sevimlilardan olib tashlang",
+        "copy_url": "URL manzilini nusxalash",
+        "copy_url_toast_success": "Modul URL manzili vaqtinchalik xotiraga nusxalandi.",
+        "copy_url_toast_error": "Modul URL manzilini vaqtinchalik xotiraga nusxalashda xatolik yuz berdi."
+      },
+      "page": {
+        "title": "Sahifa harakatlari",
+        "indicator": "Sahifa",
+        "lock": "Qulflash",
+        "unlock": "Qulfni ochish",
+        "make_private": "Shaxsiy qiling",
+        "make_public": "Ommaviy qilish",
+        "archive": "Arxiv",
+        "restore": "Qayta tiklash",
+        "add_to_favorites": "Sevimlilarga qo'shing",
+        "remove_from_favorites": "Sevimlilardan olib tashlang",
+        "copy_url": "URL manzilini nusxalash",
+        "copy_url_toast_success": "Sahifa URL manzili vaqtinchalik xotiraga nusxalandi.",
+        "copy_url_toast_error": "Sahifaning URL manzilini vaqtinchalik xotiraga nusxalashda xatolik yuz berdi."
+      }
+    },
+    "creation_actions": {
+      "create_work_item": "Yangi ish elementi",
+      "create_page": "Yangi sahifa",
+      "create_view": "Yangi ko'rinish",
+      "create_cycle": "Yangi tsikl",
+      "create_module": "Yangi modul",
+      "create_project": "Yangi loyiha",
+      "create_workspace": "Yangi ish maydoni",
+      "create_project_automation": "Yangi avtomatlashtirish"
+    },
+    "navigation_actions": {
+      "open_workspace": "Ish joyini oching",
+      "nav_home": "Uyga bor",
+      "nav_inbox": "Kirish qutisiga o'ting",
+      "nav_your_work": "Ishingizga boring",
+      "nav_account_settings": "Hisob sozlamalariga o'ting",
+      "open_project": "Loyihani oching",
+      "nav_projects_list": "Loyihalar ro'yxatiga o'ting",
+      "nav_all_workspace_work_items": "Barcha ish elementlariga o'ting",
+      "nav_assigned_workspace_work_items": "Belgilangan ish elementlariga o'ting",
+      "nav_created_workspace_work_items": "Yaratilgan ish elementlariga o'ting",
+      "nav_subscribed_workspace_work_items": "Obuna boʻlgan ish elementlariga oʻting",
+      "nav_workspace_analytics": "Ish maydoni tahliliga o'ting",
+      "nav_workspace_drafts": "Ish joyidagi qoralamalarga o‘ting",
+      "nav_workspace_archives": "Ish maydoni arxivlariga o'ting",
+      "open_workspace_setting": "Ish maydoni sozlamalarini oching",
+      "nav_workspace_settings": "Ish maydoni sozlamalariga o'ting",
+      "nav_project_work_items": "Ish elementlariga o'ting",
+      "open_project_cycle": "Tsiklni oching",
+      "nav_project_cycles": "Tsikllarga o'ting",
+      "open_project_module": "Modulni oching",
+      "nav_project_modules": "Modullarga o'ting",
+      "open_project_view": "Loyiha ko'rinishini oching",
+      "nav_project_views": "Loyiha ko'rinishlariga o'ting",
+      "nav_project_pages": "Sahifalarga o'ting",
+      "nav_project_intake": "Qabul qilish joyiga o'ting",
+      "nav_project_archives": "Loyiha arxiviga o'ting",
+      "open_project_setting": "Loyiha sozlamalarini oching",
+      "nav_project_settings": "Loyiha sozlamalariga o'ting",
+      "nav_workspace_active_cycle": "Barcha faol tsikllarga o'ting",
+      "nav_project_overview": "Loyihaning umumiy ko'rinishiga o'ting"
+    },
+    "account_actions": {
+      "sign_out": "Chiqish",
+      "workspace_invites": "Ish maydoni taklif qiladi"
+    },
+    "miscellaneous_actions": {
+      "toggle_app_sidebar": "Ilovaning yon panelini almashtirish",
+      "copy_current_page_url": "Joriy sahifa URL manzilidan nusxa oling",
+      "copy_current_page_url_toast_success": "Joriy sahifa URL manzili vaqtinchalik xotiraga nusxalandi.",
+      "copy_current_page_url_toast_error": "Joriy sahifa URL manzilini vaqtinchalik xotiraga nusxalashda xatolik yuz berdi.",
+      "focus_top_nav_search": "Fokusli qidiruv kiritish"
+    },
+    "preferences_actions": {
+      "update_theme": "Interfeys mavzusini o'zgartirish",
+      "update_timezone": "Vaqt mintaqasini o'zgartirish",
+      "update_start_of_week": "Haftaning birinchi kunini o'zgartiring",
+      "update_language": "Interfeys tilini o'zgartiring",
+      "toast": {
+        "theme": {
+          "success": "Mavzu muvaffaqiyatli yangilandi.",
+          "error": "Mavzuni yangilab bo‘lmadi. Iltimos, qayta urinib koʻring."
+        },
+        "timezone": {
+          "success": "Vaqt mintaqasi muvaffaqiyatli yangilandi.",
+          "error": "Vaqt mintaqasini yangilab bo‘lmadi. Iltimos, qayta urinib koʻring."
+        },
+        "generic": {
+          "success": "Sozlamalar muvaffaqiyatli yangilandi.",
+          "error": "Parametrlarni yangilab bo‘lmadi. Iltimos, qayta urinib koʻring."
+        }
+      }
+    },
+    "help_actions": {
+      "open_keyboard_shortcuts": "Klaviatura yorliqlarini oching",
+      "open_plane_documentation": "Plane hujjatlarini oching",
+      "join_forum": "Forumimizga qo'shiling",
+      "report_bug": "Xato haqida xabar bering",
+      "chat_with_us": "Biz bilan suhbatlashing"
+    },
+    "page_placeholders": {
+      "default": "Buyruqni kiriting yoki qidiring",
+      "open_workspace": "Ish joyini oching",
+      "open_project": "Loyihani oching",
+      "open_workspace_setting": "Ish maydoni sozlamalarini oching",
+      "open_project_cycle": "Tsiklni oching",
+      "open_project_module": "Modulni oching",
+      "open_project_view": "Loyiha ko'rinishini oching",
+      "open_project_setting": "Loyiha sozlamalarini oching",
+      "update_work_item_state": "Holatni o'zgartirish",
+      "update_work_item_priority": "Ustuvorlikni o'zgartirish",
+      "update_work_item_assignee": "tayinlash",
+      "update_work_item_estimate": "Taxminiy o'zgartirish",
+      "update_work_item_cycle": "Tsiklga qo'shing",
+      "update_work_item_module": "Modullarga qo'shish",
+      "update_work_item_labels": "Yorliqlar qo'shing",
+      "update_module_member": "A'zolarni o'zgartirish",
+      "update_module_status": "Holatni o'zgartirish",
+      "update_theme": "Mavzuni o'zgartirish",
+      "update_timezone": "Vaqt mintaqasini o'zgartirish",
+      "update_start_of_week": "Haftaning birinchi kunini o'zgartiring",
+      "update_language": "Tilni o'zgartirish"
+    },
+    "search_menu": {
+      "no_results": "Hech qanday natija topilmadi",
+      "clear_search": "Qidiruvni tozalash",
+      "go_to_advanced_search": "Kengaytirilgan qidiruvga o'ting"
+    },
+    "footer": {
+      "workspace_level": "Ish maydoni darajasi"
+    },
+    "group_titles": {
+      "actions": "Harakatlar",
+      "contextual": "Kontekstual",
+      "navigation": "Navigatsiya",
+      "create": "Yaratish",
+      "general": "Umumiy",
+      "settings": "Sozlamalar",
+      "account": "Hisob",
+      "miscellaneous": "Turli xil",
+      "preferences": "Afzalliklar",
+      "help": "Yordam"
+    }
+  }
+}

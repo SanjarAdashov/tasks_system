@@ -23,6 +23,11 @@ from .project.state_transition import (
     ProjectStateTransitionRuleViewSet,
     ProjectStateTransitionSettingsEndpoint,
 )
+from .project.user_group import ProjectUserGroupViewSet
+from .project.custom_grouping import (
+    ProjectCustomGroupingPreferenceEndpoint,
+    ProjectCustomGroupingViewSet,
+)
 
 from .project.invite import (
     UserProjectInvitationsViewset,

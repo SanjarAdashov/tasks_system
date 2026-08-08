@@ -19,6 +19,7 @@ import { validateWorkspaceName, validateSlug } from "@plane/utils";
 // hooks
 import { useWorkspace } from "@/hooks/store/use-workspace";
 import { useAppRouter } from "@/hooks/use-app-router";
+import { useCreationQuotas } from "@/hooks/use-creation-quotas";
 // services
 import { WorkspaceService } from "@/services/workspace.service";
 
@@ -58,6 +59,8 @@ export const CreateWorkspaceForm = observer(function CreateWorkspaceForm(props: 
   const router = useAppRouter();
   // store hooks
   const { createWorkspace } = useWorkspace();
+  const { data: creationQuotas, mutate: mutateCreationQuotas } = useCreationQuotas();
+  const canCreateWorkspace = Boolean(creationQuotas?.workspace.can_create);
   // form info
   const {
     handleSubmit,
@@ -68,6 +71,10 @@ export const CreateWorkspaceForm = observer(function CreateWorkspaceForm(props: 
   } = useForm<IWorkspace>({ defaultValues, mode: "onChange" });
 
   const handleCreateWorkspace = async (formData: IWorkspace) => {
+    if (!canCreateWorkspace) {
+      setToast({ type: TOAST_TYPE.ERROR, title: t("toast.error"), message: t("creation_quotas.workspace_reached") });
+      return;
+    }
     try {
       const res = (await workspaceService.workspaceSlugCheck(formData.slug)) as { status: boolean };
       if (res.status === true && !RESTRICTED_URLS.includes(formData.slug)) {
@@ -79,6 +86,8 @@ export const CreateWorkspaceForm = observer(function CreateWorkspaceForm(props: 
             title: t("workspace_creation.toast.success.title"),
             message: t("workspace_creation.toast.success.message"),
           });
+
+          await mutateCreationQuotas();
 
           if (onSubmit) await onSubmit(workspaceResponse);
         } catch {
@@ -241,7 +250,13 @@ export const CreateWorkspaceForm = observer(function CreateWorkspaceForm(props: 
       </div>
       <div className="flex items-center gap-4">
         {secondaryButton}
-        <Button variant="primary" type="submit" size="xl" disabled={!isValid} loading={isSubmitting}>
+        <Button
+          variant="primary"
+          type="submit"
+          size="xl"
+          disabled={!isValid || !canCreateWorkspace}
+          loading={isSubmitting}
+        >
           {isSubmitting ? t(primaryButtonText.loading) : t(primaryButtonText.default)}
         </Button>
         {!secondaryButton && (
@@ -250,6 +265,14 @@ export const CreateWorkspaceForm = observer(function CreateWorkspaceForm(props: 
           </Button>
         )}
       </div>
+      {!canCreateWorkspace && creationQuotas && (
+        <p className="text-12 text-warning-primary">
+          {t("creation_quotas.unavailable", {
+            used: creationQuotas.workspace.used,
+            limit: creationQuotas.workspace.limit ?? 0,
+          })}
+        </p>
+      )}
     </form>
   );
 });

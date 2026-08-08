@@ -102,9 +102,17 @@ const WorkItemFilterRoot = observer(function WorkItemFilterRoot(props: TWorkItem
   useEffect(() => {
     workItemLayoutFilter.configManager.setAreConfigsReady(workItemFiltersConfig.areAllConfigsInitialized);
     workItemLayoutFilter.configManager.registerAll(workItemFiltersConfig.configs);
+
+    if (!workItemFiltersConfig.areAllConfigsInitialized) return;
+
+    workItemLayoutFilter.allConditions.forEach((condition) => {
+      const config = workItemLayoutFilter.configManager.getConfigByProperty(condition.property);
+      if (config && !config.isEnabled) workItemLayoutFilter.removeCondition(condition.id);
+    });
   }, [
     workItemFiltersConfig.areAllConfigsInitialized,
     workItemFiltersConfig.configs,
+    workItemLayoutFilter,
     workItemLayoutFilter.configManager,
   ]);
 

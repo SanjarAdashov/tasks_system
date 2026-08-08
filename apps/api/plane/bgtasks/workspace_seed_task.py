@@ -104,13 +104,15 @@ def create_project_and_member(workspace: Workspace, bot_user: User) -> Dict[int,
             workspace=workspace,
             name=workspace.name,  # Use workspace name
             identifier=project_identifier,
-            created_by_id=bot_user.id,
+            # The initial project consumes the workspace owner's project
+            # quota, just like a project created directly from the UI.
+            created_by_id=workspace.owner_id,
             # Enable all views in seed data
             cycle_view=True,
             module_view=True,
             issue_views_view=True,
         )
-        project.save(created_by_id=bot_user.id, disable_auto_set_user=True)
+        project.save(created_by_id=workspace.owner_id, disable_auto_set_user=True)
 
         # Create project members
         ProjectMember.objects.bulk_create(

@@ -8,6 +8,7 @@ import json
 
 # Django imports
 from django.core.serializers.json import DjangoJSONEncoder
+from django.db import transaction
 from django.db.models import Exists, F, OuterRef, Prefetch, Q, Subquery, Count
 from django.utils import timezone
 
@@ -42,6 +43,7 @@ from plane.db.models import (
 from plane.db.models.intake import IntakeIssueStatus
 from plane.utils.host import base_host
 from plane.utils.order_queryset import PROJECT_ORDER_BY_ALLOWLIST, sanitize_order_by
+from plane.license.services import CreationQuotaError, assert_can_create_project
 
 
 class ProjectViewSet(BaseViewSet):
@@ -254,45 +256,53 @@ class ProjectViewSet(BaseViewSet):
         serializer = ProjectListSerializer(project)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @allow_permission([ROLE.ADMIN, ROLE.MEMBER], level="WORKSPACE")
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST], level="WORKSPACE")
     def create(self, request, slug):
         workspace = Workspace.objects.get(slug=slug)
 
         serializer = ProjectSerializer(data={**request.data}, context={"workspace_id": workspace.id})
         if serializer.is_valid():
-            serializer.save()
+            try:
+                with transaction.atomic():
+                    assert_can_create_project(request.user, workspace)
+                    serializer.save()
 
-            # Add the user as Administrator to the project
-            _ = ProjectMember.objects.create(
-                project_id=serializer.data["id"],
-                member=request.user,
-                role=ROLE.ADMIN.value,
-            )
-
-            if serializer.data["project_lead"] is not None and str(serializer.data["project_lead"]) != str(
-                request.user.id
-            ):
-                ProjectMember.objects.create(
-                    project_id=serializer.data["id"],
-                    member_id=serializer.data["project_lead"],
-                    role=ROLE.ADMIN.value,
-                )
-
-            State.objects.bulk_create(
-                [
-                    State(
-                        name=state["name"],
-                        color=state["color"],
-                        project=serializer.instance,
-                        sequence=state["sequence"],
-                        workspace=serializer.instance.workspace,
-                        group=state["group"],
-                        default=state.get("default", False),
-                        created_by=request.user,
+                    # Add the user as Administrator to the project
+                    _ = ProjectMember.objects.create(
+                        project_id=serializer.data["id"],
+                        member=request.user,
+                        role=ROLE.ADMIN.value,
                     )
-                    for state in DEFAULT_STATES
-                ]
-            )
+
+                    if serializer.data["project_lead"] is not None and str(serializer.data["project_lead"]) != str(
+                        request.user.id
+                    ):
+                        ProjectMember.objects.create(
+                            project_id=serializer.data["id"],
+                            member_id=serializer.data["project_lead"],
+                            role=ROLE.ADMIN.value,
+                        )
+
+                    State.objects.bulk_create(
+                        [
+                            State(
+                                name=state["name"],
+                                color=state["color"],
+                                project=serializer.instance,
+                                sequence=state["sequence"],
+                                workspace=serializer.instance.workspace,
+                                group=state["group"],
+                                default=state.get("default", False),
+                                created_by=request.user,
+                            )
+                            for state in DEFAULT_STATES
+                        ]
+                    )
+            except CreationQuotaError as error:
+                return Response(
+                    {"error": {"code": error.code, "message": error.message}},
+                    status=error.status_code,
+                )
 
             project = self.get_queryset().filter(pk=serializer.data["id"]).first()
 

@@ -4,7 +4,9 @@
  * See the LICENSE file for details.
  */
 
+import { createElement } from "react";
 import { useParams } from "next/navigation";
+import { useTranslation } from "@plane/i18n";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import type { EIssuesStoreType, TIssue, TIssueGroupByOptions, TIssueOrderByOptions } from "@plane/types";
 import type { GroupDropLocation } from "@/components/issues/issue-layouts/utils";
@@ -31,9 +33,11 @@ export const useGroupIssuesDragNDrop = (
   storeType: DNDStoreType,
   orderBy: TIssueOrderByOptions | undefined,
   groupBy: TIssueGroupByOptions | undefined,
-  subGroupBy?: TIssueGroupByOptions
+  subGroupBy?: TIssueGroupByOptions,
+  enableUndo = false
 ) => {
   const { workspaceSlug } = useParams();
+  const { t } = useTranslation();
 
   const {
     issue: { getIssueById },
@@ -59,13 +63,16 @@ export const useGroupIssuesDragNDrop = (
         ADD: string[];
         REMOVE: string[];
       };
-    }
+    },
+    showUndo = enableUndo
   ) => {
     const errorToastProps = {
       type: TOAST_TYPE.ERROR,
       title: "Error!",
       message: "Error while updating work item",
     };
+    const issueBeforeUpdate = getIssueById(issueId);
+    const originalData = { ...data };
     const moduleKey = ISSUE_FILTER_DEFAULT_DATA["module"];
     const cycleKey = ISSUE_FILTER_DEFAULT_DATA["cycle"];
 
@@ -74,34 +81,72 @@ export const useGroupIssuesDragNDrop = (
 
     if (isCycleChanged && workspaceSlug) {
       if (data[cycleKey]) {
-        addCycleToIssue(workspaceSlug.toString(), projectId, data[cycleKey]?.toString() ?? "", issueId).catch(() =>
-          setToast(errorToastProps)
-        );
+        await addCycleToIssue(workspaceSlug.toString(), projectId, data[cycleKey]?.toString() ?? "", issueId);
       } else {
-        removeCycleFromIssue(workspaceSlug.toString(), projectId, issueId).catch(() => setToast(errorToastProps));
+        await removeCycleFromIssue(workspaceSlug.toString(), projectId, issueId);
       }
       delete data[cycleKey];
     }
 
     if (isModuleChanged && workspaceSlug && issueUpdates[moduleKey]) {
-      changeModulesInIssue(
+      await changeModulesInIssue(
         workspaceSlug.toString(),
         projectId,
         issueId,
         issueUpdates[moduleKey].ADD,
         issueUpdates[moduleKey].REMOVE
-      ).catch(() => setToast(errorToastProps));
+      );
       delete data[moduleKey];
     }
 
     if (updateIssue) {
-      updateIssue(projectId, issueId, data).catch((error) =>
+      try {
+        await updateIssue(projectId, issueId, data);
+        if (showUndo && issueBeforeUpdate) {
+          const restoreData: Partial<TIssue> = {};
+          Object.keys(originalData).forEach((key) => {
+            if (key === "property_values") {
+              const changedValues = originalData.property_values ?? {};
+              restoreData.property_values = Object.fromEntries(
+                Object.keys(changedValues).map((propertyId) => [
+                  propertyId,
+                  issueBeforeUpdate.property_values?.[propertyId] ?? null,
+                ])
+              );
+            } else {
+              (restoreData as Record<string, unknown>)[key] = (issueBeforeUpdate as unknown as Record<string, unknown>)[
+                key
+              ];
+            }
+          });
+          setToast({
+            type: TOAST_TYPE.SUCCESS,
+            title: t("issue.custom_grouping.toast.moved"),
+            actionItems: createElement(
+              "button",
+              {
+                type: "button",
+                className: "rounded px-2 py-1 text-11 font-medium text-accent-primary hover:bg-layer-2",
+                onClick: () => {
+                  const reversedUpdates = Object.fromEntries(
+                    Object.entries(issueUpdates).map(([key, value]) => [key, { ADD: value.REMOVE, REMOVE: value.ADD }])
+                  );
+                  void updateIssueOnDrop(projectId, issueId, restoreData, reversedUpdates, false);
+                },
+              },
+              t("common.undo")
+            ),
+          });
+        }
+      } catch (error: any) {
         setToast({
           ...errorToastProps,
           message:
             error?.state_transition?.reasons?.join(" ") ?? error?.state_transition?.message ?? errorToastProps.message,
-        })
-      );
+        });
+        error.__groupDropHandled = true;
+        throw error;
+      }
     }
   };
 
@@ -124,11 +169,13 @@ export const useGroupIssuesDragNDrop = (
       subGroupBy,
       orderBy !== "sort_order"
     ).catch((err) => {
-      setToast({
-        title: "Error!",
-        type: TOAST_TYPE.ERROR,
-        message: err?.detail ?? "Failed to perform this action",
-      });
+      if (!err?.__groupDropHandled)
+        setToast({
+          title: "Error!",
+          type: TOAST_TYPE.ERROR,
+          message: err?.detail ?? "Failed to perform this action",
+        });
+      throw err;
     });
   };
 

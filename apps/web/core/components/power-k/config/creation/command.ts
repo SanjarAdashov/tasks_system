@@ -6,7 +6,7 @@
 
 import { FileText, FolderPlus, Layers, SquarePlus } from "lucide-react";
 // plane imports
-import { EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
+import { EUserPermissionsLevel } from "@plane/constants";
 import { ContrastIcon, DiceIcon, LayersIcon } from "@plane/propel/icons";
 // components
 import { EUserProjectRoles } from "@plane/types";
@@ -15,7 +15,7 @@ import type { TPowerKCommandConfig, TPowerKContext } from "@/components/power-k/
 import { useCommandPalette } from "@/hooks/store/use-command-palette";
 import { useProject } from "@/hooks/store/use-project";
 import { useUser } from "@/hooks/store/user";
-import { useInstance } from "@/hooks/store/use-instance";
+import { useCreationQuotas } from "@/hooks/use-creation-quotas";
 
 export type TPowerKCreationCommandKeys =
   | "create_work_item"
@@ -31,7 +31,7 @@ export type TPowerKCreationCommandKeys =
  */
 export const usePowerKCreationCommandsRecord = (): Record<TPowerKCreationCommandKeys, TPowerKCommandConfig> => {
   // store
-  const { config } = useInstance();
+  const { data: creationQuotas } = useCreationQuotas();
   const {
     canPerformAnyCreateAction,
     permission: { allowPermissions },
@@ -47,10 +47,11 @@ export const usePowerKCreationCommandsRecord = (): Record<TPowerKCreationCommand
   } = useCommandPalette();
   // derived values
   const canCreateWorkItem = canPerformAnyCreateAction && workspaceProjectIds && workspaceProjectIds.length > 0;
-  const canCreateProject = allowPermissions(
-    [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
-    EUserPermissionsLevel.WORKSPACE
-  );
+  const canCreateProject = (ctx: TPowerKContext) =>
+    Boolean(
+      creationQuotas?.projects.find((quota) => quota.workspace_slug === ctx.params.workspaceSlug?.toString())
+        ?.can_create
+    );
   const hasProjectMemberLevelPermissions = (ctx: TPowerKContext) =>
     allowPermissions(
       [EUserProjectRoles.ADMIN, EUserProjectRoles.MEMBER],
@@ -58,7 +59,7 @@ export const usePowerKCreationCommandsRecord = (): Record<TPowerKCreationCommand
       ctx.params.workspaceSlug?.toString(),
       ctx.params.projectId?.toString()
     );
-  const isWorkspaceCreationDisabled = config?.is_workspace_creation_disabled ?? false;
+  const canCreateWorkspace = Boolean(creationQuotas?.workspace.can_create);
 
   const getProjectDetails = (ctx: TPowerKContext) =>
     ctx.params.projectId ? getPartialProjectById(ctx.params.projectId.toString()) : undefined;
@@ -138,8 +139,8 @@ export const usePowerKCreationCommandsRecord = (): Record<TPowerKCreationCommand
       icon: FolderPlus,
       keySequence: "np",
       action: () => toggleCreateProjectModal(true),
-      isEnabled: () => Boolean(canCreateProject),
-      isVisible: () => Boolean(canCreateProject),
+      isEnabled: (ctx) => canCreateProject(ctx),
+      isVisible: (ctx) => canCreateProject(ctx),
       closeOnSelect: true,
     },
     create_workspace: {
@@ -149,8 +150,8 @@ export const usePowerKCreationCommandsRecord = (): Record<TPowerKCreationCommand
       i18n_title: "power_k.creation_actions.create_workspace",
       icon: SquarePlus,
       action: (ctx) => ctx.router.push("/create-workspace"),
-      isEnabled: () => Boolean(!isWorkspaceCreationDisabled),
-      isVisible: () => Boolean(!isWorkspaceCreationDisabled),
+      isEnabled: () => canCreateWorkspace,
+      isVisible: () => canCreateWorkspace,
       closeOnSelect: true,
     },
   };

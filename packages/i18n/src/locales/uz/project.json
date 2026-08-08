@@ -1,0 +1,418 @@
+{
+  "project_view": {
+    "sort_by": {
+      "created_at": "Yaratilgan",
+      "updated_at": "Yangilangan",
+      "name": "Ism"
+    }
+  },
+  "project_cycles": {
+    "add_cycle": "Tsikl qo'shing",
+    "more_details": "Batafsil",
+    "cycle": "Sikl",
+    "update_cycle": "Yangilanish davri",
+    "create_cycle": "Tsikl yaratish",
+    "no_matching_cycles": "Mos keladigan tsikllar yo'q",
+    "remove_filters_to_see_all_cycles": "Barcha tsikllarni ko'rish uchun filtrlarni olib tashlang",
+    "remove_search_criteria_to_see_all_cycles": "Barcha davrlarni ko'rish uchun qidiruv mezonlarini olib tashlang",
+    "only_completed_cycles_can_be_archived": "Faqat tugallangan sikllarni arxivlash mumkin",
+    "start_date": "Boshlanish sanasi",
+    "end_date": "Tugash sanasi",
+    "in_your_timezone": "Vaqt mintaqangizda",
+    "transfer_work_items": "{count} ish elementini o'tkazing",
+    "transfer": {
+      "no_cycles_available": "Ish elementlarini uzatish uchun boshqa sikllar mavjud emas."
+    },
+    "date_range": "Sana oralig'i",
+    "add_date": "Sana qo'shing",
+    "active_cycle": {
+      "label": "Faol tsikl",
+      "progress": "Taraqqiyot",
+      "chart": "Yonish jadvali",
+      "priority_issue": "Ishning ustuvor elementlari",
+      "assignees": "Tayinlovchilar",
+      "issue_burndown": "Ish elementining yonishi",
+      "ideal": "Ideal",
+      "current": "Hozirgi",
+      "labels": "Yorliqlar",
+      "trailing": "Tashqarida",
+      "leading": "Etakchi"
+    },
+    "upcoming_cycle": {
+      "label": "Kelgusi tsikl"
+    },
+    "completed_cycle": {
+      "label": "Tugallangan tsikl"
+    },
+    "status": {
+      "days_left": "Kunlar qoldi",
+      "completed": "Bajarildi",
+      "yet_to_start": "Hali boshlash uchun",
+      "in_progress": "Davom etilmoqda",
+      "draft": "Qoralama"
+    },
+    "action": {
+      "restore": {
+        "title": "Qayta tiklash tsikli",
+        "success": {
+          "title": "Tsikl tiklandi",
+          "description": "Tsikl tiklandi."
+        },
+        "failed": {
+          "title": "Tsiklni tiklash amalga oshmadi",
+          "description": "Tsiklni tiklab bo'lmadi. Iltimos, qayta urinib koʻring."
+        }
+      },
+      "favorite": {
+        "loading": "Sevimlilarga sikl qo'shish",
+        "success": {
+          "description": "Tsikl sevimlilarga qo'shildi.",
+          "title": "Muvaffaqiyat!"
+        },
+        "failed": {
+          "description": "Tsiklni sevimlilarga qo‘shib bo‘lmadi. Iltimos, qayta urinib koʻring.",
+          "title": "Xato!"
+        }
+      },
+      "unfavorite": {
+        "loading": "Tsiklni sevimlilardan olib tashlash",
+        "success": {
+          "description": "Tsikl sevimlilardan olib tashlandi.",
+          "title": "Muvaffaqiyat!"
+        },
+        "failed": {
+          "description": "Tsiklni sevimlilardan olib tashlab bo‘lmadi. Iltimos, qayta urinib koʻring.",
+          "title": "Xato!"
+        }
+      },
+      "update": {
+        "loading": "Yangilanish davri",
+        "success": {
+          "description": "Tsikl muvaffaqiyatli yangilandi.",
+          "title": "Muvaffaqiyat!"
+        },
+        "failed": {
+          "description": "Tsiklni yangilashda xatolik yuz berdi. Iltimos, qayta urinib koʻring.",
+          "title": "Xato!"
+        },
+        "error": {
+          "already_exists": "Belgilangan sanalarda sizda allaqachon tsikl bor, agar siz qoralama sikl yaratmoqchi bo'lsangiz, buni ikkala sanani olib tashlash orqali qilishingiz mumkin."
+        }
+      }
+    },
+    "empty_state": {
+      "general": {
+        "title": "Cycles-da ishlaringizni guruhlash va vaqtni belgilash.",
+        "description": "Ishlarni vaqt bo'yicha bo'laklarga ajrating, sanani belgilash uchun loyihaning oxirgi muddatidan orqaga qarab ishlang va jamoa sifatida sezilarli yutuqlarga erishing.",
+        "primary_button": {
+          "text": "Birinchi tsiklingizni o'rnating",
+          "comic": {
+            "title": "Tsikllar takrorlanuvchi vaqt qutilaridir.",
+            "description": "Sprint, iteratsiya yoki ishni haftalik yoki ikki haftalik kuzatish uchun ishlatadigan boshqa atamalar sikldir."
+          }
+        }
+      },
+      "no_issues": {
+        "title": "Tsiklga hech qanday ish elementi qo'shilmagan",
+        "description": "Vaqt qutisiga qo'shmoqchi bo'lgan ish elementlarini qo'shing yoki yarating va ushbu tsikl ichida yetkazib bering",
+        "primary_button": {
+          "text": "Yangi ish elementini yarating"
+        },
+        "secondary_button": {
+          "text": "Mavjud ish elementini qo'shing"
+        }
+      },
+      "completed_no_issues": {
+        "title": "Tsiklda hech qanday ish elementi yo'q",
+        "description": "Tsiklda hech qanday ish elementi yo'q. Ish elementlari uzatiladi yoki yashiriladi. Agar mavjud bo'lsa, yashirin ish elementlarini ko'rish uchun displey xususiyatlarini mos ravishda yangilang."
+      },
+      "active": {
+        "title": "Faol tsikl yo'q",
+        "description": "Faol sikl o'z diapazonida bugungi sanani qamrab oluvchi har qanday davrni o'z ichiga oladi. Faol tsiklning borishi va tafsilotlarini bu yerda toping."
+      },
+      "archived": {
+        "title": "Hali arxivlangan tsikllar yoʻq",
+        "description": "To tidy up your project, archive completed cycles. Arxivlanganidan keyin ularni shu yerda toping."
+      }
+    }
+  },
+  "project_views": {
+    "empty_state": {
+      "general": {
+        "title": "Loyihangiz uchun filtrlangan koʻrinishlarni saqlang. O'zingizga qancha kerak bo'lsa, shuncha yarating",
+        "description": "Ko'rishlar - bu siz tez-tez foydalanadigan yoki ularga oson kirishni xohlaydigan saqlangan filtrlar to'plami. Loyihadagi barcha hamkasblaringiz har kimning nuqtai nazarini ko‘rishlari va ularning ehtiyojlariga mos keladiganini tanlashlari mumkin.",
+        "primary_button": {
+          "text": "Birinchi ko'rinishni yarating",
+          "comic": {
+            "title": "Koʻrishlar ish elementi xususiyatlari ustida ishlaydi.",
+            "description": "Siz bu yerdan o'zingizga mos deb bilganingizcha filtrlar bilan ko'rinish yaratishingiz mumkin."
+          }
+        },
+        "filter": {
+          "title": "Mos koʻrishlar yoʻq",
+          "description": "Qidiruv mezonlariga mos keladigan ko‘rishlar topilmadi.\n Buning o'rniga yangi ko'rinish yarating."
+        }
+      },
+      "no_archived_issues": {
+        "title": "Hali arxivlangan ish elementi yoʻq",
+        "description": "Manually or through automation, you can archive work items that are completed or cancelled. Arxivlanganidan keyin ularni shu yerda toping.",
+        "primary_button": {
+          "text": "Avtomatlashtirishni sozlash"
+        }
+      },
+      "issues_empty_filter": {
+        "title": "Qo‘llaniladigan filtrlarga mos keladigan ish elementi topilmadi",
+        "secondary_button": {
+          "text": "Barcha filtrlarni tozalang"
+        }
+      },
+      "public": {
+        "title": "Hozircha ochiq sahifalar yoʻq",
+        "description": "Loyihangizdagi hamma bilan ulashilgan sahifalarni shu yerda koʻring.",
+        "primary_button": {
+          "text": "Birinchi sahifangizni yarating"
+        }
+      },
+      "archived": {
+        "title": "Hali arxivlangan sahifalar yoʻq",
+        "description": "Radaringizda bo'lmagan sahifalarni arxivlang. Zarur bo'lganda ularga bu yerdan kiring."
+      },
+      "shared": {
+        "title": "Hali hech qanday umumiy sahifalar yoʻq",
+        "description": "Boshqalar siz bilan baham ko'rgan sahifalar shu yerda paydo bo'ladi."
+      }
+    },
+    "delete_view": {
+      "title": "Haqiqatan ham bu ko‘rinishni o‘chirib tashlamoqchimisiz?",
+      "content": "Agar tasdiqlasangiz, barcha saralash, filtrlash va koʻrsatish opsiyalari + ushbu koʻrinish uchun tanlagan tartib ularni qayta tiklashning hech qanday usulisiz butunlay oʻchirib tashlanadi."
+    }
+  },
+  "project_issues": {
+    "empty_state": {
+      "no_issues": {
+        "title": "Ish elementini yarating va uni kimgadir, hatto o'zingizga ham tayinlang",
+        "description": "Ish elementlarini ish, vazifalar, ish yoki JTBD deb tasavvur qiling. Bizga yoqadigan. Ish elementi va uning qo'shimcha ish elementlari odatda jamoangiz a'zolariga tayinlangan vaqtga asoslangan harakatlardir. Sizning jamoangiz loyihangizni o'z maqsadiga olib borish uchun ish elementlarini yaratadi, tayinlaydi va yakunlaydi.",
+        "primary_button": {
+          "text": "Birinchi ish elementingizni yarating",
+          "comic": {
+            "title": "Ish elementlari Plane da qurilish bloklari hisoblanadi.",
+            "description": "Plane foydalanuvchi interfeysini qayta loyihalash, kompaniyani rebrendlash yoki yangi yonilg‘i quyish tizimini ishga tushirish - qo‘shimcha ish elementlari bo‘lishi mumkin bo‘lgan ish elementlariga misollar."
+          }
+        }
+      },
+      "no_archived_issues": {
+        "title": "Hali arxivlangan ish elementi yoʻq",
+        "description": "Manually or through automation, you can archive work items that are completed or cancelled. Arxivlanganidan keyin ularni shu yerda toping.",
+        "primary_button": {
+          "text": "Avtomatlashtirishni sozlash"
+        }
+      },
+      "issues_empty_filter": {
+        "title": "Qo‘llaniladigan filtrlarga mos keladigan ish elementi topilmadi",
+        "secondary_button": {
+          "text": "Barcha filtrlarni tozalang"
+        }
+      }
+    }
+  },
+  "project_module": {
+    "add_module": "Modul qo'shish",
+    "update_module": "Yangilash moduli",
+    "create_module": "Modul yaratish",
+    "archive_module": "Arxiv moduli",
+    "restore_module": "Modulni tiklash",
+    "delete_module": "Modulni o'chirish",
+    "empty_state": {
+      "general": {
+        "title": "Loyihangizning muhim bosqichlarini modullar bilan taqqoslang va jamlangan ishni osongina kuzatib boring.",
+        "description": "Mantiqiy, ierarxik ota-onaga tegishli bo'lgan ish elementlari guruhi modulni tashkil qiladi. Ularni loyihaning muhim bosqichlari bo'yicha ishni kuzatish usuli sifatida o'ylab ko'ring. Ularning o'z davrlari va muddatlari, shuningdek, muhim bosqichga qanchalik yaqin yoki uzoq ekanligingizni ko'rishga yordam beradigan tahliliy ma'lumotlar mavjud.",
+        "primary_button": {
+          "text": "Birinchi modulni yarating",
+          "comic": {
+            "title": "Modullar ierarxiya bo'yicha guruhda ishlashga yordam beradi.",
+            "description": "Arava moduli, shassi moduli va ombor moduli bu guruhlashning yaxshi namunasidir."
+          }
+        }
+      },
+      "no_issues": {
+        "title": "Modulda ish elementi yo'q",
+        "description": "Ushbu modulning bir qismi sifatida bajarmoqchi bo'lgan ish elementlarini yarating yoki qo'shing",
+        "primary_button": {
+          "text": "Yangi ish elementlarini yarating"
+        },
+        "secondary_button": {
+          "text": "Mavjud ish elementini qo'shing"
+        }
+      },
+      "archived": {
+        "title": "Hali arxivlangan modullar yo'q",
+        "description": "To tidy up your project, archive completed or cancelled modules. Arxivlanganidan keyin ularni shu yerda toping."
+      },
+      "sidebar": {
+        "in_active": "Bu modul hali faol emas.",
+        "invalid_date": "Yaroqsiz sana. Yaroqli sanani kiriting."
+      }
+    },
+    "quick_actions": {
+      "archive_module": "Arxiv moduli",
+      "archive_module_description": "Faqat tugallangan yoki bekor qilingan\nmodul arxivlanishi mumkin.",
+      "delete_module": "Modulni o'chirish"
+    },
+    "toast": {
+      "copy": {
+        "success": "Modul havolasi vaqtinchalik xotiraga nusxalandi"
+      },
+      "delete": {
+        "success": "Modul muvaffaqiyatli oʻchirildi",
+        "error": "Modulni o‘chirib bo‘lmadi"
+      }
+    }
+  },
+  "project_page": {
+    "empty_state": {
+      "general": {
+        "title": "Eslatma, hujjat yoki to'liq ma'lumot bazasini yozing. Boshlash uchun Plane AI yordamchisi Galileoni oling",
+        "description": "Sahifalar Plane ichida joy ochadigan fikrlardir. Uchrashuv qaydlarini olib tashlang, ularni osongina formatlang, ish elementlarini joylashtiring, komponentlar kutubxonasidan foydalanib joylashtiring va barchasini loyihangiz kontekstida saqlang. Har qanday hujjatning qisqacha ishlashi uchun yorliq yoki tugmani bosish orqali Galileo, Plane AI-ni chaqiring.",
+        "primary_button": {
+          "text": "Birinchi sahifangizni yarating"
+        }
+      },
+      "private": {
+        "title": "Hozircha shaxsiy sahifalar yoʻq",
+        "description": "Shaxsiy fikrlaringizni shu yerda saqlang. Ulashishga tayyor bo'lsangiz, jamoa bir marta bosish masofasida.",
+        "primary_button": {
+          "text": "Birinchi sahifangizni yarating"
+        }
+      },
+      "public": {
+        "title": "Hozircha ochiq sahifalar yoʻq",
+        "description": "Loyihangizdagi hamma bilan ulashilgan sahifalarni shu yerda koʻring.",
+        "primary_button": {
+          "text": "Birinchi sahifangizni yarating"
+        }
+      },
+      "archived": {
+        "title": "Hali arxivlangan sahifalar yoʻq",
+        "description": "Radaringizda bo'lmagan sahifalarni arxivlang. Zarur bo'lganda ularga bu yerdan kiring."
+      }
+    }
+  },
+  "disabled_project": {
+    "empty_state": {
+      "inbox": {
+        "title": "Loyiha uchun qabul qilish yoqilmagan.",
+        "description": "Qabul qilish loyihangizga kiruvchi so'rovlarni boshqarishga va ularni ish jarayoniga ish elementlari sifatida qo'shishga yordam beradi. Soʻrovlarni boshqarish uchun loyiha sozlamalaridan qabul qilishni yoqing.",
+        "primary_button": {
+          "text": "Xususiyatlarni boshqarish"
+        }
+      },
+      "cycle": {
+        "title": "Bu loyiha uchun tsikllar yoqilmagan.",
+        "description": "Ishlarni vaqt bo'yicha bo'laklarga ajrating, sanani belgilash uchun loyihaning oxirgi muddatidan orqaga qarab ishlang va jamoa sifatida sezilarli yutuqlarga erishing. Ulardan foydalanishni boshlash uchun loyihangiz uchun tsikllar xususiyatini yoqing.",
+        "primary_button": {
+          "text": "Xususiyatlarni boshqarish"
+        }
+      },
+      "module": {
+        "title": "Loyiha uchun modullar yoqilmagan.",
+        "description": "Modullar loyihangizning qurilish bloklaridir. Ulardan foydalanishni boshlash uchun loyiha sozlamalaridan modullarni yoqing.",
+        "primary_button": {
+          "text": "Xususiyatlarni boshqarish"
+        }
+      },
+      "page": {
+        "title": "Loyiha uchun sahifalar yoqilmagan.",
+        "description": "Sahifalar loyihangizning qurilish bloklaridir. Ulardan foydalanishni boshlash uchun loyiha sozlamalaridan sahifalarni yoqing.",
+        "primary_button": {
+          "text": "Xususiyatlarni boshqarish"
+        }
+      },
+      "view": {
+        "title": "Loyiha uchun ko‘rishlar yoqilmagan.",
+        "description": "Ko'rinishlar loyihangizning qurilish bloklari. Ulardan foydalanishni boshlash uchun loyiha sozlamalaridan ko‘rinishlarni yoqing.",
+        "primary_button": {
+          "text": "Xususiyatlarni boshqarish"
+        }
+      }
+    }
+  },
+  "project_modules": {
+    "status": {
+      "backlog": "Orqaga tushish",
+      "planned": "Rejalashtirilgan",
+      "in_progress": "Davom etilmoqda",
+      "paused": "Pauza qilingan",
+      "completed": "Bajarildi",
+      "cancelled": "Bekor qilingan"
+    },
+    "layout": {
+      "list": "Ro'yxat tartibi",
+      "board": "Galereya tartibi",
+      "timeline": "Vaqt jadvali tartibi"
+    },
+    "order_by": {
+      "name": "Ism",
+      "progress": "Taraqqiyot",
+      "issues": "Ish elementlari soni",
+      "due_date": "Muddati",
+      "created_at": "Yaratilgan sana",
+      "manual": "Qo'llanma"
+    }
+  },
+  "project_members": {
+    "full_name": "To'liq ism",
+    "display_name": "Ko'rsatilgan nom",
+    "email": "Elektron pochta",
+    "joining_date": "Qo'shilish sanasi",
+    "role": "Rol"
+  },
+  "project": {
+    "members_import": {
+      "title": "CSV dan a'zolarni import qilish",
+      "description": "Ustunlar bilan CSV yuklang: Elektron pochta va rol (5=Mehmon, 15=Aʼzo, 20=Admin). Foydalanuvchilar allaqachon ish maydoni a'zolari bo'lishi kerak.",
+      "download_sample": "CSV namunasini yuklab oling",
+      "dropzone": {
+        "active": "CSV faylini shu yerga tashlang",
+        "inactive": "Yuklash uchun sudrab olib tashlang yoki bosing",
+        "file_type": "Faqat .csv fayllar qo'llab-quvvatlanadi"
+      },
+      "buttons": {
+        "cancel": "Bekor qilish",
+        "import": "Import qilish",
+        "try_again": "Qayta urinib ko'ring",
+        "close": "Yopish",
+        "done": "Bajarildi"
+      },
+      "progress": {
+        "uploading": "Yuklanmoqda...",
+        "importing": "Import qilinmoqda..."
+      },
+      "summary": {
+        "title": {
+          "complete": "Import tugallandi"
+        },
+        "message": {
+          "success": "Loyihaga {count} a'zosi{plural} muvaffaqiyatli import qilindi.",
+          "no_imports": "CSV faylidan yangi aʼzolar import qilinmadi."
+        },
+        "stats": {
+          "added": "Qo'shilgan",
+          "reactivated": "Qayta faollashtirilgan",
+          "already_members": "Allaqachon a'zolar",
+          "skipped": "Oʻtkazib yuborildi"
+        },
+        "download_errors": "O'tkazib yuborilgan tafsilotlarni yuklab oling"
+      },
+      "toast": {
+        "invalid_file": {
+          "title": "Yaroqsiz fayl",
+          "message": "Faqat CSV fayllari qo'llab-quvvatlanadi."
+        },
+        "import_failed": {
+          "title": "Import amalga oshmadi",
+          "message": "Nimadir xato ketdi."
+        }
+      }
+    }
+  }
+}

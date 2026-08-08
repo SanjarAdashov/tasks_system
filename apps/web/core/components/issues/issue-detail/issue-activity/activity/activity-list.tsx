@@ -5,10 +5,13 @@
  */
 
 import { observer } from "mobx-react";
+import { useParams } from "next/navigation";
+import type { TWorkItemBuiltInFieldKey } from "@plane/types";
 // helpers
 import { getValidKeysFromObject } from "@plane/utils";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
+import { useProjectWorkItemFieldVisibility } from "@/hooks/use-project-work-item-field-visibility";
 import { useTimeLineRelationOptions } from "@/components/relations";
 // local components
 import {
@@ -37,20 +40,45 @@ type TIssueActivityItem = {
   ends: "top" | "bottom" | undefined;
 };
 
+const ACTIVITY_FIELD_MAP: Record<string, TWorkItemBuiltInFieldKey> = {
+  assignees: "assignees",
+  cycles: "cycle",
+  description: "description",
+  estimate_categories: "estimate",
+  estimate_point: "estimate",
+  estimate_points: "estimate",
+  labels: "labels",
+  modules: "module",
+  parent: "parent",
+  priority: "priority",
+  start_date: "start_date",
+  state: "state",
+  target_date: "target_date",
+};
+
 export const IssueActivityItem = observer(function IssueActivityItem(props: TIssueActivityItem) {
   const { activityId, ends } = props;
+  const { workspaceSlug, projectId } = useParams();
   // hooks
   const {
     activity: { getActivityById },
     // oxlint-disable-next-line no-empty-pattern
     comment: {},
   } = useIssueDetail();
+  const activity = getActivityById(activityId);
   const ISSUE_RELATION_OPTIONS = useTimeLineRelationOptions();
+  const { isFieldVisible } = useProjectWorkItemFieldVisibility(
+    workspaceSlug?.toString() ?? activity?.workspace_detail?.slug,
+    projectId?.toString() ?? activity?.project
+  );
   const activityRelations = getValidKeysFromObject(ISSUE_RELATION_OPTIONS);
 
   const componentDefaultProps = { activityId, ends };
 
-  const activityField = getActivityById(activityId)?.field;
+  const activityField = activity?.field;
+  const configuredField = activityField ? ACTIVITY_FIELD_MAP[activityField] : undefined;
+  if (configuredField && !isFieldVisible(configuredField)) return null;
+
   switch (activityField) {
     case null: // default issue creation
       return <IssueDefaultActivity {...componentDefaultProps} />;

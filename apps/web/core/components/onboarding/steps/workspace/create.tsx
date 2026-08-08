@@ -17,9 +17,9 @@ import type { IUser, IWorkspace } from "@plane/types";
 import { Spinner } from "@plane/ui";
 import { cn, validateWorkspaceName, validateSlug } from "@plane/utils";
 // hooks
-import { useInstance } from "@/hooks/store/use-instance";
 import { useWorkspace } from "@/hooks/store/use-workspace";
 import { useUserProfile, useUserSettings } from "@/hooks/store/user";
+import { useCreationQuotas } from "@/hooks/use-creation-quotas";
 // services
 import { WorkspaceService } from "@/services/workspace.service";
 // local components
@@ -46,12 +46,12 @@ export const WorkspaceCreateStep = observer(function WorkspaceCreateStep({
   // plane hooks
   const { t } = useTranslation();
   // store hooks
-  const { config } = useInstance();
+  const { data: creationQuotas, mutate: mutateCreationQuotas } = useCreationQuotas();
   const { updateUserProfile } = useUserProfile();
   const { fetchCurrentUserSettings } = useUserSettings();
   const { createWorkspace, fetchWorkspaces } = useWorkspace();
 
-  const isWorkspaceCreationDisabled = config?.is_workspace_creation_disabled ?? false;
+  const canCreateWorkspace = Boolean(creationQuotas?.workspace.can_create);
 
   // form info
   const {
@@ -82,6 +82,7 @@ export const WorkspaceCreateStep = observer(function WorkspaceCreateStep({
             title: t("workspace_creation.toast.success.title"),
             message: t("workspace_creation.toast.success.message"),
           });
+          await mutateCreationQuotas();
           await fetchWorkspaces();
           await completeStep(workspaceResponse.id);
           onComplete(formData.organization_size === "Just myself");
@@ -114,14 +115,10 @@ export const WorkspaceCreateStep = observer(function WorkspaceCreateStep({
 
   const isButtonDisabled = !isValid || invalidSlug || isSubmitting;
 
-  if (isWorkspaceCreationDisabled) {
+  if (creationQuotas && !canCreateWorkspace) {
     return (
       <div className="flex flex-col gap-10">
-        <span className="text-center text-14 text-tertiary">
-          You don&apos;t seem to have any invites to a workspace and your instance admin has restricted creation of new
-          workspaces. Please ask a workspace owner or admin to invite you to a workspace first and come back to this
-          screen to join.
-        </span>
+        <span className="text-center text-14 text-tertiary">{t("creation_quotas.workspace_reached")}</span>
       </div>
     );
   }

@@ -1,0 +1,174 @@
+{
+  "account_settings": {
+    "profile": {
+      "change_email_modal": {
+        "title": "Elektron pochtani o'zgartiring",
+        "description": "Tasdiqlash havolasini olish uchun yangi elektron pochta manzilini kiriting.",
+        "toasts": {
+          "success_title": "Muvaffaqiyat!",
+          "success_message": "Elektron pochta muvaffaqiyatli yangilandi. Iltimos, qayta kiring."
+        },
+        "form": {
+          "email": {
+            "label": "Yangi elektron pochta",
+            "placeholder": "Elektron pochtangizni kiriting",
+            "errors": {
+              "required": "Elektron pochta kerak",
+              "invalid": "Elektron pochta manzili yaroqsiz",
+              "exists": "Email allaqachon mavjud. Iltimos, boshqasini ishlating.",
+              "validation_failed": "Elektron pochtani tekshirish amalga oshmadi. Iltimos, qayta urinib koʻring."
+            }
+          },
+          "code": {
+            "label": "Noyob kod",
+            "placeholder": "123456",
+            "helper_text": "Tasdiqlash kodi yangi elektron pochta manzilingizga yuborildi.",
+            "errors": {
+              "required": "Noyob kod talab qilinadi",
+              "invalid": "Tasdiqlash kodi yaroqsiz. Iltimos, qayta urinib koʻring."
+            }
+          }
+        },
+        "actions": {
+          "continue": "Davom eting",
+          "confirm": "Tasdiqlang",
+          "cancel": "Bekor qilish"
+        },
+        "states": {
+          "sending": "Yuborilmoqda"
+        }
+      }
+    },
+    "preferences": {
+      "heading": "Afzalliklar",
+      "description": "Ilovadagi ish jarayonini o‘zingizga moslang",
+      "select_language": "Tilni tanlang",
+      "timezone_updated": "Vaqt mintaqasi muvaffaqiyatli yangilandi.",
+      "timezone_update_failed": "Vaqt mintaqasini yangilab bo‘lmadi.",
+      "language_updated": "Til muvaffaqiyatli yangilandi.",
+      "language_update_failed": "Tilni yangilab bo‘lmadi.",
+      "first_day_of_week": "Haftaning birinchi kuni",
+      "first_day_of_week_description": "Bu sozlama ilovadagi barcha taqvimlarning ko‘rinishini o‘zgartiradi.",
+      "first_day_updated": "Haftaning birinchi kuni muvaffaqiyatli yangilandi.",
+      "first_day_update_failed": "Haftaning birinchi kunini yangilab bo‘lmadi.",
+      "weekdays": {
+        "sunday": "Yakshanba",
+        "monday": "Dushanba",
+        "tuesday": "Seshanba",
+        "wednesday": "Chorshanba",
+        "thursday": "Payshanba",
+        "friday": "Juma",
+        "saturday": "Shanba"
+      }
+    },
+    "notifications": {
+      "heading": "Elektron pochta xabarnomalari",
+      "description": "Obuna boʻlgan Ish elementlari boʻyicha koʻchadan xabardor boʻling. Xabar olish uchun buni yoqing.",
+      "select_default_view": "Standart ko'rinishni tanlang",
+      "compact": "Yilni",
+      "full": "To'liq ekran"
+    },
+    "security": {
+      "heading": "Xavfsizlik"
+    },
+    "api_tokens": {
+      "title": "Shaxsiy kirish tokenlari",
+      "description": "Maʼlumotlaringizni tashqi tizimlar va ilovalar bilan birlashtirish uchun xavfsiz API tokenlarini yarating."
+    },
+    "activity": {
+      "heading": "Faoliyat",
+      "description": "Barcha loyihalar va ish elementlari boʻyicha oxirgi harakatlaringiz va oʻzgarishlaringizni kuzatib boring."
+    },
+    "connections": {
+      "title": "Ulanishlar",
+      "heading": "Ulanishlar",
+      "description": "Ish joyidagi ulanish sozlamalarini boshqaring."
+    }
+  },
+  "profile": {
+    "label": "Profil",
+    "page_label": "Sizning ishingiz",
+    "work": "Ish",
+    "details": {
+      "joined_on": "Qoʻshildi",
+      "time_zone": "Vaqt mintaqasi"
+    },
+    "stats": {
+      "workload": "Ish yuki",
+      "overview": "Umumiy koʻrinish",
+      "created": "Yaratilgan ish elementlari",
+      "assigned": "Belgilangan ish elementlari",
+      "subscribed": "Obuna bo'lgan ish ob'ektlari",
+      "state_distribution": {
+        "title": "Shtat bo'yicha ish elementlari",
+        "empty": "Yaxshiroq tahlil qilish uchun ularni grafikdagi holatlar boʻyicha koʻrish uchun ish elementlarini yarating."
+      },
+      "priority_distribution": {
+        "title": "Ish elementlari ustuvorligi bo'yicha",
+        "empty": "Yaxshiroq tahlil qilish uchun ularni grafikdagi ustuvorlik bo'yicha ko'rish uchun ish elementlarini yarating."
+      },
+      "recent_activity": {
+        "title": "Oxirgi faoliyat",
+        "empty": "Biz maʼlumot topa olmadik. Iltimos, kiritishlaringizni ko'ring",
+        "button": "Bugungi faoliyatni yuklab oling",
+        "button_loading": "Yuklab olinmoqda"
+      }
+    },
+    "actions": {
+      "profile": "Profil",
+      "security": "Xavfsizlik",
+      "activity": "Faoliyat",
+      "preferences": "Afzalliklar",
+      "notifications": "Bildirishnomalar",
+      "api-tokens": "Shaxsiy kirish tokenlari",
+      "connections": "Ulanishlar"
+    },
+    "tabs": {
+      "summary": "Xulosa",
+      "assigned": "Tayinlangan",
+      "created": "Yaratilgan",
+      "subscribed": "Obuna boʻlgan",
+      "activity": "Faoliyat"
+    },
+    "empty_state": {
+      "activity": {
+        "title": "Hozircha hech qanday faoliyat yoʻq",
+        "description": "Yangi ish elementini yaratish bilan boshlang! Unga tafsilotlar va xususiyatlarni qo'shing. Faoliyatingizni koʻrish uchun Plane boʻlimida koʻproq oʻrganing."
+      },
+      "assigned": {
+        "title": "Sizga hech qanday ish elementi tayinlanmagan",
+        "description": "Sizga tayinlangan ish elementlarini shu yerdan kuzatish mumkin."
+      },
+      "created": {
+        "title": "Hali hech qanday ish elementi yoʻq",
+        "description": "Siz yaratgan barcha ish elementlari shu yerga keladi, ularni bevosita shu yerda kuzatib boring."
+      },
+      "subscribed": {
+        "title": "Hali hech qanday ish elementi yoʻq",
+        "description": "Sizni qiziqtirgan ish obunalariga obuna bo'ling, ularning barchasini shu yerda kuzatib boring."
+      }
+    }
+  },
+  "themes": {
+    "theme_options": {
+      "system_preference": {
+        "label": "Tizim afzalligi"
+      },
+      "light": {
+        "label": "Nur"
+      },
+      "dark": {
+        "label": "Qorong'i"
+      },
+      "light_contrast": {
+        "label": "Engil yuqori kontrast"
+      },
+      "dark_contrast": {
+        "label": "To'q yuqori kontrast"
+      },
+      "custom": {
+        "label": "Shaxsiy mavzu"
+      }
+    }
+  }
+}

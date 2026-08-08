@@ -21,3 +21,4 @@ export { setLanguage } from "./core/set-language";
 
 // Constants
 export { FALLBACK_LANGUAGE, SUPPORTED_LANGUAGES, LANGUAGE_STORAGE_KEY } from "./constants/language";
+export { formatLocalizedDate, getIntlLocale } from "./core/locale";

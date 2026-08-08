@@ -16,6 +16,7 @@ export const SUPPORTED_LANGUAGES: ILanguageOption[] = [
   { label: "简体中文", value: "zh-CN" },
   { label: "繁體中文", value: "zh-TW" },
   { label: "Русский", value: "ru" },
+  { label: "O‘zbekcha", value: "uz" },
   { label: "Italian", value: "it" },
   { label: "Čeština", value: "cs" },
   { label: "Slovenčina", value: "sk" },

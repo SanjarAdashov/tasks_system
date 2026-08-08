@@ -1,0 +1,58 @@
+{
+  "notification": {
+    "label": "Kiruvchi quti",
+    "page_label": "{workspace} - Kirish qutisi",
+    "options": {
+      "mark_all_as_read": "Hammasini o'qilgan deb belgilang",
+      "mark_read": "O'qilgan deb belgilang",
+      "mark_unread": "O'qilmagan deb belgilang",
+      "refresh": "Yangilash",
+      "filters": "Kiruvchi quti filtrlari",
+      "show_unread": "Oʻqilmagan",
+      "show_snoozed": "Shou kechiktirildi",
+      "show_archived": "Arxivlangan ko'rsatish",
+      "mark_archive": "Arxiv",
+      "mark_unarchive": "Arxivdan chiqarish",
+      "mark_snooze": "Kechiktirish",
+      "mark_unsnooze": "Kechiktirmang"
+    },
+    "toasts": {
+      "read": "Bildirishnoma o‘qilgan deb belgilandi",
+      "unread": "Bildirishnoma o‘qilmagan deb belgilandi",
+      "archived": "Bildirishnoma arxivlangan deb belgilandi",
+      "unarchived": "Bildirishnoma arxivlanmagan deb belgilandi",
+      "snoozed": "Bildirishnoma kechiktirildi",
+      "unsnoozed": "Bildirishnoma kechiktirilmadi"
+    },
+    "empty_state": {
+      "detail": {
+        "title": "Tafsilotlarni ko'rish uchun tanlang."
+      },
+      "all": {
+        "title": "Hech qanday ish elementi tayinlanmagan",
+        "description": "Sizga tayinlangan ish elementlari uchun yangilanishlar bo'lishi mumkin\n bu yerda ko'rilgan"
+      },
+      "mentions": {
+        "title": "Hech qanday ish elementi tayinlanmagan",
+        "description": "Sizga tayinlangan ish elementlari uchun yangilanishlar bo'lishi mumkin\n bu yerda ko'rilgan"
+      }
+    },
+    "tabs": {
+      "all": "Hammasi",
+      "mentions": "Eslatmalar"
+    },
+    "filter": {
+      "assigned": "Menga tayinlangan",
+      "created": "Men tomonidan yaratilgan",
+      "subscribed": "Men obuna bo'lganman"
+    },
+    "snooze": {
+      "1_day": "1 kun",
+      "3_days": "3 kun",
+      "5_days": "5 kun",
+      "1_week": "1 hafta",
+      "2_weeks": "2 hafta",
+      "custom": "Maxsus"
+    }
+  }
+}

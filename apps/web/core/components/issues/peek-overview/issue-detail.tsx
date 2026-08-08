@@ -19,6 +19,7 @@ import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useMember } from "@/hooks/store/use-member";
 import { useUser } from "@/hooks/store/user";
 import useReloadConfirmations from "@/hooks/use-reload-confirmation";
+import { useProjectWorkItemFieldVisibility } from "@/hooks/use-project-work-item-field-visibility";
 // plane web components
 import { IssueTypeSwitcher } from "@/components/issues/issue-type-switcher";
 // plane web hooks
@@ -45,8 +46,17 @@ type Props = {
 };
 
 export const PeekOverviewIssueDetails = observer(function PeekOverviewIssueDetails(props: Props) {
-  const { editorRef, workspaceSlug, issueId, issueOperations, disabled, isArchived, isSubmitting, setIsSubmitting } =
-    props;
+  const {
+    editorRef,
+    workspaceSlug,
+    projectId,
+    issueId,
+    issueOperations,
+    disabled,
+    isArchived,
+    isSubmitting,
+    setIsSubmitting,
+  } = props;
   // store hooks
   const { data: currentUser } = useUser();
   const {
@@ -54,6 +64,7 @@ export const PeekOverviewIssueDetails = observer(function PeekOverviewIssueDetai
   } = useIssueDetail();
 
   const { getUserDetails } = useMember();
+  const { isFieldVisible } = useProjectWorkItemFieldVisibility(workspaceSlug, projectId);
   // reload confirmation
   const { setShowAlert } = useReloadConfirmations(isSubmitting === "submitting");
 
@@ -82,7 +93,7 @@ export const PeekOverviewIssueDetails = observer(function PeekOverviewIssueDetai
 
   return (
     <div className="space-y-2">
-      {issue.parent_id && (
+      {isFieldVisible("parent") && issue.parent_id && (
         <IssueParentDetail
           workspaceSlug={workspaceSlug}
           projectId={issue.project_id}

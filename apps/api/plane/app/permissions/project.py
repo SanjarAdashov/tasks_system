@@ -21,12 +21,12 @@ class ProjectBasePermission(BasePermission):
                 workspace__slug=view.workspace_slug, member=request.user, is_active=True
             ).exists()
 
-        ## Only workspace owners or admins can create the projects
+        ## Any active workspace member may create when their project quota
+        ## grants it. The atomic quota service performs the final check.
         if request.method == "POST":
             return WorkspaceMember.objects.filter(
                 workspace__slug=view.workspace_slug,
                 member=request.user,
-                role__in=[ROLE.ADMIN.value, ROLE.MEMBER.value],
                 is_active=True,
             ).exists()
 

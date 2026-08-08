@@ -7,6 +7,14 @@
 import { differenceInDays, format, formatDistanceToNow, isAfter, isEqual, isValid, parseISO } from "date-fns";
 import { isNumber } from "lodash-es";
 
+const getInterfaceLanguage = (): string => {
+  if (typeof window !== "undefined")
+    return window.localStorage.getItem("userLanguage") || document.documentElement.lang || "en";
+  return "en";
+};
+
+const usesNumericDateFormat = () => ["ru", "uz"].includes(getInterfaceLanguage());
+
 // Format Date Helpers
 /**
  * @returns {string | null} formatted date in the desired format or platform default format (MMM dd, yyyy)
@@ -29,10 +37,13 @@ export const renderFormattedDate = (
   let formattedDate;
   try {
     // Format the date in the format provided or default format (MMM dd, yyyy)
-    formattedDate = format(parsedDate, formatToken);
+    formattedDate = format(
+      parsedDate,
+      usesNumericDateFormat() && formatToken === "MMM dd, yyyy" ? "dd.MM.yyyy" : formatToken
+    );
   } catch (_e) {
     // Format the date in format (MMM dd, yyyy) in case of any error
-    formattedDate = format(parsedDate, "MMM dd, yyyy");
+    formattedDate = format(parsedDate, usesNumericDateFormat() ? "dd.MM.yyyy" : "MMM dd, yyyy");
   }
   return formattedDate;
 };
@@ -51,7 +62,7 @@ export const renderFormattedDateWithoutYear = (date: string | Date): string => {
   // Check if the parsed date is valid before formatting
   if (!isValid(parsedDate)) return ""; // Return empty string for invalid dates
   // Format the date in short format (MMM dd)
-  const formattedDate = format(parsedDate, "MMM dd");
+  const formattedDate = format(parsedDate, usesNumericDateFormat() ? "dd.MM" : "MMM dd");
   return formattedDate;
 };
 
@@ -175,6 +186,27 @@ export const calculateTimeAgo = (time: string | number | Date | null): string =>
   // return if undefined
   if (!parsedTime) return ""; // Return empty string for invalid dates
   // Format the time in the form of amount of time passed since the event happened
+  const language = getInterfaceLanguage();
+  if (["ru", "uz"].includes(language)) {
+    const seconds = Math.round((parsedTime.getTime() - Date.now()) / 1000);
+    const absolute = Math.abs(seconds);
+    const [amount, unit] =
+      absolute < 60
+        ? [seconds, "second"]
+        : absolute < 3600
+          ? [Math.round(seconds / 60), "minute"]
+          : absolute < 86400
+            ? [Math.round(seconds / 3600), "hour"]
+            : absolute < 2592000
+              ? [Math.round(seconds / 86400), "day"]
+              : absolute < 31536000
+                ? [Math.round(seconds / 2592000), "month"]
+                : [Math.round(seconds / 31536000), "year"];
+    return new Intl.RelativeTimeFormat(language === "ru" ? "ru-RU" : "uz-Latn-UZ", { numeric: "auto" }).format(
+      amount,
+      unit as Intl.RelativeTimeFormatUnit
+    );
+  }
   const distance = formatDistanceToNow(parsedTime, { addSuffix: true });
   return distance;
 };
@@ -187,33 +219,40 @@ export function calculateTimeAgoShort(date: string | number | Date | null): stri
   const parsedDate = typeof date === "string" ? parseISO(date) : new Date(date);
   const now = new Date();
   const diffInSeconds = (now.getTime() - parsedDate.getTime()) / 1000;
+  const language = getInterfaceLanguage();
+  const suffixes =
+    language === "ru"
+      ? { second: "с", minute: "мин", hour: "ч", day: "д", month: "мес", year: "г" }
+      : language === "uz"
+        ? { second: "s", minute: "daq", hour: "soat", day: "kun", month: "oy", year: "yil" }
+        : { second: "s", minute: "m", hour: "h", day: "d", month: "mo", year: "y" };
 
   if (diffInSeconds < 60) {
-    return `${Math.floor(diffInSeconds)}s`;
+    return `${Math.floor(diffInSeconds)}${suffixes.second}`;
   }
 
   const diffInMinutes = diffInSeconds / 60;
   if (diffInMinutes < 60) {
-    return `${Math.floor(diffInMinutes)}m`;
+    return `${Math.floor(diffInMinutes)}${suffixes.minute}`;
   }
 
   const diffInHours = diffInMinutes / 60;
   if (diffInHours < 24) {
-    return `${Math.floor(diffInHours)}h`;
+    return `${Math.floor(diffInHours)}${suffixes.hour}`;
   }
 
   const diffInDays = diffInHours / 24;
   if (diffInDays < 30) {
-    return `${Math.floor(diffInDays)}d`;
+    return `${Math.floor(diffInDays)}${suffixes.day}`;
   }
 
   const diffInMonths = diffInDays / 30;
   if (diffInMonths < 12) {
-    return `${Math.floor(diffInMonths)}mo`;
+    return `${Math.floor(diffInMonths)}${suffixes.month}`;
   }
 
   const diffInYears = diffInMonths / 12;
-  return `${Math.floor(diffInYears)}y`;
+  return `${Math.floor(diffInYears)}${suffixes.year}`;
 }
 
 // Date Validation Helpers
@@ -284,7 +323,7 @@ export const getDate = (date: string | Date | undefined | null): Date | undefine
   try {
     if (!date || date === "") return;
 
-    if (typeof date !== "string" && !(date instanceof String)) return date;
+    if (typeof date !== "string") return date;
 
     const [yearString, monthString, dayString] = date.substring(0, 10).split("-");
     const year = parseInt(yearString);
@@ -366,8 +405,15 @@ export const convertMinutesToHoursAndMinutes = (mins: number): { hours: number; 
  */
 export const convertMinutesToHoursMinutesString = (totalMinutes: number): string => {
   const { hours, minutes } = convertMinutesToHoursAndMinutes(totalMinutes);
+  const language = getInterfaceLanguage();
+  const suffixes =
+    language === "ru"
+      ? { hour: "ч", minute: "мин" }
+      : language === "uz"
+        ? { hour: "soat", minute: "daq" }
+        : { hour: "h", minute: "m" };
 
-  return `${hours ? `${hours}h ` : ``}${minutes ? `${minutes}m ` : ``}`;
+  return `${hours ? `${hours}${suffixes.hour} ` : ``}${minutes ? `${minutes}${suffixes.minute} ` : ``}`;
 };
 
 /**
@@ -392,7 +438,6 @@ export const getReadTimeFromWordsCount = (wordsCount: number): number => {
 export const generateDateArray = (startDate: string | Date, endDate: string | Date) => {
   // Convert the start and end dates to Date objects if they aren't already
   const start = new Date(startDate);
-  // start.setDate(start.getDate() + 1);
   const end = new Date(endDate);
   end.setDate(end.getDate() + 2);
 
@@ -400,13 +445,15 @@ export const generateDateArray = (startDate: string | Date, endDate: string | Da
   const dateArray = [];
 
   // Use a while loop to generate dates between the range
-  while (start <= end) {
+  for (
+    let current = start;
+    current <= end;
+    current = new Date(current.getFullYear(), current.getMonth(), current.getDate() + 1)
+  ) {
     // Push the current date (converted to ISO string for consistency)
     dateArray.push({
-      date: new Date(start).toISOString().split("T")[0],
+      date: current.toISOString().split("T")[0],
     });
-    // Increment the date by 1 day (86400000 milliseconds)
-    start.setDate(start.getDate() + 1);
   }
 
   return dateArray;
@@ -498,6 +545,12 @@ export const formatDateRange = (
     return "";
   }
 
+  if (usesNumericDateFormat()) {
+    if (parsedStartDate && parsedEndDate)
+      return `${format(parsedStartDate, "dd.MM.yyyy")} - ${format(parsedEndDate, "dd.MM.yyyy")}`;
+    return format((parsedStartDate ?? parsedEndDate)!, "dd.MM.yyyy");
+  }
+
   // If only start date is provided
   if (parsedStartDate && !parsedEndDate) {
     return format(parsedStartDate, "MMM dd, yyyy");
@@ -549,15 +602,22 @@ export const formatDateRange = (
  * @example formatDuration(0.1223094) // "122.31 ms"
  */
 export const formatDuration = (seconds: number | undefined | null): string => {
+  const language = getInterfaceLanguage();
+  const labels =
+    language === "ru"
+      ? { unavailable: "н/д", millisecond: "мс", hour: "ч", minute: "мин", second: "с" }
+      : language === "uz"
+        ? { unavailable: "mavjud emas", millisecond: "ms", hour: "soat", minute: "daq", second: "son" }
+        : { unavailable: "N/A", millisecond: "ms", hour: "hr", minute: "min", second: "sec" };
   // Return "N/A" if seconds is not a valid number
   if (seconds == null || typeof seconds !== "number" || !Number.isFinite(seconds) || seconds < 0) {
-    return "N/A";
+    return labels.unavailable;
   }
 
   // If less than 1 second, show in ms (2 decimal places)
   if (seconds > 0 && seconds < 1) {
     const ms = seconds * 1000;
-    return `${ms.toFixed(2)} ms`;
+    return `${ms.toFixed(2)} ${labels.millisecond}`;
   }
 
   // Round to nearest second
@@ -572,15 +632,15 @@ export const formatDuration = (seconds: number | undefined | null): string => {
   const parts: string[] = [];
 
   if (hours > 0) {
-    parts.push(`${hours} hr`);
+    parts.push(`${hours} ${labels.hour}`);
   }
 
   if (minutes > 0) {
-    parts.push(`${minutes} min`);
+    parts.push(`${minutes} ${labels.minute}`);
   }
 
   if (remainingSeconds > 0 || parts.length === 0) {
-    parts.push(`${remainingSeconds} sec`);
+    parts.push(`${remainingSeconds} ${labels.second}`);
   }
 
   return parts.join(" ");

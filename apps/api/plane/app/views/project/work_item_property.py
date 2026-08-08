@@ -18,6 +18,7 @@ from plane.db.models import (
     Project,
     ProjectWorkItemFieldConfiguration,
     ProjectWorkItemProperty,
+    ProjectCustomGrouping,
 )
 
 
@@ -62,6 +63,16 @@ class ProjectWorkItemFieldConfigurationEndpoint(
         )
         serializer.is_valid(raise_exception=True)
         serializer.save()
+        hidden_fields = [
+            field_key
+            for field_key, field_settings in serializer.instance.built_in_fields.items()
+            if not field_settings.get("visible", True)
+        ]
+        if hidden_fields:
+            ProjectCustomGrouping.objects.filter(
+                project=project,
+                group_by__in=hidden_fields,
+            ).delete()
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -108,4 +119,8 @@ class ProjectWorkItemPropertyViewSet(
         property_instance = self.get_object()
         property_instance.archived_at = timezone.now()
         property_instance.save(update_fields=["archived_at", "updated_at"])
+        ProjectCustomGrouping.objects.filter(
+            project=property_instance.project,
+            group_by=f"customproperty_{property_instance.id}",
+        ).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

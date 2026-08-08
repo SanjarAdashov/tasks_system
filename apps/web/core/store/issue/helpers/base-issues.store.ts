@@ -121,6 +121,7 @@ export const ISSUE_GROUP_BY_KEY = {
   created_by: "created_by",
   assignees: "assignee_ids",
   target_date: "target_date",
+  start_date: "start_date",
   cycle: "cycle_id",
   module: "module_ids",
   team_project: "project_id",
@@ -137,11 +138,14 @@ export const ISSUE_FILTER_DEFAULT_DATA = {
   created_by: "created_by",
   assignees: "assignee_ids",
   target_date: "target_date",
+  start_date: "start_date",
   team_project: "project_id",
 } as Record<TIssueDisplayFilterOptions, keyof TIssue>;
 
 // This constant maps the order by keys to the respective issue property that the key relies on
 const ISSUE_ORDERBY_KEY: Record<TIssueOrderByOptions, keyof TIssue> = {
+  sequence_id: "sequence_id",
+  "-sequence_id": "sequence_id",
   created_at: "created_at",
   "-created_at": "created_at",
   updated_at: "updated_at",
@@ -292,7 +296,7 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
 
     return layout === EIssueLayoutTypes.CALENDAR
       ? "target_date"
-      : [EIssueLayoutTypes.LIST, EIssueLayoutTypes.KANBAN]?.includes(layout)
+      : [EIssueLayoutTypes.LIST, EIssueLayoutTypes.KANBAN, EIssueLayoutTypes.CUSTOM_GROUPING]?.includes(layout)
         ? displayFilters?.group_by
         : undefined;
   }
@@ -1793,6 +1797,10 @@ export abstract class BaseIssuesStore implements IBaseIssuesStore {
         return getIssueIds(orderBy(array, (issue) => convertToISODateString(issue["updated_at"])));
       case "-updated_at":
         return getIssueIds(orderBy(array, (issue) => convertToISODateString(issue["updated_at"]), ["desc"]));
+      case "sequence_id":
+        return getIssueIds(orderBy(array, "sequence_id"));
+      case "-sequence_id":
+        return getIssueIds(orderBy(array, "sequence_id", ["desc"]));
       case "start_date":
         return getIssueIds(orderBy(array, [getSortOrderToFilterEmptyValues.bind(null, "start_date"), "start_date"])); //preferring sorting based on empty values to always keep the empty values below
       case "-start_date":

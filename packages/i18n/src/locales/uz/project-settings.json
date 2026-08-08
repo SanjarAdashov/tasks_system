@@ -1,0 +1,886 @@
+{
+  "project_settings": {
+    "sidebar_title": "Loyiha sozlamalari",
+    "work_item_fields": {
+      "label": "Ish elementi maydonlari",
+      "heading": "Ish elementi maydonlari",
+      "description": "Ish elementlari yaratilganda ko'rsatiladigan o'rnatilgan maydonlarni tanlang va loyihaga xos xususiyatlarni belgilang.",
+      "errors": {
+        "try_again": "Sozlamalarni tekshiring va qayta urinib ko'ring."
+      },
+      "system_fields": {
+        "title": "Tizim maydonlari",
+        "description": "Loyiha va sarlavha doimo ko'rinadigan va majburiy bo'lib qoladi. Yashirilgan maydonlar faqat yaratish shaklidan olib tashlanadi va API bilan mosligicha qoladi.",
+        "columns": {
+          "field": "Maydon",
+          "visible": "Ko'rinadi",
+          "required": "Majburiy"
+        },
+        "always": "Doimo",
+        "save": "Tizim maydonlarini saqlash",
+        "fields": {
+          "project": "Loyiha",
+          "title": "Sarlavha",
+          "description": "Tavsif",
+          "state": "Holat",
+          "priority": "Ustuvorlik",
+          "assignees": "Ijrochilar",
+          "labels": "Teglar",
+          "start_date": "Boshlanish sanasi",
+          "target_date": "Muddat",
+          "cycle": "Sikl",
+          "module": "Modul",
+          "estimate": "Baho",
+          "parent": "Yuqori ish elementi"
+        },
+        "toast": {
+          "success_title": "Tizim maydonlari yangilandi",
+          "success_message": "Ish elementi shakli sozlamalari ushbu loyiha uchun saqlandi.",
+          "error_title": "Tizim maydonlarini yangilab bo'lmadi"
+        }
+      },
+      "property_types": {
+        "short_text": "Qisqa matn",
+        "long_text": "Ko'p qatorli matn",
+        "number": "Raqam",
+        "date": "Sana",
+        "checkbox": "Belgilash katagi",
+        "single_select": "Bitta tanlov",
+        "multi_select": "Ko'p tanlov"
+      },
+      "custom_properties": {
+        "title": "Maxsus xususiyatlar",
+        "description": "Xususiyatlar faqat ushbu loyihada amal qiladi. Saqlangan qiymatlarni o'chirmasdan yangi ish elementlaridan olib tashlash uchun xususiyatni arxivlang.",
+        "new": "Yangi xususiyat",
+        "required_badge": "Majburiy",
+        "edit": "Tahrirlash",
+        "archive": "Arxivlash",
+        "archive_confirm": "«{name}» xususiyati arxivlansinmi? Mavjud qiymatlar saqlanadi.",
+        "empty_title": "Hali maxsus xususiyatlar yo'q",
+        "empty_description": "Ushbu loyiha uchun birinchi xususiyatni yarating.",
+        "toast": {
+          "archived_title": "Xususiyat arxivlandi",
+          "archived_message": "Oldingi qiymatlar mavjudligicha qoladi.",
+          "archive_error_title": "Xususiyatni arxivlab bo'lmadi"
+        }
+      },
+      "form": {
+        "edit_title": "Xususiyatni tahrirlash",
+        "new_title": "Yangi xususiyat",
+        "description": "Xususiyat faqat ushbu loyihada amal qiladi. Yaratilgandan keyin uning turini o'zgartirib bo'lmaydi.",
+        "name_label": "Nomi",
+        "name_placeholder": "Masalan, mijoz toifasi",
+        "type_label": "Turi",
+        "select_source_label": "Ro'yxat manbasi",
+        "manual_list": "Qo'lda kiritiladigan ro'yxat",
+        "project_members": "Loyiha xodimlari",
+        "select_source_description": "Loyiha xodimlari avtomatik yuklanadi va doimo ularning profildagi joriy nomlarini ko'rsatadi.",
+        "description_label": "Tavsif",
+        "description_placeholder": "Bu xususiyatdan qanday foydalanishni tushuntiring",
+        "required_title": "Majburiy maydon",
+        "required_description": "Ish elementini saqlashdan oldin qiymat kiritilishi kerak.",
+        "options_title": "Variantlar",
+        "options_description": "Kamida bitta faol variant kerak.",
+        "add_option": "Variant qo'shish",
+        "option_placeholder": "{number}-variant",
+        "remove_option": "Variantni o'chirish",
+        "empty_options": "Xususiyatni saqlash uchun birinchi variantni qo'shing.",
+        "default_value_title": "Standart qiymat",
+        "default_value_description": "Yangi ish elementida qiymat ko'rsatilmasa ishlatiladi.",
+        "default_value_placeholder": "Standart qiymat",
+        "checked": "Belgilangan",
+        "unchecked": "Belgilanmagan",
+        "untitled_option": "Nomsiz variant",
+        "select_member": "Loyiha xodimini tanlang",
+        "select_option": "Variantni tanlang",
+        "select_members": "Loyiha xodimlarini tanlang",
+        "select_options": "Variantlarni tanlang",
+        "cancel": "Bekor qilish",
+        "save_changes": "O'zgarishlarni saqlash",
+        "create_property": "Xususiyat yaratish",
+        "toast": {
+          "updated_title": "Xususiyat yangilandi",
+          "created_title": "Xususiyat yaratildi",
+          "ready_message": "«{name}» xususiyati ushbu loyihada foydalanishga tayyor.",
+          "error_title": "Xususiyatni saqlab bo'lmadi",
+          "error_message": "Xususiyatni saqlab bo'lmadi."
+        }
+      }
+    },
+    "user_groups": {
+      "label": "Foydalanuvchi guruhlari",
+      "heading": "Foydalanuvchi guruhlari",
+      "description": "O‘tish qoidalari va kirish shartlari uchun loyiha foydalanuvchilarining qayta ishlatiladigan ro‘yxatlarini yarating.",
+      "name": "Guruh nomi",
+      "description_label": "Tavsif",
+      "description_placeholder": "Ixtiyoriy tavsif",
+      "create": "Guruh yaratish",
+      "save": "Saqlash",
+      "edit": "Tahrirlash",
+      "archive": "Arxivlash",
+      "restore": "Qaytarish",
+      "delete": "Butunlay o‘chirish",
+      "active_tab": "Faol",
+      "archived_tab": "Arxiv",
+      "archived": "Arxivlangan",
+      "members": "A’zolar",
+      "selected": "tanlandi",
+      "search_members": "Ism yoki elektron pochta bo‘yicha qidirish",
+      "no_members": "Bu guruhga hali a’zolar qo‘shilmagan.",
+      "no_members_found": "Qidiruvga mos faol a’zolar topilmadi.",
+      "no_description": "Tavsifsiz",
+      "not_in_project": "Loyihada yo‘q",
+      "unavailable_members": "Mavjud bo‘lmagan guruh a’zolari",
+      "unavailable_members_help": "Ushbu hisoblar guruh tarixida saqlanadi va loyihaga qaytganida bu yerda yana faol bo‘ladi.",
+      "status": {
+        "active": "Faol",
+        "inactive": "Faol emas",
+        "blocked": "Bloklangan"
+      },
+      "empty": {
+        "active": {
+          "title": "Hali faol guruhlar yo‘q",
+          "description": "Jamoa tarkibini o‘tish qoidalari va kirish shartlarida ishlatish uchun guruh yarating."
+        },
+        "archived": {
+          "title": "Arxiv bo‘sh",
+          "description": "Arxivlangan guruhlar shu yerda ko‘rsatiladi va ularni istalgan vaqtda qaytarish mumkin."
+        }
+      },
+      "editor": {
+        "create_title": "Foydalanuvchi guruhini yaratish",
+        "edit_title": "Guruhni tahrirlash",
+        "description": "Guruh ma’lumotlarini kiriting va loyihaning faol a’zolarini tanlang.",
+        "members_help": "Guruh tarkibini faqat shu oynada o‘zgartirish mumkin."
+      },
+      "confirm": {
+        "archive": {
+          "title": "Guruh arxivlansinmi?",
+          "description": "Guruh «Arxiv» sahifasiga ko‘chadi. Mavjud qoidalar unga bog‘lanishni saqlaydi, ammo guruh tiklanmaguncha yangi qoidalarda tanlab bo‘lmaydi.",
+          "action": "Arxivlash",
+          "success_title": "Guruh arxivlandi",
+          "success_message": "Guruh arxivga ko‘chirildi."
+        },
+        "restore": {
+          "title": "Guruh qaytarilsinmi?",
+          "description": "Guruh faol ro‘yxatga qaytadi va uni yangi qoidalarda yana tanlash mumkin bo‘ladi.",
+          "action": "Guruhni qaytarish",
+          "success_title": "Guruh tiklandi",
+          "success_message": "Guruh yana faol."
+        },
+        "delete": {
+          "title": "Guruh butunlay o‘chirilsinmi?",
+          "description": "Bu amalni bekor qilib bo‘lmaydi. Guruh faqat mavjud qoidalarda ishlatilmayotgan bo‘lsa, butunlay o‘chiriladi.",
+          "action": "Butunlay o‘chirish",
+          "success_title": "Guruh o‘chirildi",
+          "success_message": "Arxivlangan guruh butunlay o‘chirildi."
+        }
+      },
+      "toast": {
+        "created": {
+          "title": "Guruh yaratildi",
+          "message": "Yangi foydalanuvchi guruhi foydalanishga tayyor."
+        },
+        "updated": {
+          "title": "Guruh yangilandi",
+          "message": "Guruh ma’lumotlari va tarkibi saqlandi."
+        },
+        "error": {
+          "title": "Guruhni yangilab bo‘lmadi",
+          "message": "Ma’lumotlarni tekshiring va qayta urinib ko‘ring."
+        }
+      }
+    },
+    "attachments": {
+      "label": "Fayl yuklamalari",
+      "heading": "Fayllarni yuklash cheklovlari",
+      "description": "Ushbu loyiha uchun qaysi fayl toifalarini yuklash mumkinligini va ularning maksimal hajmini boshqaring.",
+      "help": "Cheklovlar faqat yangi yuklamalar uchun amal qiladi. Mavjud fayllar mavjud bo'lib qoladi. Loyiha chegarasini olib tashlash uchun Cheksiz yoki toifadagi yangi yuklamalarni oldini olish uchun “O‘chirilgan” ni tanlang.",
+      "save": "Cheklovlarni saqlang",
+      "reset": "O'zgarishlarni tiklash",
+      "limit_in_mib": "MiBda maksimal o'lcham",
+      "modes": {
+        "limited": "Hajmi chegarasi",
+        "unlimited": "Cheksiz",
+        "disabled": "O‘chirilgan"
+      },
+      "mode_help": {
+        "unlimited": "Loyiha hajmi chegarasi yo'q",
+        "disabled": "Yangi yuklamalar bloklangan"
+      },
+      "categories": {
+        "images": "Tasvirlar",
+        "images_help": "JPEG, PNG, WebP, GIF, BMP va boshqa tasvir formatlari.",
+        "video": "Video",
+        "video_help": "MP4, WebM va boshqa brauzer tomonidan qo'llab-quvvatlanadigan video formatlari.",
+        "audio": "Audio",
+        "audio_help": "MP3, WAV, OGG va boshqa audio formatlar.",
+        "pdf": "PDF hujjatlar",
+        "pdf_help": "Ilova ichida xavfsiz ko'rish uchun PDF fayllar mavjud.",
+        "documents": "Hujjatlar",
+        "documents_help": "Ofis hujjatlari, matn, CSV va shunga o'xshash fayllar.",
+        "archives": "Arxivlar",
+        "archives_help": "ZIP, RAR, 7z, TAR va siqilgan paketlar.",
+        "other": "Boshqa fayllar",
+        "other_help": "Boshqa toifaga mos kelmaydigan har bir fayl turi."
+      },
+      "toast": {
+        "success_title": "Fayl cheklovlari saqlandi",
+        "success_message": "Yangi yuklashlar yangilangan loyiha chegaralaridan foydalanadi.",
+        "error_title": "Fayl chegaralarini saqlab bo‘lmadi",
+        "error_message": "Qiymatlarni ko'rib chiqing va qayta urinib ko'ring.",
+        "invalid_title": "Yaroqli fayl chegarasini kiriting",
+        "invalid_message": "Har bir o'lcham chegarasi noldan katta bo'lishi kerak."
+      }
+    },
+    "general": {
+      "enter_project_id": "Loyiha identifikatorini kiriting",
+      "please_select_a_timezone": "Vaqt mintaqasini tanlang",
+      "archive_project": {
+        "title": "Arxiv loyihasi",
+        "description": "Loyihani arxivlash loyihangizni yon navigatsiya roʻyxatidan olib tashlaydi, lekin siz hali ham loyihalar sahifangizdan unga kirishingiz mumkin boʻladi. Siz xohlagan vaqtda loyihani qayta tiklashingiz yoki uni o'chirishingiz mumkin.",
+        "button": "Arxiv loyihasi"
+      },
+      "delete_project": {
+        "title": "Loyihani o'chirish",
+        "description": "Loyihani o'chirishda ushbu loyihadagi barcha ma'lumotlar va resurslar butunlay o'chiriladi va ularni qayta tiklab bo'lmaydi.",
+        "button": "Loyihamni o'chirib tashlang"
+      },
+      "toast": {
+        "success": "Loyiha muvaffaqiyatli yangilandi",
+        "error": "Loyihani yangilab boʻlmadi. Iltimos, qayta urinib koʻring."
+      }
+    },
+    "members": {
+      "label": "A'zolar",
+      "project_lead": "Loyiha rahbari",
+      "project_lead_description": "Loyiha uchun loyiha rahbarini tanlang.",
+      "default_assignee": "Birlamchi tayinlovchi",
+      "default_assignee_description": "Loyiha uchun standart tayinlovchini tanlang.",
+      "project_subscribers": "Loyiha obunachilari",
+      "project_subscribers_description": "Ushbu loyiha uchun bildirishnoma oladigan aʼzolarni tanlang.",
+      "guest_super_permissions": {
+        "title": "Mehmon foydalanuvchilarga barcha ish elementlarini koʻrishga ruxsat bering:",
+        "sub_heading": "Bu mehmonlarga loyihaning barcha ish elementlarini ko'rish imkoniyatini beradi."
+      },
+      "invite_members": {
+        "title": "A'zolarni taklif qiling",
+        "sub_heading": "A'zolarni loyihangiz ustida ishlashga taklif qiling.",
+        "select_co_worker": "Hamkasbni tanlang"
+      }
+    },
+    "states": {
+      "heading": "Shtatlar",
+      "description": "Ish elementlarining borishini kuzatish uchun ish jarayoni holatini belgilang va sozlang.",
+      "describe_this_state_for_your_members": "Bu holatni aʼzolaringiz uchun tasvirlab bering.",
+      "empty_state": {
+        "title": "{groupKey} guruhi uchun shtatlar mavjud emas",
+        "description": "Iltimos, yangi davlat yarating"
+      }
+    },
+    "state_order": {
+      "label": "Davlat buyurtmasi",
+      "heading": "Davlat buyurtmasi",
+      "description": "Ish elementlari, filtrlar, ko‘rinishlar, tahlillar va API’larda foydalaniladigan loyiha bo‘yicha bitta davlat buyurtmasini o‘rnating.",
+      "help": "Holatlarni torting yoki strelka tugmalaridan foydalaning. Kategoriyalar ma'lumot uchun ko'rsatilgan va o'zgartirilmaydi.",
+      "save": "Buyurtmani saqlang",
+      "reset": "O'zgarishlarni tiklash",
+      "saving": "Buyurtma saqlanmoqda...",
+      "success": "Davlat buyurtmasi saqlanib qoldi",
+      "error": "Davlat buyurtmasini saqlab bo'lmadi. Sahifani yangilang va qayta urinib ko'ring.",
+      "groups": {
+        "backlog": "Orqaga tushish",
+        "unstarted": "Boshlanmagan",
+        "started": "Boshlandi",
+        "completed": "Bajarildi",
+        "cancelled": "Bekor qilingan"
+      }
+    },
+    "state_transitions": {
+      "editor": {
+        "transition_type": "O‘tish turi",
+        "nested_group": "Ichki guruh",
+        "all_conditions": "VA · barcha shartlar",
+        "any_condition": "YOKI · istalgan shart",
+        "yes": "Ha",
+        "no": "Yo‘q",
+        "guest": "Mehmon",
+        "member": "A’zo",
+        "project_admin": "Loyiha administratori",
+        "unknown_status": "Noma’lum holat",
+        "remove_condition": "Shartni olib tashlash",
+        "remove_group": "Guruhni olib tashlash",
+        "optional_message": "Ixtiyoriy xato xabari",
+        "value": "Qiymat",
+        "user_uuid": "Foydalanuvchi UUID",
+        "actor_group": "Joriy foydalanuvchi guruhga kiradi",
+        "creator_group": "Yaratuvchi guruhga kiradi",
+        "any_assignee_group": "Istalgan ijrochi guruhga kiradi",
+        "all_assignee_group": "Barcha ijrochilar guruhga kiradi",
+        "any_property_group": "{property} maydonidagi istalgan foydalanuvchi guruhga kiradi",
+        "all_property_group": "{property} maydonidagi barcha foydalanuvchilar guruhga kiradi",
+        "current_user_property": "Joriy foydalanuvchi {property} maydonida tanlangan",
+        "admin_bypass_short": "Administrator istisnosi",
+        "system_bypass_short": "Tizim istisnosi",
+        "refresh": "Yangilash",
+        "denied_transition": "O‘tish rad etildi",
+        "configuration_changed": "Sozlamalar o‘zgartirildi",
+        "actor": "Foydalanuvchi",
+        "system": "Tizim",
+        "work_item": "Vazifa",
+        "audit_empty": "Jurnal bo‘sh.",
+        "preview_creation": "Vazifa yaratilishini tekshirish",
+        "work_item_uuid": "Vazifa UUID",
+        "user_uuid_self": "Foydalanuvchi UUID (o‘zingiz uchun bo‘sh qoldiring)",
+        "target_status": "Maqsad holati",
+        "run_preview": "Tekshirish",
+        "allowed": "O‘tishga ruxsat berildi",
+        "denied": "O‘tish taqiqlandi",
+        "archived_group": "arxivlangan",
+        "try_again": "Iltimos, qayta urinib ko‘ring.",
+        "fields": {
+          "title": "Sarlavha",
+          "description": "Tavsif",
+          "priority": "Ustuvorlik",
+          "status": "Holat",
+          "assignees": "Tayinlovchilar",
+          "labels": "Yorliqlar",
+          "start_date": "Boshlanish sanasi",
+          "due_date": "Muddati",
+          "cycle": "Sikl",
+          "module": "Modul",
+          "estimate": "Baholash",
+          "parent": "Yuqori vazifa",
+          "creator": "Yaratuvchi",
+          "attachments": "Ilovalar",
+          "comments": "Fikrlar",
+          "subtasks": "Quyi vazifalar",
+          "dependencies": "Bog‘liqliklar",
+          "current_user": "Joriy foydalanuvchi",
+          "current_user_role": "Joriy foydalanuvchining loyihadagi roli",
+          "current_user_assignee": "Joriy foydalanuvchi — ijrochi",
+          "current_user_creator": "Joriy foydalanuvchi vazifani yaratgan"
+        }
+      },
+      "operators": {
+        "is_set": "To‘ldirilgan",
+        "is_not_set": "To‘ldirilmagan",
+        "eq": "Teng",
+        "neq": "Teng emas",
+        "before": "Sana oldin",
+        "after": "Sana keyin",
+        "contains": "O‘z ichiga oladi",
+        "not_contains": "O‘z ichiga olmaydi",
+        "all_completed": "Barchasi yakunlangan",
+        "has_incomplete": "Yakunlanmaganlari bor"
+      },
+      "label": "Davlat o'tish qoidalari",
+      "heading": "Davlat o'tish qoidalari",
+      "description": "Ushbu loyihadagi shtatlar oʻrtasida ish elementlarini koʻchirish uchun ruxsatlar va talab qilinadigan shartlarni sozlang.",
+      "rules": "Qoidalar",
+      "audit": "Audit jurnali",
+      "preview": "Ko‘rib chiqish",
+      "strict_mode": "Qattiq rejim",
+      "strict_mode_help": "Sozlangan qoidaga ega bo'lmagan o'tishlarni va boshlang'ich holatlarni rad etish.",
+      "new_rule": "Yangi qoida",
+      "empty": "O‘tish qoidalari hali sozlanmagan.",
+      "save": "Qoidani saqlash",
+      "cancel": "Bekor qilish",
+      "archive": "Arxiv",
+      "edit": "Tahrirlash",
+      "allow": "O'tishni kim amalga oshirishi mumkin",
+      "deny": "Kimga o'tish taqiqlanadi",
+      "validation": "Qaysi ish elementi ma'lumotlari talab qilinadi",
+      "admin_bypass": "Loyiha boshqaruvchisi ushbu qoidani chetlab o'tishi mumkin",
+      "system_bypass": "Tizim operatsiyalari va avtomatlashtirish bu qoidani chetlab o'tishi mumkin",
+      "exact": "Muayyan holatdan",
+      "any": "Har qanday davlatdan",
+      "create": "Ish elementini yaratish",
+      "source": "Kimdan",
+      "target": "Kimga",
+      "add_condition": "Shart qo'shing",
+      "add_group": "Guruh qo'shish",
+      "custom_message": "Foydalanuvchiga ko'rsatilgan xabar",
+      "saved": "Oʻtish qoidasi saqlandi.",
+      "save_error": "Oʻtish qoidasini saqlab boʻlmadi.",
+      "archived": "Oʻtish qoidasi arxivlandi."
+    },
+    "labels": {
+      "heading": "Yorliqlar",
+      "description": "Ish elementlarini toifalarga ajratish va tartibga solish uchun maxsus teglar yarating",
+      "label_title": "Yorliq sarlavhasi",
+      "label_title_is_required": "Yorliq sarlavhasi talab qilinadi",
+      "label_max_char": "Yorliq nomi 255 belgidan oshmasligi kerak",
+      "toast": {
+        "error": "Yorliqni yangilashda xatolik yuz berdi"
+      }
+    },
+    "estimates": {
+      "heading": "Hisob-kitoblar",
+      "description": "Har bir ish elementi uchun zarur bo'lgan harakatlarni kuzatish va etkazish uchun baholash tizimlarini o'rnating.",
+      "label": "Hisob-kitoblar",
+      "title": "Loyiham uchun hisob-kitoblarni yoqing",
+      "enable_description": "Ular sizga jamoaning murakkabligi va ish yukini etkazishda yordam beradi.",
+      "no_estimate": "Taxmin yo'q",
+      "new": "Yangi smeta tizimi",
+      "create": {
+        "custom": "Maxsus",
+        "start_from_scratch": "Noldan boshlang",
+        "choose_template": "Shablonni tanlang",
+        "choose_estimate_system": "Hisoblash tizimini tanlang",
+        "enter_estimate_point": "Taxminiy kiriting",
+        "step": "Qadam {step} / {total}",
+        "label": "Taxminiy yaratish"
+      },
+      "toasts": {
+        "created": {
+          "success": {
+            "title": "Taxminiy yaratilgan",
+            "message": "Smeta muvaffaqiyatli yaratildi"
+          },
+          "error": {
+            "title": "Taxmini yaratish amalga oshmadi",
+            "message": "Yangi hisobni yaratib bo‘lmadi, qaytadan urinib ko‘ring."
+          }
+        },
+        "updated": {
+          "success": {
+            "title": "Taxminiy o'zgartirildi",
+            "message": "Loyihangizda smeta yangilandi."
+          },
+          "error": {
+            "title": "Taxminiy o‘zgartirish amalga oshmadi",
+            "message": "Biz taxminni o‘zgartira olmadik, qaytadan urinib ko‘ring"
+          }
+        },
+        "enabled": {
+          "success": {
+            "title": "Muvaffaqiyat!",
+            "message": "Hisob-kitoblar yoqilgan."
+          }
+        },
+        "disabled": {
+          "success": {
+            "title": "Muvaffaqiyat!",
+            "message": "Hisob-kitoblar o'chirildi."
+          },
+          "error": {
+            "title": "Xato!",
+            "message": "Hisob-kitobni o‘chirib bo‘lmadi. Iltimos, qayta urinib koʻring"
+          }
+        },
+        "reorder": {
+          "success": {
+            "title": "Hisob-kitoblar qayta tartiblangan",
+            "message": "Loyihangizda hisob-kitoblar qayta tartiblangan."
+          },
+          "error": {
+            "title": "Taxminiy qayta buyurtma bajarilmadi",
+            "message": "Hisob-kitoblarni qayta buyurtma qila olmadik, qayta urinib ko‘ring"
+          }
+        },
+        "switch": {
+          "success": {
+            "title": "Hisoblash tizimi yaratilgan",
+            "message": "Yaratildi va muvaffaqiyatli yoqildi"
+          },
+          "error": {
+            "title": "Xato",
+            "message": "Nimadir xato ketdi"
+          }
+        }
+      },
+      "validation": {
+        "min_length": "Taxmin 0 dan katta bo'lishi kerak.",
+        "unable_to_process": "So‘rovingizni ko‘rib chiqa olmadik, qayta urinib ko‘ring.",
+        "numeric": "Baholash raqamli qiymat boʻlishi kerak.",
+        "character": "Taxminiy belgi qiymati bo'lishi kerak.",
+        "empty": "Taxminiy qiymat bo'sh bo'lishi mumkin emas.",
+        "already_exists": "Taxminiy qiymat allaqachon mavjud.",
+        "unsaved_changes": "Sizda saqlanmagan oʻzgarishlar bor, “Bajarildi” tugmasini bosishdan oldin ularni saqlang",
+        "remove_empty": "Taxminiy boʻsh boʻlishi mumkin emas. Har bir maydonga qiymat kiriting yoki sizda mavjud bo'lmagan qiymatlarni olib tashlang.",
+        "fill": "Iltimos, ushbu smeta maydonini to'ldiring",
+        "repeat": "Taxminiy qiymatni takrorlab bo'lmaydi"
+      },
+      "systems": {
+        "points": {
+          "label": "Ballar",
+          "fibonacci": "Fibonachchi",
+          "linear": "Chiziqli",
+          "squares": "Kvadratchalar",
+          "custom": "Maxsus"
+        },
+        "categories": {
+          "label": "Kategoriyalar",
+          "t_shirt_sizes": "Futbolka o'lchamlari",
+          "easy_to_hard": "Osondan qiyinga",
+          "custom": "Maxsus"
+        },
+        "time": {
+          "label": "Vaqt",
+          "hours": "Soat"
+        }
+      },
+      "edit": {
+        "title": "Hisoblash tizimini tahrirlash",
+        "add_or_update": {
+          "title": "Hisob-kitoblarni qo'shing, yangilang yoki o'chiring",
+          "description": "Joriy tizimni boshqaring yoki ball yoki toifalarni qo'shish, yangilash yoki o'chirish."
+        },
+        "switch": {
+          "title": "Hisoblash turini o'zgartirish",
+          "description": "Ballar tizimini toifalar tizimiga aylantiring va aksincha."
+        }
+      },
+      "switch": "Hisoblash tizimini almashtirish",
+      "current": "Joriy smeta tizimi",
+      "select": "Hisoblash tizimini tanlang"
+    },
+    "automations": {
+      "label": "Avtomatlashtirish",
+      "heading": "Avtomatlashtirish",
+      "description": "Loyihani boshqarish ish jarayonini soddalashtirish va qo'lda bajariladigan vazifalarni kamaytirish uchun avtomatlashtirilgan harakatlarni sozlang.",
+      "auto-archive": {
+        "title": "Yopiq ish elementlarini avtomatik arxivlash",
+        "description": "Plane tugallangan yoki bekor qilingan ish elementlarini avtomatik arxivlaydi.",
+        "duration": "Yopiq ish elementlarini avtomatik arxivlash"
+      },
+      "auto-close": {
+        "title": "Ish elementlarini avtomatik yopish",
+        "description": "Plane tugallanmagan yoki bekor qilinmagan ish elementlarini avtomatik ravishda yopadi.",
+        "duration": "Faol bo'lmagan ish elementlarini avtomatik yopish",
+        "auto_close_status": "Avtomatik yopish holati"
+      },
+      "auto-remind": {
+        "title": "Avtomatik eslatmalar",
+        "description": "Plane jamoangizni belgilangan muddatlarda kuzatib borish uchun avtomatik ravishda elektron pochta va ilova ichidagi bildirishnomalar orqali eslatmalarni yuboradi.",
+        "duration": "Oldindan eslatma yuboring"
+      }
+    },
+    "empty_state": {
+      "labels": {
+        "title": "Hali teglar yoʻq",
+        "description": "Loyihangizdagi ish elementlarini tartibga solish va filtrlash uchun teglar yarating."
+      },
+      "estimates": {
+        "title": "Hali taxminiy tizimlar yo'q",
+        "description": "Har bir ish elementi uchun ish hajmini bildirish uchun hisob-kitoblar to'plamini yarating.",
+        "primary_button": "Hisoblash tizimini qo'shing"
+      },
+      "integrations": {
+        "title": "Hech qanday integratsiya sozlanmagan",
+        "description": "Loyihangizning ish elementlarini sinxronlashtirish uchun GitHub va boshqa integratsiyalarni sozlang."
+      }
+    },
+    "workflows": {
+      "toggle": {
+        "title": "Ish oqimlarini yoqish",
+        "description": "Ish elementi harakatini boshqarish uchun ish oqimlarini o'rnating",
+        "no_states_tooltip": "Ish jarayoniga hech qanday shtat qo'shilmaydi.",
+        "no_work_item_types_tooltip": "Ish jarayoniga hech qanday ish elementi turlari qo'shilmaydi.",
+        "no_states_or_work_item_types_tooltip": "Ish jarayoniga hech qanday holat yoki ish elementi turlari qo'shilmaydi.",
+        "toast": {
+          "loading": {
+            "enabling": "Ish oqimlarini yoqish",
+            "disabling": "Ish oqimlarini o'chirish"
+          },
+          "success": {
+            "title": "Muvaffaqiyat!",
+            "message": "Ish oqimlari muvaffaqiyatli yoqildi."
+          },
+          "error": {
+            "title": "Xato!",
+            "message": "Ish oqimlari yoqilmadi. Iltimos, qayta urinib koʻring."
+          }
+        }
+      },
+      "heading": "Ish oqimlari",
+      "description": "Ish elementlarini o'tishni avtomatlashtiring va vazifalarning loyihangiz orqali qanday harakatlanishini nazorat qilish uchun qoidalar o'rnating.",
+      "add_button": "Yangi ish jarayonini qo'shing",
+      "search": "Ish oqimlarini qidirish",
+      "detail": {
+        "define": "Ish jarayonini aniqlang",
+        "add_states": "Davlatlarni qo'shing",
+        "unmapped_states": {
+          "title": "Xarita qilinmagan holatlar aniqlandi",
+          "description": "Tanlangan turlar uchun ba'zi ish elementlari hozirda ushbu ish jarayonida mavjud bo'lmagan holatda.",
+          "note": "Agar siz ushbu ish jarayonini yoqsangiz, ushbu elementlar avtomatik ravishda ushbu ish jarayoni uchun dastlabki holatga o'tadi.",
+          "label": "Yo'qolgan davlatlar",
+          "tooltip": "Ayrim ish elementlari ushbu ish jarayoniga moslashtirilmagan shtatlarda. Ko'rib chiqish uchun ish jarayonini oching."
+        }
+      },
+      "select_states": {
+        "empty_state": {
+          "title": "Barcha shtatlar qo'llaniladi",
+          "description": "Ushbu loyiha uchun barcha belgilangan holatlar joriy ish oqimingizda allaqachon mavjud."
+        }
+      },
+      "default_footer": {
+        "fallback_message": "Ushbu ish jarayoni ish oqimiga tayinlanmagan har qanday ish elementi turiga taalluqlidir."
+      },
+      "create": {
+        "heading": "Yangi ish jarayonini yarating",
+        "name": {
+          "placeholder": "Noyob nom qo'shing",
+          "validation": {
+            "max_length": "Ism 255 belgidan kam bo'lishi kerak",
+            "required": "Ism talab qilinadi",
+            "invalid": "Ism faqat harflar, raqamlar, bo'shliqlar, defislar va apostroflardan iborat bo'lishi mumkin"
+          }
+        },
+        "description": {
+          "placeholder": "Qisqacha tavsif qo'shing",
+          "validation": {
+            "invalid": "Tavsifda faqat harflar, raqamlar, bo'shliqlar, defislar va apostroflar bo'lishi mumkin"
+          }
+        },
+        "work_item_type": {
+          "label": "Ish elementi turi"
+        },
+        "success": {
+          "title": "Muvaffaqiyat!",
+          "message": "Ish jarayoni muvaffaqiyatli yaratildi."
+        },
+        "error": {
+          "title": "Xato!",
+          "message": "Ish jarayonini yaratib bo‘lmadi. Iltimos, qayta urinib koʻring."
+        }
+      },
+      "update": {
+        "success": {
+          "title": "Muvaffaqiyat!",
+          "message": "Ish jarayoni muvaffaqiyatli yangilandi."
+        },
+        "error": {
+          "title": "Xato!",
+          "message": "Ish jarayonini yangilab bo‘lmadi. Iltimos, qayta urinib koʻring."
+        }
+      },
+      "delete": {
+        "loading": "Ish jarayoni o'chirilmoqda",
+        "success": {
+          "title": "Muvaffaqiyat!",
+          "message": "Ish jarayoni muvaffaqiyatli oʻchirildi."
+        },
+        "error": {
+          "title": "Xato!",
+          "message": "Ish jarayonini o‘chirib bo‘lmadi. Iltimos, qayta urinib koʻring."
+        }
+      },
+      "add_states": {
+        "success": {
+          "title": "Muvaffaqiyat!",
+          "message": "Davlatlar muvaffaqiyatli qo'shildi."
+        },
+        "error": {
+          "title": "Xato!",
+          "message": "Shtatlarni qo‘shib bo‘lmadi. Iltimos, qayta urinib koʻring."
+        }
+      }
+    },
+    "work_item_types": {
+      "heading": "Ish elementi turlari",
+      "description": "Noyob xususiyatlarga ega har xil turdagi ish elementlarini yarating va sozlang"
+    },
+    "features": {
+      "cycles": {
+        "title": "Velosipedlar",
+        "short_title": "Velosipedlar",
+        "description": "Ushbu loyihaning o'ziga xos ritmi va tezligiga mos keladigan moslashuvchan davrlarda ishni rejalashtiring.",
+        "toggle_title": "Tsikllarni yoqish",
+        "toggle_description": "Ishni belgilangan vaqt oralig'ida rejalashtiring."
+      },
+      "modules": {
+        "title": "Modullar",
+        "short_title": "Modullar",
+        "description": "Maxsus rahbarlar va topshiruvchilar bilan kichik loyihalar bo'yicha ishlarni tashkil qiling.",
+        "toggle_title": "Modullarni yoqish",
+        "toggle_description": "Loyiha a'zolari modullarni yaratishi va tahrirlashi mumkin."
+      },
+      "views": {
+        "title": "Koʻrishlar",
+        "short_title": "Koʻrishlar",
+        "description": "Maxsus turlar, filtrlar va ko‘rsatish parametrlarini saqlang yoki ularni jamoangiz bilan baham ko‘ring.",
+        "toggle_title": "Ko‘rishlarni yoqish",
+        "toggle_description": "Loyiha a'zolari ko'rinishlarni yaratish va tahrirlash imkoniyatiga ega bo'ladi."
+      },
+      "pages": {
+        "title": "Sahifalar",
+        "short_title": "Sahifalar",
+        "description": "Erkin shakldagi tarkibni yaratish va tahrirlash; eslatmalar, hujjatlar, har qanday narsa.",
+        "toggle_title": "Sahifalarni yoqish",
+        "toggle_description": "Loyiha a'zolari sahifalarni yaratish va tahrirlash imkoniyatiga ega bo'ladilar."
+      },
+      "intake": {
+        "intake_responsibility": "Mas'uliyatni qabul qilish",
+        "intake_sources": "Qabul qilish manbalari",
+        "title": "Qabul qilish",
+        "short_title": "Qabul qilish",
+        "description": "Aʼzo boʻlmaganlarga xatolar, fikr-mulohaza va takliflar bilan boʻlishishiga ruxsat bering; ish jarayonini buzmasdan.",
+        "toggle_title": "Qabul qilishni yoqing",
+        "toggle_description": "Loyiha aʼzolariga ilovalarni qabul qilish soʻrovlarini yaratishga ruxsat bering.",
+        "toggle_tooltip_on": "Loyiha administratoridan buni yoqishni so‘rang.",
+        "toggle_tooltip_off": "Loyiha administratoridan buni oʻchirishni soʻrang.",
+        "notify_assignee": {
+          "title": "Vakolatli shaxslarni xabardor qilish",
+          "description": "Qabul qilish uchun yangi so'rov uchun standart tayinlovchilar bildirishnomalar orqali ogohlantiriladi"
+        },
+        "in_app": {
+          "title": "Ilova ichidagi",
+          "description": "Ish joyingizdagi aʼzolar va mehmonlardan yangi ish elementlarini mavjud ish obʼyektlaringizga xalaqit bermasdan oling."
+        },
+        "email": {
+          "title": "Elektron pochta",
+          "description": "Plane elektron pochta manziliga xat yuborgan har bir kishidan yangi ish elementlarini to'plang.",
+          "fieldName": "Elektron pochta identifikatori"
+        },
+        "form": {
+          "title": "Shakllar",
+          "description": "Ish joyingizdan tashqaridagi odamlarga maxsus va xavfsiz shakl orqali siz uchun yangi ish buyumlarini yaratishga ruxsat bering.",
+          "fieldName": "Standart shakl URL manzili",
+          "create_forms": "Ish elementi turlaridan foydalangan holda shakllar yarating",
+          "manage_forms": "Shakllarni boshqarish",
+          "manage_forms_tooltip": "Buni boshqarish uchun Workspace administratoringizdan soʻrang.",
+          "create_form": "Shakl yaratish",
+          "edit_form": "Shakl tafsilotlarini tahrirlash",
+          "form_title": "Shakl sarlavhasi",
+          "form_title_required": "Shakl sarlavhasi talab qilinadi",
+          "work_item_type": "Ish elementi turi",
+          "remove_property": "Mulkni olib tashlang",
+          "select_properties": "Xususiyatlarni tanlang",
+          "search_placeholder": "Xususiyatlarni qidiring",
+          "toasts": {
+            "success_create": "Qabul qilish shakli muvaffaqiyatli yaratildi",
+            "success_update": "Qabul qilish shakli muvaffaqiyatli yangilandi",
+            "error_create": "Qabul qilish shakli yaratilmadi",
+            "error_update": "Qabul qilish shaklini yangilab bo‘lmadi"
+          }
+        },
+        "toasts": {
+          "set": {
+            "loading": "Vazifalar sozlanmoqda...",
+            "success": {
+              "title": "Muvaffaqiyat!",
+              "message": "Tayinlovchilar muvaffaqiyatli oʻrnatildi."
+            },
+            "error": {
+              "title": "Xato!",
+              "message": "Tayinlovchilarni sozlashda nimadir xato ketdi. Iltimos, qayta urinib koʻring."
+            }
+          }
+        }
+      },
+      "time_tracking": {
+        "title": "Vaqtni kuzatish",
+        "short_title": "Vaqtni kuzatish",
+        "description": "Ish elementlari va loyihalarga sarflangan vaqtni qayd qiling.",
+        "toggle_title": "Vaqtni kuzatishni yoqish",
+        "toggle_description": "Loyiha a'zolari ishlagan vaqtini qayd qilishlari mumkin."
+      },
+      "milestones": {
+        "title": "Marosimlar",
+        "short_title": "Marosimlar",
+        "description": "Muhim bosqichlar ish elementlarini umumiy yakunlash sanalariga moslashtirish uchun qatlamni taqdim etadi.",
+        "toggle_title": "Marshrutlarni yoqish",
+        "toggle_description": "Ishni belgilangan muddatlar bo'yicha tartibga soling."
+      },
+      "toasts": {
+        "loading": "Loyiha funksiyasi yangilanmoqda...",
+        "success": "Loyiha funksiyasi muvaffaqiyatli yangilandi.",
+        "error": "Loyiha funksiyasini yangilashda nimadir xato ketdi. Iltimos, qayta urinib koʻring."
+      }
+    },
+    "project_updates": {
+      "heading": "Loyiha yangilanishlari",
+      "description": "Ushbu loyiha uchun jamlangan kuzatuv va taraqqiyot monitoringi"
+    },
+    "templates": {
+      "heading": "Shablonlar",
+      "description": "Shablonlardan foydalanganda loyihalar, ish elementlari va sahifalarni yaratishga sarflangan vaqtni 80% tejang."
+    },
+    "cycles": {
+      "auto_schedule": {
+        "heading": "Avtomatik sikllarni rejalashtirish",
+        "description": "Qo'lda sozlashsiz tsikllarni harakatda saqlang.",
+        "tooltip": "Siz tanlagan jadval asosida avtomatik ravishda yangi tsikllarni yarating.",
+        "edit_button": "Tahrirlash",
+        "form": {
+          "cycle_title": {
+            "label": "Tsikl nomi",
+            "placeholder": "Sarlavha",
+            "tooltip": "Sarlavha keyingi davrlar uchun raqamlar bilan qo'shiladi. Masalan: Dizayn - 1/2/3",
+            "validation": {
+              "required": "Tsikl nomi talab qilinadi",
+              "max_length": "Sarlavha 255 belgidan oshmasligi kerak"
+            }
+          },
+          "cycle_duration": {
+            "label": "Tsikl davomiyligi",
+            "unit": "Haftalar",
+            "validation": {
+              "required": "Tsikl davomiyligi talab qilinadi",
+              "min": "Tsiklning davomiyligi kamida 1 hafta bo'lishi kerak",
+              "max": "Tsikl davomiyligi 30 haftadan oshmasligi kerak",
+              "positive": "Tsikl davomiyligi ijobiy bo'lishi kerak"
+            }
+          },
+          "cooldown_period": {
+            "label": "Sovutish davri",
+            "unit": "kunlar",
+            "tooltip": "Keyingi boshlanishidan oldin tsikllar o'rtasida pauza qiling.",
+            "validation": {
+              "required": "Sovutish davri talab qilinadi",
+              "negative": "Sovutish davri salbiy bo'lishi mumkin emas"
+            }
+          },
+          "start_date": {
+            "label": "Tsikl boshlanadigan kun",
+            "validation": {
+              "required": "Boshlanish sanasi talab qilinadi",
+              "past": "Boshlanish sanasi o‘tmishda bo‘lishi mumkin emas"
+            }
+          },
+          "number_of_cycles": {
+            "label": "Kelajakdagi tsikllar soni",
+            "validation": {
+              "required": "Tsikllar soni talab qilinadi",
+              "min": "Kamida 1 tsikl talab qilinadi",
+              "max": "3 dan ortiq tsiklni rejalashtirish mumkin emas"
+            }
+          },
+          "auto_rollover": {
+            "label": "Ish elementlarini avtomatik aylantirish",
+            "tooltip": "Tsikl tugagan kuni barcha tugallanmagan ish elementlarini keyingi tsiklga o'tkazing."
+          }
+        },
+        "toast": {
+          "toggle": {
+            "loading_enable": "Avtomatik rejalashtirish sikllarini yoqish",
+            "loading_disable": "Avtomatik rejalashtirish davrlarini o'chirish",
+            "success": {
+              "title": "Muvaffaqiyat!",
+              "message": "Avtomatik rejalashtirish sikllari muvaffaqiyatli almashtirildi."
+            },
+            "error": {
+              "title": "Xato!",
+              "message": "Avtomatik rejalashtirish sikllarini almashtirib bo‘lmadi."
+            }
+          },
+          "save": {
+            "loading": "Avtomatik rejalashtirish sikllari konfiguratsiyasini saqlash",
+            "success": {
+              "title": "Muvaffaqiyat!",
+              "message_create": "Avtomatik sikllarni rejalashtirish konfiguratsiyasi muvaffaqiyatli saqlandi.",
+              "message_update": "Avtomatik sikllarni rejalashtirish konfiguratsiyasi muvaffaqiyatli yangilandi."
+            },
+            "error": {
+              "title": "Xato!",
+              "message_create": "Avtomatik sikl konfiguratsiyasini saqlab bo‘lmadi.",
+              "message_update": "Avtomatik sikllarni rejalashtirish konfiguratsiyasini yangilab bo‘lmadi."
+            }
+          }
+        }
+      }
+    }
+  }
+}

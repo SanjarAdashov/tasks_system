@@ -1,0 +1,195 @@
+{
+  "product_tour": {
+    "workitems": {
+      "step_zero": {
+        "title": "Ish joyingizga xush kelibsiz",
+        "description": "Ishni boshlashingizga yordam berish uchun biz siz uchun demo loyihasini yaratdik. Birinchi ish elementingizni qo'shamiz."
+      },
+      "step_one": {
+        "title": "\"+ Ish elementini qo'shish\" tugmasini bosing",
+        "description": "“+ Yangi ish elementi” tugmasini bosish bilan boshlang. Ehtiyojlaringizga mos keladigan vazifalar, xatolar yoki maxsus turdagi yaratishingiz mumkin."
+      },
+      "step_two": {
+        "title": "Ish elementlarini filtrlang",
+        "description": "Roʻyxatni tezda qisqartirish uchun filtrlardan foydalaning. Siz maqom, ustuvorlik yoki jamoa aʼzolari boʻyicha filtrlashingiz mumkin."
+      },
+      "step_three": {
+        "title": "Ish elementlarini kerak bo'lganda ko'ring, guruhlang va buyurtma qiling.",
+        "description": "Kerakli xususiyatlarni ko'ring va ehtiyojlaringiz bo'yicha ish elementlarini guruhlang yoki buyurtma qiling."
+      },
+      "step_four": {
+        "title": "O'zingiz xohlagan tarzda tasavvur qiling",
+        "description": "Ro'yxatda ko'rmoqchi bo'lgan xususiyatlarni tanlang. Shuningdek, siz ish ob'ektlarini o'zingiz uchun guruhlashingiz va saralashingiz mumkin."
+      }
+    },
+    "cycle": {
+      "step_zero": {
+        "title": "Cycles bilan muvaffaqiyatga erishing",
+        "description": "Tsikl yaratish uchun Q tugmasini bosing. Uni nomlang va sanalarni belgilang - har bir loyiha uchun faqat bitta tsikl."
+      },
+      "step_one": {
+        "title": "Yangi tsikl yarating",
+        "description": "Tsikl yaratish uchun Q tugmasini bosing. Uni nomlang va sanalarni belgilang - har bir loyiha uchun faqat bitta tsikl."
+      },
+      "step_two": {
+        "title": "“+” tugmasini bosing",
+        "description": "\"+\" tugmasini bosish bilan boshlang. To'g'ridan-to'g'ri \"Tsikl\" sahifasidan yangi yoki mavjud ish elementlarini qo'shing."
+      },
+      "step_three": {
+        "title": "Tsikl xulosasi",
+        "description": "Tsiklning borishini, jamoa unumdorligini va ustuvorliklarini kuzatib boring va narsalar ortda qolayotganligini tekshirib ko'ring."
+      },
+      "step_four": {
+        "title": "Ish elementlarini uzatish",
+        "description": "Belgilangan sanadan so'ng, tsikl avtomatik ravishda tugaydi. Tugallanmagan ishni boshqa tsiklga o'tkazing."
+      }
+    },
+    "module": {
+      "step_zero": {
+        "title": "Loyihangizni modullarga ajrating",
+        "description": "Modullar kichikroq, yo'naltirilgan loyihalar bo'lib, foydalanuvchilarga ma'lum vaqt oralig'ida ish elementlarini guruhlash va tartibga solishga yordam beradi."
+      },
+      "step_one": {
+        "title": "Modul yaratish",
+        "description": "Modullar kichikroq, yo'naltirilgan loyihalar bo'lib, foydalanuvchilarga ma'lum vaqt oralig'ida ish elementlarini guruhlash va tartibga solishga yordam beradi."
+      },
+      "step_two": {
+        "title": "“+” tugmasini bosing",
+        "description": "\"+\" tugmasini bosish bilan boshlang. Yangi yoki mavjud ish elementlarini to'g'ridan-to'g'ri Modul sahifasidan qo'shing."
+      },
+      "step_three": {
+        "title": "Modul holatlari",
+        "description": "Modullar ushbu statuslardan foydalanuvchilarga taraqqiyot va bosqichni rejalashtirish va aniq kuzatishda yordam berish uchun foydalanadi."
+      },
+      "step_four": {
+        "title": "Modul rivojlanishi",
+        "description": "Modulning borishi tugallangan elementlar orqali kuzatiladi, unumdorlikni kuzatish uchun tahlillar mavjud."
+      }
+    },
+    "page": {
+      "step_zero": {
+        "title": "AI bilan ishlaydigan sahifalar bilan hujjat",
+        "description": "Plane sahifalari sizga loyiha maʼlumotlarini yozib olish, tartibga solish va hamkorlik qilish imkonini beradi — tashqi vositalar kerak emas."
+      },
+      "step_one": {
+        "title": "Sahifani umumiy yoki shaxsiy qilish",
+        "description": "Sahifalar umumiy, ish joyingizdagi hammaga koʻrinadigan yoki shaxsiy, faqat siz uchun ochiq boʻlishi mumkin."
+      },
+      "step_two": {
+        "title": "/ buyrug'idan foydalaning",
+        "description": "Roʻyxatlar, rasmlar, jadvallar va oʻrnatishlarni oʻz ichiga olgan 16 turdagi bloklardan tarkib qoʻshish uchun sahifada / dan foydalaning."
+      },
+      "step_three": {
+        "title": "Sahifa harakatlari",
+        "description": "Sahifangiz yaratilgandan soʻng, quyidagi amallarni bajarish uchun yuqori oʻng burchakdagi ••• menyuni bosishingiz mumkin."
+      },
+      "step_four": {
+        "title": "Mundarija",
+        "description": "Barcha sarlavhalarni ko'rish uchun panel belgisini bosish orqali sahifangizni qush nazari bilan ko'ring."
+      },
+      "step_five": {
+        "title": "Versiya tarixi",
+        "description": "Sahifalar barcha tahrirlarni versiyalar tarixi bilan kuzatib boradi, agar kerak bo'lsa, oldingi versiyalarni tiklashga imkon beradi."
+      }
+    },
+    "intake": {
+      "step_zero": {
+        "title": "Qabul qilish bilan so'rovlarni soddalashtiring",
+        "description": "Mehmonlarga xatolar, soʻrovlar yoki chiptalar uchun ish elementlarini yaratishga imkon beruvchi Plane-faqat xususiyat."
+      },
+      "step_one": {
+        "title": "Ochiq/yopiq qabul qilish so'rovlari",
+        "description": "Kutilayotgan so‘rovlar “Ochiq” yorlig‘ida qoladi va administrator yoki a’zo tomonidan murojaat qilingandan so‘ng, ular “Yopiq” yorlig‘iga o‘tadi."
+      },
+      "step_two": {
+        "title": "Kutilayotgan so'rovni qabul qilish/rad etish",
+        "description": "Ish elementini loyihangizga tahrirlash va koʻchirishga rozilik bildiring yoki uni Bekor qilingan deb belgilashni rad eting."
+      },
+      "step_three": {
+        "title": "Hozircha kechiktiring",
+        "description": "Ish elementini keyinroq ko‘rib chiqish uchun keyinga qoldirish mumkin. U ochiq so'rovlar ro'yxatining pastki qismiga ko'chiriladi."
+      }
+    },
+    "mcp_connectors": {
+      "step_zero": {
+        "title": "Tablarni almashtirishni to'xtating. Dunyongizni bog'lang.",
+        "description": "GitHub, PRlarni kuzatish va suhbatlarni to‘g‘ridan-to‘g‘ri Plane AIda umumlashtirish uchun Slack-ga havola."
+      }
+    },
+    "navigation": {
+      "modal": {
+        "title": "Navigatsiya, qayta tasavvur qilingan",
+        "sub_title": "Ish joyingizni endi aqlliroq va soddalashtirilgan navigatsiya bilan o‘rganish osonroq.",
+        "highlight_1": "Tezroq kashf qilish uchun soddalashtirilgan chap panel tuzilishi",
+        "highlight_2": "Bir zumda hamma narsaga o'tish uchun yaxshilangan global qidiruv",
+        "highlight_3": "Aniqlik va diqqatni jamlash uchun aqlli toifalarni guruhlash",
+        "footer": "Tezkor ma'lumot olishni xohlaysizmi?"
+      },
+      "step_zero": {
+        "title": "Bir zumda biror narsani toping",
+        "description": "Vazifalar, loyihalar, sahifalar va odamlarga o'tish uchun universal qidiruvdan foydalaning - oqimingizni qoldirmasdan."
+      },
+      "step_one": {
+        "title": "Yangilanishlarni nazorat ostida qoling",
+        "description": "Kiruvchi xabarlar qutingiz barcha eslatmalar, tasdiqlar va harakatlarni bir joyda saqlaydi, shuning uchun siz hech qachon muhim ishni o'tkazib yubormaysiz."
+      },
+      "step_two": {
+        "title": "Navigatsiyangizni shaxsiylashtiring",
+        "description": "Sozlamalar orqali nima koʻrishni va qanday navigatsiya qilishni sozlang."
+      }
+    },
+    "actions": {
+      "close": "Yopish",
+      "next": "Keyingi",
+      "back": "Orqaga",
+      "done": "Bajarildi",
+      "take_a_tour": "Ekskursiya qiling",
+      "get_started": "Boshlash",
+      "got_it": "Tushundim"
+    },
+    "seed_data": {
+      "title": "Mana sizning demo loyihangiz",
+      "description": "Loyihalar sizga jamoalaringizni, vazifalaringizni va ish joyingizda ishlarni bajarish uchun kerak bo'lgan hamma narsani boshqarish imkonini beradi."
+    }
+  },
+  "get_started": {
+    "title": "Salom {name}, kemaga xush kelibsiz!",
+    "description": "Plane bilan sayohatni boshlash uchun kerak bo'lgan hamma narsa shu.",
+    "checklist_section": {
+      "title": "Boshlash",
+      "description": "O'rnatishni boshlang va g'oyalaringiz tezroq amalga oshishini ko'ring.",
+      "checklist_items": {
+        "item_1": {
+          "title": "Loyiha yarating"
+        },
+        "item_2": {
+          "title": "Ish elementini yarating"
+        },
+        "item_3": {
+          "title": "Jamoa a'zolarini taklif qiling"
+        },
+        "item_4": {
+          "title": "Sahifa yarating"
+        },
+        "item_5": {
+          "title": "Plane AI chatini sinab ko'ring"
+        },
+        "item_6": {
+          "title": "Bog'lanish integratsiyasi"
+        }
+      }
+    },
+    "team_section": {
+      "title": "Jamoangizni taklif qiling",
+      "description": "Jamoadoshlaringizni taklif qiling va birgalikda qurishni boshlang."
+    },
+    "integrations_section": {
+      "title": "Ish joyingizni quvvatlang",
+      "more_integrations": "Koʻproq integratsiyalarni koʻrib chiqing"
+    },
+    "switch_to_plane_section": {
+      "title": "Jamoalar nima uchun Plane ga oʻtishini bilib oling",
+      "description": "Plane ni bugungi kunda foydalanayotgan vositalaringiz bilan solishtiring va farqni ko'ring."
+    }
+  }
+}

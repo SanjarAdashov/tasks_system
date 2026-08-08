@@ -7,6 +7,7 @@
 import React from "react";
 import { isEmpty } from "lodash-es";
 import { observer } from "mobx-react";
+import { useParams } from "next/navigation";
 import type {
   IIssueDisplayFilterOptions,
   IIssueDisplayProperties,
@@ -21,6 +22,7 @@ import {
   FilterOrderBy,
   FilterSubGroupBy,
 } from "@/components/issues/issue-layouts/filters";
+import { useProjectWorkItemFieldVisibility } from "@/hooks/use-project-work-item-field-visibility";
 
 type Props = {
   displayFilters: IIssueDisplayFilterOptions | undefined;
@@ -46,17 +48,41 @@ export const DisplayFiltersSelection = observer(function DisplayFiltersSelection
     moduleViewDisabled = false,
     isEpic = false,
   } = props;
+  const { workspaceSlug, projectId } = useParams();
+  const { isDisplayPropertyVisible, isFieldVisible, isGroupByVisible, isOrderByVisible, visibleDisplayProperties } =
+    useProjectWorkItemFieldVisibility(workspaceSlug?.toString(), projectId?.toString());
+
+  const effectiveDisplayProperties = visibleDisplayProperties(displayProperties) ?? {};
+  const effectiveCycleViewDisabled = cycleViewDisabled || !isFieldVisible("cycle");
+  const effectiveModuleViewDisabled = moduleViewDisabled || !isFieldVisible("module");
+
+  React.useEffect(() => {
+    const hiddenActiveProperties = Object.entries(displayProperties).filter(
+      ([property, isVisible]) => isVisible && !isDisplayPropertyVisible(property as keyof IIssueDisplayProperties)
+    );
+    if (hiddenActiveProperties.length === 0) return;
+
+    handleDisplayPropertiesUpdate(
+      Object.fromEntries(
+        hiddenActiveProperties.map(([property]) => [property, false])
+      ) as Partial<IIssueDisplayProperties>
+    );
+  }, [displayProperties, handleDisplayPropertiesUpdate, isDisplayPropertyVisible]);
+
+  React.useEffect(() => {
+    const updates: Partial<IIssueDisplayFilterOptions> = {};
+    if (!isGroupByVisible(displayFilters?.group_by)) updates.group_by = null;
+    if (!isGroupByVisible(displayFilters?.sub_group_by)) updates.sub_group_by = null;
+    if (!isOrderByVisible(displayFilters?.order_by)) updates.order_by = "-updated_at";
+    if (Object.keys(updates).length > 0) handleDisplayFiltersUpdate(updates);
+  }, [displayFilters, handleDisplayFiltersUpdate, isGroupByVisible, isOrderByVisible]);
 
   const isDisplayFilterEnabled = (displayFilter: keyof IIssueDisplayFilterOptions) =>
     Object.keys(layoutDisplayFiltersOptions?.display_filters ?? {}).includes(displayFilter);
 
   const computedIgnoreGroupedFilters: Partial<TIssueGroupByOptions>[] = [];
-  if (cycleViewDisabled) {
-    ignoreGroupedFilters.push("cycle");
-  }
-  if (moduleViewDisabled) {
-    ignoreGroupedFilters.push("module");
-  }
+  if (effectiveCycleViewDisabled) computedIgnoreGroupedFilters.push("cycle");
+  if (effectiveModuleViewDisabled) computedIgnoreGroupedFilters.push("module");
 
   return (
     <div className="vertical-scrollbar relative scrollbar-sm h-full w-full divide-y divide-subtle-1 overflow-hidden overflow-y-auto px-2.5">
@@ -64,12 +90,13 @@ export const DisplayFiltersSelection = observer(function DisplayFiltersSelection
       {layoutDisplayFiltersOptions?.display_properties && layoutDisplayFiltersOptions.display_properties.length > 0 && (
         <div className="py-2">
           <FilterDisplayProperties
-            displayProperties={displayProperties}
+            displayProperties={effectiveDisplayProperties}
             displayPropertiesToRender={layoutDisplayFiltersOptions.display_properties}
             handleUpdate={handleDisplayPropertiesUpdate}
-            cycleViewDisabled={cycleViewDisabled}
-            moduleViewDisabled={moduleViewDisabled}
+            cycleViewDisabled={effectiveCycleViewDisabled}
+            moduleViewDisabled={effectiveModuleViewDisabled}
             isEpic={isEpic}
+            isPropertyVisible={isDisplayPropertyVisible}
           />
         </div>
       )}
@@ -118,7 +145,7 @@ export const DisplayFiltersSelection = observer(function DisplayFiltersSelection
                 order_by: val,
               })
             }
-            orderByOptions={layoutDisplayFiltersOptions?.display_filters.order_by ?? []}
+            orderByOptions={(layoutDisplayFiltersOptions?.display_filters.order_by ?? []).filter(isOrderByVisible)}
           />
         </div>
       )}

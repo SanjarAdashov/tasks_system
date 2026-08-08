@@ -54,6 +54,7 @@ export const HeaderFilters = observer(function HeaderFilters(props: Props) {
   const { t } = useTranslation();
   // states
   const [analyticsModal, setAnalyticsModal] = useState(false);
+  const layouts = storeType === EIssuesStoreType.PROJECT ? [...LAYOUTS, EIssueLayoutTypes.CUSTOM_GROUPING] : LAYOUTS;
   // store hooks
   const {
     issuesFilter: { issueFilters, updateFilters },
@@ -96,14 +97,14 @@ export const HeaderFilters = observer(function HeaderFilters(props: Props) {
       />
       <div className="hidden @4xl:flex">
         <LayoutSelection
-          layouts={LAYOUTS}
+          layouts={layouts}
           onChange={(layout) => handleLayoutChange(layout)}
           selectedLayout={activeLayout}
         />
       </div>
       <div className="flex @4xl:hidden">
         <MobileLayoutSelection
-          layouts={LAYOUTS}
+          layouts={layouts}
           onChange={(layout) => handleLayoutChange(layout)}
           activeLayout={activeLayout}
         />

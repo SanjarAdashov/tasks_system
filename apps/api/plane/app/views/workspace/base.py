@@ -5,12 +5,11 @@
 # Python imports
 import csv
 import io
-import os
 from datetime import date
 import uuid
 
 from dateutil.relativedelta import relativedelta
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.db.models import Count, F, Func, OuterRef, Prefetch, Q
 
 from django.db.models.fields import DateField
@@ -44,7 +43,10 @@ from plane.db.models import (
 )
 from plane.app.permissions import ROLE, allow_permission
 from plane.utils.constants import RESTRICTED_WORKSPACE_SLUGS
-from plane.license.utils.instance_value import get_configuration_value
+from plane.license.services import (
+    CreationQuotaError,
+    assert_can_create_workspace,
+)
 from plane.bgtasks.workspace_seed_task import workspace_seed
 from plane.bgtasks.event_tracking_task import track_event
 from plane.utils.url import contains_url
@@ -82,21 +84,6 @@ class WorkSpaceViewSet(BaseViewSet):
 
     def create(self, request):
         try:
-            (DISABLE_WORKSPACE_CREATION,) = get_configuration_value(
-                [
-                    {
-                        "key": "DISABLE_WORKSPACE_CREATION",
-                        "default": os.environ.get("DISABLE_WORKSPACE_CREATION", "0"),
-                    }
-                ]
-            )
-
-            if DISABLE_WORKSPACE_CREATION == "1":
-                return Response(
-                    {"error": "Workspace creation is not allowed"},
-                    status=status.HTTP_403_FORBIDDEN,
-                )
-
             serializer = WorkSpaceSerializer(data=request.data)
 
             slug = request.data.get("slug", False)
@@ -121,14 +108,16 @@ class WorkSpaceViewSet(BaseViewSet):
                 )
 
             if serializer.is_valid(raise_exception=True):
-                serializer.save(owner=request.user)
-                # Create Workspace member
-                _ = WorkspaceMember.objects.create(
-                    workspace_id=serializer.data["id"],
-                    member=request.user,
-                    role=20,
-                    company_role=request.data.get("company_role", ""),
-                )
+                with transaction.atomic():
+                    assert_can_create_workspace(request.user)
+                    serializer.save(owner=request.user)
+                    # Create Workspace member
+                    _ = WorkspaceMember.objects.create(
+                        workspace_id=serializer.data["id"],
+                        member=request.user,
+                        role=20,
+                        company_role=request.data.get("company_role", ""),
+                    )
 
                 # Get total members and role
                 total_members = WorkspaceMember.objects.filter(workspace_id=serializer.data["id"]).count()
@@ -136,7 +125,7 @@ class WorkSpaceViewSet(BaseViewSet):
                 data["total_members"] = total_members
                 data["role"] = 20
 
-                workspace_seed.delay(serializer.data["id"])
+                transaction.on_commit(lambda: workspace_seed.delay(serializer.data["id"]), robust=True)
 
                 track_event.delay(
                     user_id=request.user.id,
@@ -158,6 +147,11 @@ class WorkSpaceViewSet(BaseViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        except CreationQuotaError as e:
+            return Response(
+                {"error": {"code": e.code, "message": e.message}},
+                status=e.status_code,
+            )
         except IntegrityError as e:
             if "already exists" in str(e):
                 return Response(

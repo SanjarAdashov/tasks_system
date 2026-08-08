@@ -5,12 +5,14 @@
  */
 
 import { observer } from "mobx-react";
+import { useParams } from "next/navigation";
 // plane imports
 import { PriorityIcon, StateGroupIcon } from "@plane/propel/icons";
 import type { TIssue, TStateGroups } from "@plane/types";
 // hooks
 import { useProject } from "@/hooks/store/use-project";
 import { useProjectState } from "@/hooks/store/use-project-state";
+import { useProjectWorkItemFieldVisibility } from "@/hooks/use-project-work-item-field-visibility";
 // components
 import { IssueIdentifier } from "@/components/issues/issue-detail/issue-identifier";
 // local imports
@@ -28,9 +30,11 @@ type Props = {
 
 export const WorkItemPreviewCard = observer(function WorkItemPreviewCard(props: Props) {
   const { projectId, stateDetails, workItem } = props;
+  const { workspaceSlug } = useParams();
   // store hooks
   const { getProjectIdentifierById } = useProject();
   const { getStateById } = useProjectState();
+  const { isFieldVisible } = useProjectWorkItemFieldVisibility(workspaceSlug?.toString(), projectId);
   // derived values
   const projectIdentifier = getProjectIdentifierById(projectId);
   const fallbackStateDetails = stateDetails.id ? getStateById(stateDetails.id) : undefined;
@@ -59,9 +63,9 @@ export const WorkItemPreviewCard = observer(function WorkItemPreviewCard(props: 
       <div className="flex h-5 items-center gap-1">
         <PriorityIcon priority={workItem.priority} withContainer />
         <WorkItemPreviewCardDate
-          startDate={workItem.start_date}
+          startDate={isFieldVisible("start_date") ? workItem.start_date : null}
           stateGroup={stateGroup}
-          targetDate={workItem.target_date}
+          targetDate={isFieldVisible("target_date") ? workItem.target_date : null}
         />
       </div>
     </div>

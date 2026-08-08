@@ -10,6 +10,7 @@ from .attachment import (
     ProjectAttachmentSettings,
 )
 from .base import BaseModel
+from .creation_quota import ProjectCreationQuota
 from .cycle import Cycle, CycleIssue, CycleUserProperties
 from .deploy_board import DeployBoard
 from .draft import (
@@ -102,6 +103,13 @@ from .state_transition import (
     StateTransitionAuditAction,
     StateTransitionSourceType,
     get_empty_transition_condition_tree,
+)
+from .user_group import ProjectUserGroup, ProjectUserGroupMember
+from .custom_grouping import (
+    CustomGroupingAccess,
+    CustomGroupingDateBucket,
+    ProjectCustomGrouping,
+    ProjectCustomGroupingPreference,
 )
 
 from .favorite import UserFavorite

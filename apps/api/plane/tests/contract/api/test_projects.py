@@ -8,7 +8,18 @@ from uuid import uuid4
 import pytest
 from rest_framework import status
 
-from plane.db.models import Project, ProjectMember, State, User, WorkspaceMember
+from plane.db.models import Project, ProjectCreationQuota, ProjectMember, State, User, WorkspaceMember
+
+
+@pytest.fixture(autouse=True)
+def allow_project_creation_for_existing_contracts(db, create_user, workspace):
+    """Keep pre-quota project API contracts focused on their original behavior."""
+
+    ProjectCreationQuota.objects.update_or_create(
+        user=create_user,
+        workspace=workspace,
+        defaults={"limit": None},
+    )
 
 
 @pytest.fixture

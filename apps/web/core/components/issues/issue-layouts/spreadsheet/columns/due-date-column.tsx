@@ -7,6 +7,7 @@
 import React from "react";
 import { observer } from "mobx-react";
 import { DueDatePropertyIcon } from "@plane/propel/icons";
+import { useTranslation } from "@plane/i18n";
 // types
 import type { TIssue } from "@plane/types";
 import { cn, getDate, renderFormattedPayloadDate, shouldHighlightIssueDueDate } from "@plane/utils";
@@ -25,6 +26,7 @@ type Props = {
 
 export const SpreadsheetDueDateColumn = observer(function SpreadsheetDueDateColumn(props: Props) {
   const { issue, onChange, disabled, onClose } = props;
+  const { t } = useTranslation();
   // store hooks
   const { getStateById } = useProjectState();
   // derived values
@@ -47,7 +49,7 @@ export const SpreadsheetDueDateColumn = observer(function SpreadsheetDueDateColu
           );
         }}
         disabled={disabled}
-        placeholder="Due date"
+        placeholder={t("due_date")}
         icon={<DueDatePropertyIcon className="h-3 w-3 flex-shrink-0" />}
         buttonVariant="transparent-with-text"
         buttonContainerClassName="w-full"

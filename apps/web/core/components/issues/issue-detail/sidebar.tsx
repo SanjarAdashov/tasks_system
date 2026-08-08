@@ -36,6 +36,7 @@ import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useMember } from "@/hooks/store/use-member";
 import { useProject } from "@/hooks/store/use-project";
 import { useProjectState } from "@/hooks/store/use-project-state";
+import { useProjectWorkItemFieldVisibility } from "@/hooks/use-project-work-item-field-visibility";
 // components
 import { IssueParentSelectRoot } from "@/components/issues/parent-select-root";
 import { SidebarPropertyListItem } from "@/components/common/layout/sidebar/property-list-item";
@@ -63,6 +64,7 @@ export const IssueDetailsSidebar = observer(function IssueDetailsSidebar(props: 
   } = useIssueDetail();
   const { getUserDetails } = useMember();
   const { getStateById } = useProjectState();
+  const { isFieldVisible } = useProjectWorkItemFieldVisibility(workspaceSlug, projectId);
   const issue = getIssueById(issueId);
   if (!issue) return <></>;
 
@@ -139,52 +141,56 @@ export const IssueDetailsSidebar = observer(function IssueDetailsSidebar(props: 
               </SidebarPropertyListItem>
             )}
 
-            <SidebarPropertyListItem icon={StartDatePropertyIcon} label={t("common.order_by.start_date")}>
-              <DateDropdown
-                placeholder={t("issue.add.start_date")}
-                value={issue.start_date}
-                onChange={(val) =>
-                  issueOperations.update(workspaceSlug, projectId, issueId, {
-                    start_date: val ? renderFormattedPayloadDate(val) : null,
-                  })
-                }
-                maxDate={maxDate ?? undefined}
-                disabled={!isEditable}
-                buttonVariant="transparent-with-text"
-                className="group w-full grow"
-                buttonContainerClassName="w-full text-left h-7.5"
-                buttonClassName={`text-body-xs-regular ${issue?.start_date ? "" : "text-placeholder"}`}
-                hideIcon
-                clearIconClassName="h-3 w-3 hidden group-hover:inline"
-              />
-            </SidebarPropertyListItem>
-
-            <SidebarPropertyListItem icon={DueDatePropertyIcon} label={t("common.order_by.due_date")}>
-              <div className="flex w-full items-center gap-2">
+            {isFieldVisible("start_date") && (
+              <SidebarPropertyListItem icon={StartDatePropertyIcon} label={t("common.order_by.start_date")}>
                 <DateDropdown
-                  placeholder={t("issue.add.due_date")}
-                  value={issue.target_date}
+                  placeholder={t("issue.add.start_date")}
+                  value={issue.start_date}
                   onChange={(val) =>
                     issueOperations.update(workspaceSlug, projectId, issueId, {
-                      target_date: val ? renderFormattedPayloadDate(val) : null,
+                      start_date: val ? renderFormattedPayloadDate(val) : null,
                     })
                   }
-                  minDate={minDate ?? undefined}
+                  maxDate={maxDate ?? undefined}
                   disabled={!isEditable}
                   buttonVariant="transparent-with-text"
                   className="group w-full grow"
                   buttonContainerClassName="w-full text-left h-7.5"
-                  buttonClassName={cn("text-body-xs-regular", {
-                    "text-placeholder": !issue.target_date,
-                    "text-danger-primary": shouldHighlightIssueDueDate(issue.target_date, stateDetails?.group),
-                  })}
+                  buttonClassName={`text-body-xs-regular ${issue?.start_date ? "" : "text-placeholder"}`}
                   hideIcon
-                  clearIconClassName="h-3 w-3 hidden group-hover:inline text-primary"
+                  clearIconClassName="h-3 w-3 hidden group-hover:inline"
                 />
-              </div>
-            </SidebarPropertyListItem>
+              </SidebarPropertyListItem>
+            )}
 
-            {projectId && areEstimateEnabledByProjectId(projectId) && (
+            {isFieldVisible("target_date") && (
+              <SidebarPropertyListItem icon={DueDatePropertyIcon} label={t("common.order_by.due_date")}>
+                <div className="flex w-full items-center gap-2">
+                  <DateDropdown
+                    placeholder={t("issue.add.due_date")}
+                    value={issue.target_date}
+                    onChange={(val) =>
+                      issueOperations.update(workspaceSlug, projectId, issueId, {
+                        target_date: val ? renderFormattedPayloadDate(val) : null,
+                      })
+                    }
+                    minDate={minDate ?? undefined}
+                    disabled={!isEditable}
+                    buttonVariant="transparent-with-text"
+                    className="group w-full grow"
+                    buttonContainerClassName="w-full text-left h-7.5"
+                    buttonClassName={cn("text-body-xs-regular", {
+                      "text-placeholder": !issue.target_date,
+                      "text-danger-primary": shouldHighlightIssueDueDate(issue.target_date, stateDetails?.group),
+                    })}
+                    hideIcon
+                    clearIconClassName="h-3 w-3 hidden group-hover:inline text-primary"
+                  />
+                </div>
+              </SidebarPropertyListItem>
+            )}
+
+            {isFieldVisible("estimate") && projectId && areEstimateEnabledByProjectId(projectId) && (
               <SidebarPropertyListItem icon={EstimatePropertyIcon} label={t("common.estimate")}>
                 <EstimateDropdown
                   value={issue?.estimate_point ?? undefined}
@@ -205,7 +211,7 @@ export const IssueDetailsSidebar = observer(function IssueDetailsSidebar(props: 
               </SidebarPropertyListItem>
             )}
 
-            {projectDetails?.module_view && (
+            {isFieldVisible("module") && projectDetails?.module_view && (
               <SidebarPropertyListItem icon={ModuleIcon} label={t("common.modules")}>
                 <IssueModuleSelect
                   className="w-full grow"
@@ -218,7 +224,7 @@ export const IssueDetailsSidebar = observer(function IssueDetailsSidebar(props: 
               </SidebarPropertyListItem>
             )}
 
-            {projectDetails?.cycle_view && (
+            {isFieldVisible("cycle") && projectDetails?.cycle_view && (
               <SidebarPropertyListItem icon={CycleIcon} label={t("common.cycle")} appendElement={null}>
                 <IssueCycleSelect
                   className="h-7.5 w-full grow"
@@ -231,16 +237,18 @@ export const IssueDetailsSidebar = observer(function IssueDetailsSidebar(props: 
               </SidebarPropertyListItem>
             )}
 
-            <SidebarPropertyListItem icon={ParentPropertyIcon} label={t("common.parent")}>
-              <IssueParentSelectRoot
-                className="h-7.5 w-full grow"
-                workspaceSlug={workspaceSlug}
-                projectId={projectId}
-                issueId={issueId}
-                issueOperations={issueOperations}
-                disabled={!isEditable}
-              />
-            </SidebarPropertyListItem>
+            {isFieldVisible("parent") && (
+              <SidebarPropertyListItem icon={ParentPropertyIcon} label={t("common.parent")}>
+                <IssueParentSelectRoot
+                  className="h-7.5 w-full grow"
+                  workspaceSlug={workspaceSlug}
+                  projectId={projectId}
+                  issueId={issueId}
+                  issueOperations={issueOperations}
+                  disabled={!isEditable}
+                />
+              </SidebarPropertyListItem>
+            )}
 
             <SidebarPropertyListItem icon={LabelPropertyIcon} label={t("common.labels")}>
               <IssueLabel

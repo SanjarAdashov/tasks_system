@@ -19,6 +19,7 @@ export enum EIssueLayoutTypes {
   CALENDAR = "calendar",
   GANTT = "gantt_chart",
   SPREADSHEET = "spreadsheet",
+  CUSTOM_GROUPING = "custom_grouping",
 }
 
 export enum EIssueServiceType {

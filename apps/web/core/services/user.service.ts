@@ -18,6 +18,7 @@ import type {
   TIssuesResponse,
   TUserProfile,
   IEmailCheckResponse,
+  IUserCreationQuotaSnapshot,
 } from "@plane/types";
 import { APIService } from "@/services/api.service";
 // types
@@ -89,6 +90,14 @@ export class UserService extends APIService {
       .then((response) => response?.data)
       .catch((error) => {
         throw error?.response;
+      });
+  }
+
+  async currentUserCreationQuotas(): Promise<IUserCreationQuotaSnapshot> {
+    return this.get("/api/users/me/creation-quotas/")
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
       });
   }
 

@@ -21,6 +21,7 @@ import { useCommandPalette } from "@/hooks/store/use-command-palette";
 import { useProject } from "@/hooks/store/use-project";
 import { useWorkspace } from "@/hooks/store/use-workspace";
 import { useUser, useUserPermissions } from "@/hooks/store/user";
+import { useCreationQuotas } from "@/hooks/use-creation-quotas";
 // plane web constants
 
 export const NoProjectsEmptyState = observer(function NoProjectsEmptyState() {
@@ -32,6 +33,7 @@ export const NoProjectsEmptyState = observer(function NoProjectsEmptyState() {
   const { data: currentUser } = useUser();
   const { joinedProjectIds } = useProject();
   const { currentWorkspace: activeWorkspace } = useWorkspace();
+  const { data: creationQuotas } = useCreationQuotas();
   // local storage
   const { storedValue, setValue } = useLocalStorage(`quickstart-guide-${workspaceSlug}`, {
     hide: false,
@@ -41,9 +43,8 @@ export const NoProjectsEmptyState = observer(function NoProjectsEmptyState() {
   });
   const { t } = useTranslation();
   // derived values
-  const canCreateProject = allowPermissions(
-    [EUserPermissions.ADMIN, EUserPermissions.MEMBER],
-    EUserPermissionsLevel.WORKSPACE
+  const canCreateProject = Boolean(
+    creationQuotas?.projects.find((quota) => quota.workspace_slug === workspaceSlug?.toString())?.can_create
   );
   const isWorkspaceAdmin = allowPermissions([EUserPermissions.ADMIN], EUserPermissionsLevel.WORKSPACE);
 
