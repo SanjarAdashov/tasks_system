@@ -32,7 +32,12 @@ export const StateUpdate = observer(function StateUpdate(props: TStateUpdate) {
     if (!state.id) return { status: "error" };
 
     try {
-      await updateStateCallback(state.id, formData);
+      const editableData: Partial<IState> = {
+        name: formData.name,
+        description: formData.description,
+        color: formData.color,
+      };
+      await updateStateCallback(state.id, editableData);
       setToast({
         type: TOAST_TYPE.SUCCESS,
         title: "Success!",

@@ -121,6 +121,23 @@ class TestProjectStateOrder:
         state.refresh_from_db()
         assert state.sequence == original_sequence
 
+    def test_state_rename_accepts_unchanged_sequence_from_legacy_form(
+        self, session_client, workspace, project, project_states
+    ):
+        state = project_states[0]
+        original_sequence = state.sequence
+
+        response = session_client.patch(
+            f"{_states_url(workspace, project)}{state.id}/",
+            {"name": "Renamed backlog", "sequence": original_sequence},
+            format="json",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        state.refresh_from_db()
+        assert state.name == "Renamed backlog"
+        assert state.sequence == original_sequence
+
     def test_new_and_restored_states_are_appended(self, project, project_states):
         deleted_state = project_states[1]
         deleted_state.delete()

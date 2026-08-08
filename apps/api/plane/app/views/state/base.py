@@ -61,14 +61,23 @@ class StateViewSet(BaseViewSet):
 
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
     def partial_update(self, request, slug, project_id, pk):
-        if "sequence" in request.data:
-            return Response(
-                {"sequence": "Use the project state order endpoint to change state order"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
         try:
             state = State.objects.get(pk=pk, project_id=project_id, workspace__slug=slug)
-            serializer = StateSerializer(state, data=request.data, partial=True)
+            update_data = request.data.copy()
+            if "sequence" in update_data:
+                try:
+                    requested_sequence = float(update_data["sequence"])
+                except (TypeError, ValueError):
+                    requested_sequence = None
+
+                if requested_sequence != state.sequence:
+                    return Response(
+                        {"sequence": "Use the project state order endpoint to change state order"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                update_data.pop("sequence")
+
+            serializer = StateSerializer(state, data=update_data, partial=True)
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data, status=status.HTTP_200_OK)

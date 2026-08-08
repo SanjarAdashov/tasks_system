@@ -11,6 +11,7 @@ import { CircleMinus } from "lucide-react";
 import { Disclosure } from "@headlessui/react";
 // plane imports
 import { ROLE, EUserPermissions, MEMBER_TRACKER_ELEMENTS } from "@plane/constants";
+import { useTranslation } from "@plane/i18n";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import type { EUserProjectRoles, IUser, IWorkspaceMember, TProjectMembership } from "@plane/types";
 import { CustomMenu, CustomSelect } from "@plane/ui";
@@ -40,8 +41,9 @@ type AccountTypeProps = {
 
 export function NameColumn(props: NameProps) {
   const { rowData, workspaceSlug, isAdmin, currentUser, setRemoveMemberModal } = props;
+  const { t } = useTranslation();
   // derived values
-  const { avatar_url, display_name, email, first_name, id, last_name } = rowData.member;
+  const { avatar_url, display_name, email, first_name, id, is_active, last_name } = rowData.member;
 
   return (
     <Disclosure>
@@ -66,7 +68,14 @@ export function NameColumn(props: NameProps) {
                   </span>
                 </Link>
               )}
-              {first_name} {last_name}
+              <span className="truncate">
+                {first_name} {last_name}
+              </span>
+              {is_active === false && (
+                <span className="shrink-0 rounded-full bg-danger-subtle px-2 py-0.5 text-10 font-medium text-danger-primary">
+                  {t("project_settings.user_groups.status.blocked")}
+                </span>
+              )}
             </div>
             {(isAdmin || id === currentUser?.id) && (
               <CustomMenu
