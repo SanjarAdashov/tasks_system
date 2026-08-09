@@ -7,6 +7,7 @@ import uuid
 from unittest.mock import patch
 
 import pytest
+from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
 
@@ -17,8 +18,12 @@ from plane.db.models import (
     ProjectMember,
     ProjectUserGroup,
     ProjectUserGroupMember,
+    ProjectWorkItemProperty,
     State,
     User,
+    WorkItemPropertyType,
+    WorkItemSelectSource,
+    WorkItemPropertyValue,
     WorkspaceMember,
 )
 
@@ -210,6 +215,111 @@ class TestIntakePublicForms:
         assert session_client.get("/api/public/support/forms/workspace-support/").status_code == 200
 
     @patch("plane.space.views.intake_form.send_intake_form_requester_email.delay")
+    def test_project_custom_member_field_is_available_on_public_form(
+        self,
+        mock_email,
+        session_client,
+        api_client,
+        workspace,
+        intake_project,
+        create_user,
+    ):
+        project, target_state, group = intake_project
+        blocked_user = User.objects.create_user(
+            email=f"blocked-{uuid.uuid4().hex}@plane.so",
+            username=uuid.uuid4().hex,
+        )
+        blocked_user.blocked_at = timezone.now()
+        blocked_user.save(update_fields=["blocked_at", "updated_at"])
+        ProjectMember.objects.create(project=project, member=blocked_user, role=15, is_active=True)
+        property_instance = ProjectWorkItemProperty.objects.create(
+            workspace=workspace,
+            project=project,
+            name="Participants",
+            property_type=WorkItemPropertyType.MULTI_SELECT,
+            select_source=WorkItemSelectSource.MEMBERS,
+        )
+        payload = _form_payload(target_state, group, slug="member-field")
+        payload["field_schema"].append(
+            {
+                "id": f"property_{property_instance.id}",
+                "source": "CUSTOM",
+                "key": property_instance.name,
+                "property_id": str(property_instance.id),
+                "name": property_instance.name,
+                "visible": True,
+                "required": True,
+            }
+        )
+
+        created = session_client.post(_form_url(workspace, project), payload, format="json")
+
+        assert created.status_code == status.HTTP_201_CREATED, created.data
+        opened = api_client.get("/api/public/support/forms/member-field/")
+        assert opened.status_code == status.HTTP_200_OK
+        custom_field = next(field for field in opened.data["fields"] if field["source"] == "CUSTOM")
+        assert custom_field["property_type"] == WorkItemPropertyType.MULTI_SELECT
+        assert custom_field["options"] == [{"id": str(create_user.id), "name": create_user.display_name}]
+
+        submitted = api_client.post(
+            "/api/public/support/forms/member-field/",
+            {
+                "tracking_token": "m" * 48,
+                "values": {
+                    "title": "Member selection",
+                    f"property_{property_instance.id}": [str(create_user.id)],
+                },
+                "asset_ids": [],
+            },
+            format="json",
+        )
+        assert submitted.status_code == status.HTTP_201_CREATED, submitted.data
+        submission = IntakeFormSubmission.objects.get(reference=submitted.data["reference"])
+        assert WorkItemPropertyValue.objects.filter(
+            issue=submission.intake_issue.issue,
+            property=property_instance,
+            value=[str(create_user.id)],
+        ).exists()
+
+    @patch("plane.space.views.intake_form.send_intake_form_requester_email.delay")
+    def test_required_attachments_are_validated_separately_from_form_values(
+        self,
+        mock_email,
+        session_client,
+        api_client,
+        workspace,
+        intake_project,
+    ):
+        project, target_state, group = intake_project
+        payload = _form_payload(target_state, group, slug="required-files")
+        payload["field_schema"].append(
+            {
+                "id": "attachments",
+                "source": "FORM",
+                "key": "attachments",
+                "visible": True,
+                "required": True,
+            }
+        )
+        created = session_client.post(_form_url(workspace, project), payload, format="json")
+        assert created.status_code == status.HTTP_201_CREATED, created.data
+
+        opened = api_client.get("/api/public/support/forms/required-files/")
+        assert any(field["key"] == "attachments" for field in opened.data["fields"])
+        submitted = api_client.post(
+            "/api/public/support/forms/required-files/",
+            {
+                "tracking_token": "a" * 48,
+                "values": {"title": "Files are required"},
+                "asset_ids": [],
+            },
+            format="json",
+        )
+
+        assert submitted.status_code == status.HTTP_400_BAD_REQUEST
+        assert submitted.data["asset_ids"] == "This field is required."
+
+    @patch("plane.space.views.intake_form.send_intake_form_requester_email.delay")
     def test_public_submission_creates_triage_item_and_tracking_page(
         self,
         mock_email,
@@ -318,11 +428,14 @@ class TestIntakePublicForms:
             group=group,
             member=reviewer,
         )
-        assert session_client.post(
-            _form_url(workspace, project),
-            _form_payload(target_state, group, slug="reviewed"),
-            format="json",
-        ).status_code == 201
+        assert (
+            session_client.post(
+                _form_url(workspace, project),
+                _form_payload(target_state, group, slug="reviewed"),
+                format="json",
+            ).status_code
+            == 201
+        )
         created = api_client.post(
             "/api/public/support/forms/reviewed/",
             {"tracking_token": "r" * 48, "values": {"title": "Review me"}, "asset_ids": []},

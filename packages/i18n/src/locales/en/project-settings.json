@@ -804,8 +804,14 @@
           "metrics": { "active": "Active forms", "submissions": "Requests received", "public": "Public forms" },
           "tabs": { "active": "Active", "archived": "Archive" },
           "empty": {
-            "active": { "title": "Create your first public form", "description": "Collect structured requests through a secure link and review them in Intake." },
-            "archived": { "title": "The archive is empty", "description": "Archived forms remain here together with their request history." }
+            "active": {
+              "title": "Create your first public form",
+              "description": "Collect structured requests through a secure link and review them in Intake."
+            },
+            "archived": {
+              "title": "The archive is empty",
+              "description": "Archived forms remain here together with their request history."
+            }
           },
           "copied": "Link copied",
           "disabled": "Disabled",
@@ -822,7 +828,13 @@
           },
           "editor_help": "Configure one section at a time. The preview updates as you work.",
           "loading": "Preparing the form editor...",
-          "steps": { "basics": "Basics", "access": "Access", "fields": "Fields", "routing": "Routing", "appearance": "Appearance" },
+          "steps": {
+            "basics": "Basics",
+            "access": "Access",
+            "fields": "Fields",
+            "routing": "Routing",
+            "appearance": "Appearance"
+          },
           "help": {
             "basics": "Set the name, description, and permanent public URL.",
             "access": "Choose who can open and submit this form.",
@@ -837,35 +849,48 @@
           "action_error": "Action failed",
           "name": "Form name",
           "description_label": "Description",
-      "public_url": "Public URL",
-      "slug_suggestions": "Available options",
+          "public_url": "Public URL",
+          "slug_suggestions": "Available options",
           "enabled": "Accept new requests",
           "enabled_help": "Turn this off to temporarily close the form without losing its history.",
           "access_code": "Access code",
           "generate": "Generate",
-          "fields": { "requester_name": "Your name", "requester_email": "Email", "title": "Request title", "description": "Description", "priority": "Priority" },
+          "fields": {
+            "requester_name": "Your name",
+            "requester_email": "Email",
+            "title": "Request title",
+            "description": "Description",
+            "priority": "Priority",
+            "attachments": "Attachments"
+          },
           "custom_field": "Project field",
           "system_field": "Standard field",
           "visible": "Visible",
-      "required": "Required",
-      "hidden_default": "Default value for the hidden field",
-      "hidden_checkbox_default": "Enabled by default",
-      "priorities": { "none": "None", "low": "Low", "medium": "Medium", "high": "High", "urgent": "Urgent" },
-      "title_template": "Hidden title template",
+          "required": "Required",
+          "hidden_default": "Default value for the hidden field",
+          "hidden_checkbox_default": "Enabled by default",
+          "priorities": { "none": "None", "low": "Low", "medium": "Medium", "high": "High", "urgent": "Urgent" },
+          "title_template": "Hidden title template",
           "custom_fields": "Project fields",
-          "custom_fields_help": "Employee-backed lists are excluded from public forms.",
+          "custom_fields_help": "Add any active project field, including employee-backed lists. Only active, unblocked project members are shown.",
           "conditions": "Conditional visibility",
           "conditions_help": "Show a field only when another answer matches.",
           "add_condition": "Add condition",
-      "condition_value": "Expected value",
-      "condition_target": "Field to update",
-      "condition_action": "Action",
-      "condition_actions": { "SHOW": "Show", "HIDE": "Hide" },
-      "condition_match": "Apply when",
-      "condition_matches": { "ALL": "all rules match", "ANY": "any rule matches" },
-      "condition_operators": { "EQUALS": "equals", "NOT_EQUALS": "does not equal", "CONTAINS": "contains", "IS_EMPTY": "is empty", "IS_NOT_EMPTY": "is not empty" },
-      "condition_no_value": "No value needed",
-      "add_rule": "Add rule",
+          "condition_value": "Expected value",
+          "condition_target": "Field to update",
+          "condition_action": "Action",
+          "condition_actions": { "SHOW": "Show", "HIDE": "Hide" },
+          "condition_match": "Apply when",
+          "condition_matches": { "ALL": "all rules match", "ANY": "any rule matches" },
+          "condition_operators": {
+            "EQUALS": "equals",
+            "NOT_EQUALS": "does not equal",
+            "CONTAINS": "contains",
+            "IS_EMPTY": "is empty",
+            "IS_NOT_EMPTY": "is not empty"
+          },
+          "condition_no_value": "No value needed",
+          "add_rule": "Add rule",
           "target_state": "Status after acceptance",
           "reviewer_group": "Reviewer group",
           "group_required": "Create an active project user group before publishing a form.",
@@ -873,11 +898,23 @@
           "email_notifications": "Email the requester",
           "email_notifications_help": "Send updates at every public status change. Email becomes required.",
           "public_statuses": "Public statuses",
-      "public_statuses_help": "Choose what the requester sees for each Intake decision.",
-      "project_state_statuses": "Task statuses after acceptance",
-      "project_state_statuses_help": "Map each project status to a requester-friendly public stage.",
-          "internal_statuses": { "PENDING": "New request", "SNOOZED": "Snoozed", "ACCEPTED": "Accepted", "REJECTED": "Rejected", "DUPLICATE": "Duplicate" },
-          "public_status_labels": { "RECEIVED": "Received", "UNDER_REVIEW": "Under review", "IN_PROGRESS": "In progress", "COMPLETED": "Completed", "REJECTED": "Rejected" },
+          "public_statuses_help": "Choose what the requester sees for each Intake decision.",
+          "project_state_statuses": "Task statuses after acceptance",
+          "project_state_statuses_help": "Map each project status to a requester-friendly public stage.",
+          "internal_statuses": {
+            "PENDING": "New request",
+            "SNOOZED": "Snoozed",
+            "ACCEPTED": "Accepted",
+            "REJECTED": "Rejected",
+            "DUPLICATE": "Duplicate"
+          },
+          "public_status_labels": {
+            "RECEIVED": "Received",
+            "UNDER_REVIEW": "Under review",
+            "IN_PROGRESS": "In progress",
+            "COMPLETED": "Completed",
+            "REJECTED": "Rejected"
+          },
           "accent_color": "Accent color",
           "header_image": "Header image URL",
           "logo_url": "Logo URL",
@@ -885,14 +922,26 @@
           "locale_content": "Translations",
           "locale_content_help": "Add the form name and description in Russian, Uzbek, and English.",
           "localized_name": "Localized form name",
-      "localized_description": "Localized description",
-      "localized_success_message": "Localized success message",
-      "localized_field_labels": "Project field labels",
+          "localized_description": "Localized description",
+          "localized_success_message": "Localized success message",
+          "localized_field_labels": "Project field labels",
           "untitled": "Untitled form",
           "confirm": {
-            "archive": { "title": "Archive this form?", "description": "The public link will close, while all requests stay available.", "action": "Archive" },
-            "restore": { "title": "Restore this form?", "description": "You can enable the public link after restoring it.", "action": "Restore" },
-            "delete": { "title": "Delete this empty form?", "description": "This cannot be undone and its URL becomes available immediately.", "action": "Delete" }
+            "archive": {
+              "title": "Archive this form?",
+              "description": "The public link will close, while all requests stay available.",
+              "action": "Archive"
+            },
+            "restore": {
+              "title": "Restore this form?",
+              "description": "You can enable the public link after restoring it.",
+              "action": "Restore"
+            },
+            "delete": {
+              "title": "Delete this empty form?",
+              "description": "This cannot be undone and its URL becomes available immediately.",
+              "action": "Delete"
+            }
           }
         },
         "toasts": {

@@ -801,11 +801,21 @@
           }
         },
         "builder": {
-          "metrics": { "active": "Faol shakllar", "submissions": "Qabul qilingan murojaatlar", "public": "Ochiq shakllar" },
+          "metrics": {
+            "active": "Faol shakllar",
+            "submissions": "Qabul qilingan murojaatlar",
+            "public": "Ochiq shakllar"
+          },
           "tabs": { "active": "Faol", "archived": "Arxiv" },
           "empty": {
-            "active": { "title": "Birinchi ochiq shaklni yarating", "description": "Xavfsiz havola orqali tartibli murojaatlarni yig‘ing va ularni Qabul bo‘limida ko‘rib chiqing." },
-            "archived": { "title": "Arxiv bo‘sh", "description": "Arxivlangan shakllar murojaatlar tarixi bilan shu yerda saqlanadi." }
+            "active": {
+              "title": "Birinchi ochiq shaklni yarating",
+              "description": "Xavfsiz havola orqali tartibli murojaatlarni yig‘ing va ularni Qabul bo‘limida ko‘rib chiqing."
+            },
+            "archived": {
+              "title": "Arxiv bo‘sh",
+              "description": "Arxivlangan shakllar murojaatlar tarixi bilan shu yerda saqlanadi."
+            }
           },
           "copied": "Havola nusxalandi",
           "disabled": "O‘chirilgan",
@@ -814,7 +824,11 @@
           "access": "Kirish",
           "requests": "Murojaatlar",
           "fields_count": "Ko‘rinadigan maydonlar",
-          "access_types": { "PUBLIC": "Ochiq havola", "CODE": "Kirish kodi", "AUTHENTICATED": "Ish maydoni foydalanuvchilari" },
+          "access_types": {
+            "PUBLIC": "Ochiq havola",
+            "CODE": "Kirish kodi",
+            "AUTHENTICATED": "Ish maydoni foydalanuvchilari"
+          },
           "access_help": {
             "PUBLIC": "Havolasi bor har kim murojaat yubora oladi.",
             "CODE": "Shakl ochilishidan oldin tashrifchi kod kiritadi.",
@@ -822,7 +836,13 @@
           },
           "editor_help": "Har bir bo‘limni alohida sozlang. Ko‘rinish darhol yangilanadi.",
           "loading": "Shakl konstruktori tayyorlanmoqda...",
-          "steps": { "basics": "Asosiy", "access": "Kirish", "fields": "Maydonlar", "routing": "Yo‘naltirish", "appearance": "Ko‘rinish" },
+          "steps": {
+            "basics": "Asosiy",
+            "access": "Kirish",
+            "fields": "Maydonlar",
+            "routing": "Yo‘naltirish",
+            "appearance": "Ko‘rinish"
+          },
           "help": {
             "basics": "Nomi, tavsifi va doimiy ochiq manzilini belgilang.",
             "access": "Shaklni kim ochishi va yuborishini belgilang.",
@@ -837,35 +857,54 @@
           "action_error": "Amal bajarilmadi",
           "name": "Shakl nomi",
           "description_label": "Tavsif",
-      "public_url": "Ochiq manzil",
-      "slug_suggestions": "Bo‘sh variantlar",
+          "public_url": "Ochiq manzil",
+          "slug_suggestions": "Bo‘sh variantlar",
           "enabled": "Yangi murojaatlarni qabul qilish",
           "enabled_help": "Tarixni yo‘qotmasdan shaklni vaqtincha yopish uchun o‘chiring.",
           "access_code": "Kirish kodi",
           "generate": "Yaratish",
-          "fields": { "requester_name": "Ismingiz", "requester_email": "Elektron pochta", "title": "Murojaat mavzusi", "description": "Tavsif", "priority": "Ustuvorlik" },
+          "fields": {
+            "requester_name": "Ismingiz",
+            "requester_email": "Elektron pochta",
+            "title": "Murojaat mavzusi",
+            "description": "Tavsif",
+            "priority": "Ustuvorlik",
+            "attachments": "Ilovalar"
+          },
           "custom_field": "Loyiha maydoni",
           "system_field": "Standart maydon",
           "visible": "Ko‘rsatish",
-      "required": "Majburiy",
-      "hidden_default": "Yashirin maydon uchun standart qiymat",
-      "hidden_checkbox_default": "Standart holatda yoqilgan",
-      "priorities": { "none": "Ko‘rsatilmagan", "low": "Past", "medium": "O‘rta", "high": "Yuqori", "urgent": "Shoshilinch" },
-      "title_template": "Yashirin sarlavha shabloni",
+          "required": "Majburiy",
+          "hidden_default": "Yashirin maydon uchun standart qiymat",
+          "hidden_checkbox_default": "Standart holatda yoqilgan",
+          "priorities": {
+            "none": "Ko‘rsatilmagan",
+            "low": "Past",
+            "medium": "O‘rta",
+            "high": "Yuqori",
+            "urgent": "Shoshilinch"
+          },
+          "title_template": "Yashirin sarlavha shabloni",
           "custom_fields": "Loyiha maydonlari",
-          "custom_fields_help": "Xodimlar ro‘yxati ochiq shakllarda ko‘rsatilmaydi.",
+          "custom_fields_help": "Istalgan faol loyiha maydonini, jumladan xodimlar ro‘yxatini qo‘shing. Faqat faol va bloklanmagan loyiha ishtirokchilari ko‘rsatiladi.",
           "conditions": "Shartli ko‘rsatish",
           "conditions_help": "Boshqa javob mos kelgandagina maydonni ko‘rsating.",
           "add_condition": "Shart qo‘shish",
-      "condition_value": "Kutilgan qiymat",
-      "condition_target": "Qaysi maydon o‘zgaradi",
-      "condition_action": "Amal",
-      "condition_actions": { "SHOW": "Ko‘rsatish", "HIDE": "Yashirish" },
-      "condition_match": "Quyidagilar bajarilganda qo‘llash",
-      "condition_matches": { "ALL": "barcha shartlar", "ANY": "istalgan shart" },
-      "condition_operators": { "EQUALS": "teng", "NOT_EQUALS": "teng emas", "CONTAINS": "o‘z ichiga oladi", "IS_EMPTY": "to‘ldirilmagan", "IS_NOT_EMPTY": "to‘ldirilgan" },
-      "condition_no_value": "Qiymat talab qilinmaydi",
-      "add_rule": "Qoida qo‘shish",
+          "condition_value": "Kutilgan qiymat",
+          "condition_target": "Qaysi maydon o‘zgaradi",
+          "condition_action": "Amal",
+          "condition_actions": { "SHOW": "Ko‘rsatish", "HIDE": "Yashirish" },
+          "condition_match": "Quyidagilar bajarilganda qo‘llash",
+          "condition_matches": { "ALL": "barcha shartlar", "ANY": "istalgan shart" },
+          "condition_operators": {
+            "EQUALS": "teng",
+            "NOT_EQUALS": "teng emas",
+            "CONTAINS": "o‘z ichiga oladi",
+            "IS_EMPTY": "to‘ldirilmagan",
+            "IS_NOT_EMPTY": "to‘ldirilgan"
+          },
+          "condition_no_value": "Qiymat talab qilinmaydi",
+          "add_rule": "Qoida qo‘shish",
           "target_state": "Qabuldan keyingi holat",
           "reviewer_group": "Tekshiruvchilar guruhi",
           "group_required": "Nashr qilishdan oldin faol loyiha foydalanuvchilari guruhini yarating.",
@@ -873,11 +912,23 @@
           "email_notifications": "Murojaatchiga email yuborish",
           "email_notifications_help": "Har bir ochiq holat o‘zgarishida xabar yuboriladi. Email majburiy bo‘ladi.",
           "public_statuses": "Ochiq holatlar",
-      "public_statuses_help": "Qabul bo‘limidagi har bir qaror uchun murojaatchi ko‘radigan holatni tanlang.",
-      "project_state_statuses": "Qabul qilingandan keyingi vazifa holatlari",
-      "project_state_statuses_help": "Har bir loyiha holatini tushunarli ommaviy bosqichga moslang.",
-          "internal_statuses": { "PENDING": "Yangi murojaat", "SNOOZED": "Kechiktirilgan", "ACCEPTED": "Qabul qilingan", "REJECTED": "Rad etilgan", "DUPLICATE": "Nusxa" },
-          "public_status_labels": { "RECEIVED": "Qabul qilindi", "UNDER_REVIEW": "Ko‘rib chiqilmoqda", "IN_PROGRESS": "Ish jarayonida", "COMPLETED": "Yakunlandi", "REJECTED": "Rad etildi" },
+          "public_statuses_help": "Qabul bo‘limidagi har bir qaror uchun murojaatchi ko‘radigan holatni tanlang.",
+          "project_state_statuses": "Qabul qilingandan keyingi vazifa holatlari",
+          "project_state_statuses_help": "Har bir loyiha holatini tushunarli ommaviy bosqichga moslang.",
+          "internal_statuses": {
+            "PENDING": "Yangi murojaat",
+            "SNOOZED": "Kechiktirilgan",
+            "ACCEPTED": "Qabul qilingan",
+            "REJECTED": "Rad etilgan",
+            "DUPLICATE": "Nusxa"
+          },
+          "public_status_labels": {
+            "RECEIVED": "Qabul qilindi",
+            "UNDER_REVIEW": "Ko‘rib chiqilmoqda",
+            "IN_PROGRESS": "Ish jarayonida",
+            "COMPLETED": "Yakunlandi",
+            "REJECTED": "Rad etildi"
+          },
           "accent_color": "Asosiy rang",
           "header_image": "Sarlavha rasmi havolasi",
           "logo_url": "Logotip havolasi",
@@ -885,14 +936,26 @@
           "locale_content": "Tarjimalar",
           "locale_content_help": "Shakl nomi va tavsifini rus, o‘zbek va ingliz tillarida kiriting.",
           "localized_name": "Tarjima qilingan shakl nomi",
-      "localized_description": "Tarjima qilingan tavsif",
-      "localized_success_message": "Yuborilgandan keyingi tarjima qilingan xabar",
-      "localized_field_labels": "Loyiha maydonlari nomlari",
+          "localized_description": "Tarjima qilingan tavsif",
+          "localized_success_message": "Yuborilgandan keyingi tarjima qilingan xabar",
+          "localized_field_labels": "Loyiha maydonlari nomlari",
           "untitled": "Nomsiz shakl",
           "confirm": {
-            "archive": { "title": "Shakl arxivlansinmi?", "description": "Ochiq havola yopiladi, barcha murojaatlar saqlanadi.", "action": "Arxivlash" },
-            "restore": { "title": "Shakl tiklansinmi?", "description": "Tiklangandan keyin ochiq havolani qayta yoqish mumkin.", "action": "Tiklash" },
-            "delete": { "title": "Bo‘sh shakl o‘chirilsinmi?", "description": "Bu amalni qaytarib bo‘lmaydi va manzil darhol bo‘shaydi.", "action": "O‘chirish" }
+            "archive": {
+              "title": "Shakl arxivlansinmi?",
+              "description": "Ochiq havola yopiladi, barcha murojaatlar saqlanadi.",
+              "action": "Arxivlash"
+            },
+            "restore": {
+              "title": "Shakl tiklansinmi?",
+              "description": "Tiklangandan keyin ochiq havolani qayta yoqish mumkin.",
+              "action": "Tiklash"
+            },
+            "delete": {
+              "title": "Bo‘sh shakl o‘chirilsinmi?",
+              "description": "Bu amalni qaytarib bo‘lmaydi va manzil darhol bo‘shaydi.",
+              "action": "O‘chirish"
+            }
           }
         },
         "toasts": {

@@ -18,7 +18,7 @@ from plane.utils.work_item_fields import _validate_property_value
 from .base import BaseSerializer
 
 
-FORM_FIELD_KEYS = {"requester_name", "requester_email"}
+FORM_FIELD_KEYS = {"requester_name", "requester_email", "attachments"}
 SYSTEM_FIELD_KEYS = {"title", "description", "priority"}
 CONDITION_OPERATORS = {"EQUALS", "NOT_EQUALS", "CONTAINS", "IS_EMPTY", "IS_NOT_EMPTY"}
 
@@ -87,11 +87,14 @@ class IntakeFormSerializer(BaseSerializer):
         return value
 
     def validate_reviewer_group(self, value):
-        if value and not ProjectUserGroup.objects.filter(
-            id=value.id,
-            project=self.context["project"],
-            archived_at__isnull=True,
-        ).exists():
+        if (
+            value
+            and not ProjectUserGroup.objects.filter(
+                id=value.id,
+                project=self.context["project"],
+                archived_at__isnull=True,
+            ).exists()
+        ):
             raise serializers.ValidationError("Select an active user group from this project.")
         return value
 
@@ -134,15 +137,6 @@ class IntakeFormSerializer(BaseSerializer):
         }
         if set(custom_property_ids) != set(properties):
             raise serializers.ValidationError("Every custom field must reference an active project property.")
-        member_properties = [
-            property_id
-            for property_id, item in properties.items()
-            if item.select_source == WorkItemSelectSource.MEMBERS
-        ]
-        if member_properties:
-            raise serializers.ValidationError(
-                {"member_properties": member_properties, "message": "Employee lists cannot be exposed publicly."}
-            )
         return sorted(value, key=lambda item: item["sort_order"])
 
     def validate_conditions(self, value):
@@ -210,8 +204,10 @@ class IntakeFormSerializer(BaseSerializer):
             self.instance.access_type if self.instance else IntakeFormAccessType.PUBLIC,
         )
         access_code = attrs.pop("access_code", None)
-        if access_type == IntakeFormAccessType.CODE and not access_code and not (
-            self.instance and self.instance.access_code_hash
+        if (
+            access_type == IntakeFormAccessType.CODE
+            and not access_code
+            and not (self.instance and self.instance.access_code_hash)
         ):
             raise serializers.ValidationError({"access_code": "Set or generate an access code."})
         if access_code is not None:

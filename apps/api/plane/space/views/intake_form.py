@@ -127,6 +127,8 @@ def _validate_submission_values(form, values):
         field = schema_map.get(field_id)
         if not field:
             continue
+        if field.get("key") == "attachments":
+            continue
         value = values.get(field_id)
         is_empty = value is None or value == "" or value == []
         if field.get("required") and is_empty:
@@ -161,6 +163,18 @@ def _validate_submission_values(form, values):
     if errors:
         raise serializers.ValidationError({"values": errors})
     return normalized
+
+
+def _visible_attachments_field(form, values):
+    visible_ids = get_visible_intake_form_field_ids(form, values)
+    return next(
+        (
+            field
+            for field in form.field_schema
+            if field.get("key") == "attachments" and str(field.get("id")) in visible_ids
+        ),
+        None,
+    )
 
 
 def _apply_hidden_relations(form, issue, hidden_values):
@@ -320,9 +334,7 @@ class PublicIntakeFormEndpoint(BaseAPIView):
         denied = _access_denied_response(form, request)
         if denied:
             return denied
-        response = Response(
-            serialize_public_intake_form(form, tracking_token=generate_tracking_token())
-        )
+        response = Response(serialize_public_intake_form(form, tracking_token=generate_tracking_token()))
         response["Cache-Control"] = "no-store"
         return response
 
@@ -366,6 +378,14 @@ class PublicIntakeFormEndpoint(BaseAPIView):
         ).count()
         if valid_assets != len(set(asset_ids)):
             return Response({"asset_ids": "One or more attachments are invalid."}, status=status.HTTP_400_BAD_REQUEST)
+        attachments_field = _visible_attachments_field(form, values)
+        if asset_ids and not attachments_field:
+            return Response(
+                {"asset_ids": "Attachments are not enabled for this form."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if attachments_field and attachments_field.get("required") and not asset_ids:
+            return Response({"asset_ids": "This field is required."}, status=status.HTTP_400_BAD_REQUEST)
         try:
             submission = _create_submission(
                 form,
@@ -397,6 +417,8 @@ class PublicIntakeAssetEndpoint(BaseAPIView):
         denied = _access_denied_response(form, request)
         if denied:
             return denied
+        if not _visible_attachments_field(form, request.data.get("values", {})):
+            return Response({"error": "ATTACHMENTS_DISABLED"}, status=400)
         tracking_token = str(request.data.get("tracking_token") or "")
         if len(tracking_token) < 32:
             return Response({"tracking_token": "Tracking token is required."}, status=400)

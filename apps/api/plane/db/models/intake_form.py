@@ -45,6 +45,14 @@ def get_default_intake_form_fields():
             "required": False,
             "sort_order": 4000,
         },
+        {
+            "id": "attachments",
+            "source": "FORM",
+            "key": "attachments",
+            "visible": True,
+            "required": False,
+            "sort_order": 5000,
+        },
     ]
 
 
@@ -204,10 +212,14 @@ class IntakeFormEvent(ProjectBaseModel):
 
 @receiver(post_save, sender="db.Issue")
 def schedule_intake_form_status_sync(sender, instance, **kwargs):
-    submission_id = IntakeFormSubmission.objects.filter(
-        intake_issue__issue_id=instance.id,
-        deleted_at__isnull=True,
-    ).values_list("id", flat=True).first()
+    submission_id = (
+        IntakeFormSubmission.objects.filter(
+            intake_issue__issue_id=instance.id,
+            deleted_at__isnull=True,
+        )
+        .values_list("id", flat=True)
+        .first()
+    )
     if not submission_id:
         return
     from plane.bgtasks.intake_form_task import sync_intake_form_submission_status
@@ -233,6 +245,4 @@ def notify_requester_about_public_team_comment(sender, instance, created, **kwar
     )
     from plane.bgtasks.intake_form_task import send_intake_form_requester_email
 
-    transaction.on_commit(
-        lambda: send_intake_form_requester_email.delay(str(submission.id), "TEAM_COMMENTED")
-    )
+    transaction.on_commit(lambda: send_intake_form_requester_email.delay(str(submission.id), "TEAM_COMMENTED"))

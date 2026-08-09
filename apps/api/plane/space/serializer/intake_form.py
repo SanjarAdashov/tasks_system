@@ -4,8 +4,10 @@
 from plane.db.models import (
     IntakeFormEvent,
     IntakeFormPublicStatus,
+    ProjectMember,
     ProjectWorkItemProperty,
     StateGroup,
+    WorkItemSelectSource,
     WorkItemPropertyType,
 )
 
@@ -57,6 +59,7 @@ def serialize_public_intake_form(form, tracking_token=None):
             archived_at__isnull=True,
         ).prefetch_related("options")
     }
+    member_options = None
     fields = []
     for field in form.field_schema:
         if not field.get("visible", True) and str(field.get("id")) not in conditional_field_ids:
@@ -66,18 +69,40 @@ def serialize_public_intake_form(form, tracking_token=None):
             property_instance = properties.get(str(data.get("property_id")))
             if not property_instance:
                 continue
+            if property_instance.select_source == WorkItemSelectSource.MEMBERS:
+                if member_options is None:
+                    member_options = [
+                        {
+                            "id": str(project_member.member_id),
+                            "name": project_member.member.display_name,
+                        }
+                        for project_member in ProjectMember.objects.filter(
+                            project=form.project,
+                            is_active=True,
+                            role__gte=15,
+                            member__is_active=True,
+                            member__blocked_at__isnull=True,
+                        )
+                        .select_related("member")
+                        .order_by("member__display_name", "member_id")
+                    ]
+                options = member_options
+            elif property_instance.property_type in {
+                WorkItemPropertyType.SINGLE_SELECT,
+                WorkItemPropertyType.MULTI_SELECT,
+            }:
+                options = [
+                    {"id": str(option.id), "name": option.name}
+                    for option in property_instance.options.filter(archived_at__isnull=True)
+                ]
+            else:
+                options = []
             data.update(
                 {
                     "name": property_instance.name,
                     "description": property_instance.description,
                     "property_type": property_instance.property_type,
-                    "options": [
-                        {"id": str(option.id), "name": option.name}
-                        for option in property_instance.options.filter(archived_at__isnull=True)
-                    ]
-                    if property_instance.property_type
-                    in {WorkItemPropertyType.SINGLE_SELECT, WorkItemPropertyType.MULTI_SELECT}
-                    else [],
+                    "options": options,
                 }
             )
         fields.append(data)

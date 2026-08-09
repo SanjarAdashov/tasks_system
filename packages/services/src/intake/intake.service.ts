@@ -74,9 +74,13 @@ export default class IntakeService extends APIService {
   }
 
   async getPublicForm(slug: string, accessCode?: string): Promise<TPublicIntakeForm> {
-    return this.get(`/api/public/support/forms/${slug}/`, {}, {
-      headers: accessCode ? { "X-Intake-Code": accessCode } : undefined,
-    }).then((response) => response.data);
+    return this.get(
+      `/api/public/support/forms/${slug}/`,
+      {},
+      {
+        headers: accessCode ? { "X-Intake-Code": accessCode } : undefined,
+      }
+    ).then((response) => response.data);
   }
 
   async createPublicSubmission(
@@ -96,7 +100,7 @@ export default class IntakeService extends APIService {
 
   async preparePublicAsset(
     slug: string,
-    data: { tracking_token: string; name: string; type: string; size: number },
+    data: { tracking_token: string; name: string; type: string; size: number; values?: Record<string, unknown> },
     accessCode?: string
   ): Promise<TIntakeAssetUpload> {
     return this.post(`/api/public/support/forms/${slug}/assets/`, data, {
