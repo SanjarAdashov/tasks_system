@@ -141,6 +141,7 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "anon": "30/minute",
         "asset_id": "5/minute",
+        "intake_form": "10/minute",
     },
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_RENDERER_CLASSES": ("rest_framework.renderers.JSONRenderer",),
@@ -189,7 +190,7 @@ else:
     CORS_ALLOW_ALL_ORIGINS = True
     secure_origins = False
 
-CORS_ALLOW_HEADERS = [*default_headers, "X-API-Key"]
+CORS_ALLOW_HEADERS = [*default_headers, "X-API-Key", "Idempotency-Key", "X-Intake-Code"]
 
 # Application Settings
 WSGI_APPLICATION = "plane.wsgi.application"

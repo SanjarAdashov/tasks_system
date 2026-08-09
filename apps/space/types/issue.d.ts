@@ -1,9 +1,7 @@
 import type { ActorDetail, TIssue, TIssuePriorities, TStateGroups, TIssuePublicComment } from "@plane/types";
 
-export type TIssueLayout = "list" | "kanban" | "calendar" | "spreadsheet" | "gantt";
-export type TIssueLayoutOptions = {
-  [key in TIssueLayout]: boolean;
-};
+export type TIssueLayout = "list" | "kanban" | "calendar" | "spreadsheet" | "gantt" | "custom_grouping";
+export type TIssueLayoutOptions = Partial<Record<TIssueLayout, boolean>>;
 
 export type TIssueFilterPriorityObject = {
   key: TIssuePriorities;

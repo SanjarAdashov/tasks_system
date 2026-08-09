@@ -37,6 +37,8 @@ class Intake(ProjectBaseModel):
 
 class SourceType(models.TextChoices):
     IN_APP = "IN_APP"
+    FORMS = "FORMS"
+    EMAIL = "EMAIL"
 
 
 class IntakeIssueStatus(models.IntegerChoices):

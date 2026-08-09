@@ -7,6 +7,11 @@
 import { EIssueGroupByToServerOptions, EServerGroupByToFilterOptions } from "@plane/constants";
 import type { IssuePaginationOptions, TIssueParams } from "@plane/types";
 
+const getServerGroupBy = (groupBy: NonNullable<IssuePaginationOptions["groupedBy"]>) =>
+  groupBy.startsWith("customproperty_")
+    ? groupBy
+    : EIssueGroupByToServerOptions[groupBy as keyof typeof EIssueGroupByToServerOptions];
+
 /**
  * This Method is used to construct the url params along with paginated values
  * @param filterParams params generated from filters
@@ -35,12 +40,12 @@ export const getPaginationParams = (
 
   // If group by is specifically sent through options, like that for calendar layout, use that to group
   if (options.groupedBy) {
-    paginationParams.group_by = EIssueGroupByToServerOptions[options.groupedBy];
+    paginationParams.group_by = getServerGroupBy(options.groupedBy);
   }
 
   // If group by is specifically sent through options, like that for calendar layout, use that to group
   if (options.subGroupedBy) {
-    paginationParams.sub_group_by = EIssueGroupByToServerOptions[options.subGroupedBy];
+    paginationParams.sub_group_by = getServerGroupBy(options.subGroupedBy);
   }
 
   // If group by is specifically sent through options, like that for calendar layout, use that to group

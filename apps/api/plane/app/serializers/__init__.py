@@ -136,6 +136,7 @@ from .intake import (
     IntakeIssueLiteSerializer,
     IntakeIssueDetailSerializer,
 )
+from .intake_form import IntakeFormSerializer
 
 from .analytic import AnalyticViewSerializer
 

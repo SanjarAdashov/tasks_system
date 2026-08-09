@@ -28,6 +28,11 @@ from .project.custom_grouping import (
     ProjectCustomGroupingPreferenceEndpoint,
     ProjectCustomGroupingViewSet,
 )
+from .project.intake_form import (
+    IntakeFormAccessCodeEndpoint,
+    IntakeFormSlugSuggestionEndpoint,
+    IntakeFormViewSet,
+)
 
 from .project.invite import (
     UserProjectInvitationsViewset,

@@ -57,6 +57,21 @@ const VALUELESS_OPERATORS = new Set<TStateTransitionConditionOperator>([
   "HAS_INCOMPLETE",
 ]);
 
+const conditionDefaultsForField = (
+  field: string,
+  groups: TProjectUserGroup[]
+): Pick<TStateTransitionCondition, "operator" | "value"> => {
+  if (field === "actor.role") return { operator: "EQ", value: 15 };
+  if (field === "actor.is_assignee" || field === "actor.is_creator" || field.startsWith("actor.member_property:"))
+    return { operator: "EQ", value: true };
+  if (field.includes(".group"))
+    return {
+      operator: "EQ",
+      value: groups.find((group) => !group.archived_at)?.id,
+    };
+  return { operator: "IS_SET", value: undefined };
+};
+
 const OPERATORS: Array<{ value: TStateTransitionConditionOperator; label: string }> = [
   { value: "IS_SET", label: "project_settings.state_transitions.operators.is_set" },
   { value: "IS_NOT_SET", label: "project_settings.state_transitions.operators.is_not_set" },
@@ -211,12 +226,10 @@ function ConditionTreeEditor({ title, description, value, onChange, states, prop
     onChange(
       updateNode(value, conditionId, (node) => {
         if (node.kind !== "condition") return node;
-        const isGroupField = field.includes(".group");
         return {
           ...node,
           field,
-          operator: isGroupField ? "EQ" : "IS_SET",
-          value: isGroupField ? groups.find((group) => !group.archived_at)?.id : undefined,
+          ...conditionDefaultsForField(field, groups),
         };
       })
     );
@@ -370,13 +383,15 @@ function ConditionTreeEditor({ title, description, value, onChange, states, prop
                 onChange(
                   updateNode(value, node.id!, (current) =>
                     current.kind === "condition"
-                      ? {
-                          ...current,
-                          operator: event.target.value as TStateTransitionConditionOperator,
-                          value: VALUELESS_OPERATORS.has(event.target.value as TStateTransitionConditionOperator)
-                            ? undefined
-                            : current.value,
-                        }
+                      ? (() => {
+                          const operator = event.target.value as TStateTransitionConditionOperator;
+                          const defaultValue = conditionDefaultsForField(current.field, groups).value;
+                          return {
+                            ...current,
+                            operator,
+                            value: VALUELESS_OPERATORS.has(operator) ? undefined : (current.value ?? defaultValue),
+                          };
+                        })()
                       : current
                   )
                 )

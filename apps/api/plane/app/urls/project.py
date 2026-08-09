@@ -29,6 +29,9 @@ from plane.app.views import (
     ProjectUserGroupViewSet,
     ProjectCustomGroupingPreferenceEndpoint,
     ProjectCustomGroupingViewSet,
+    IntakeFormAccessCodeEndpoint,
+    IntakeFormSlugSuggestionEndpoint,
+    IntakeFormViewSet,
 )
 
 
@@ -248,5 +251,35 @@ urlpatterns = [
         "workspaces/<str:slug>/projects/<uuid:project_id>/user-groups/<uuid:pk>/members/",
         ProjectUserGroupViewSet.as_view({"patch": "update_members"}),
         name="project-user-group-members",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/intake-forms/",
+        IntakeFormViewSet.as_view({"get": "list", "post": "create"}),
+        name="project-intake-form",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/intake-forms/<uuid:pk>/",
+        IntakeFormViewSet.as_view({"get": "retrieve", "patch": "partial_update", "delete": "destroy"}),
+        name="project-intake-form-detail",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/intake-forms/<uuid:pk>/archive/",
+        IntakeFormViewSet.as_view({"post": "archive"}),
+        name="project-intake-form-archive",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/intake-forms/<uuid:pk>/restore/",
+        IntakeFormViewSet.as_view({"post": "restore"}),
+        name="project-intake-form-restore",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/intake-forms/slug-suggestions/",
+        IntakeFormSlugSuggestionEndpoint.as_view(),
+        name="project-intake-form-slug-suggestions",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/intake-forms/access-code/",
+        IntakeFormAccessCodeEndpoint.as_view(),
+        name="project-intake-form-access-code",
     ),
 ]

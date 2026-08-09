@@ -52,6 +52,7 @@ from plane.utils.timezone_converter import user_timezone_converter
 from plane.utils.global_paginator import paginate
 from plane.utils.host import base_host
 from plane.db.models.intake import SourceType
+from plane.utils.intake_forms import can_review_intake_form_submission
 
 
 class IntakeViewSet(BaseViewSet):
@@ -184,7 +185,7 @@ class IntakeIssueViewSet(BaseViewSet):
         filters = issue_filters(request.GET, "GET", "issue__")
         intake_issue = (
             IntakeIssue.objects.filter(intake_id=intake.id, project_id=project_id, **filters)
-            .select_related("issue")
+            .select_related("issue", "form_submission__form__reviewer_group")
             .prefetch_related("issue__labels")
             .annotate(
                 label_ids=Coalesce(
@@ -207,6 +208,23 @@ class IntakeIssueViewSet(BaseViewSet):
         intake_status = [item for item in request.GET.get("status", "-2").split(",") if item != "null"]
         if intake_status:
             intake_issue = intake_issue.filter(status__in=intake_status)
+
+        is_project_admin = ProjectMember.objects.filter(
+            workspace__slug=slug,
+            project_id=project_id,
+            member=request.user,
+            role=ROLE.ADMIN.value,
+            is_active=True,
+        ).exists()
+        if not is_project_admin:
+            intake_issue = intake_issue.filter(
+                Q(form_submission__isnull=True)
+                | Q(
+                    form_submission__form__reviewer_group__memberships__member=request.user,
+                    form_submission__form__reviewer_group__memberships__deleted_at__isnull=True,
+                    form_submission__form__reviewer_group__archived_at__isnull=True,
+                )
+            ).distinct()
 
         if (
             ProjectMember.objects.filter(
@@ -331,7 +349,7 @@ class IntakeIssueViewSet(BaseViewSet):
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    @allow_permission(allowed_roles=[ROLE.ADMIN], creator=True, model=Issue)
+    @allow_permission(allowed_roles=[ROLE.ADMIN, ROLE.MEMBER], creator=True, model=Issue)
     def partial_update(self, request, slug, project_id, pk):
         skip_activity = request.data.pop("skip_activity", False)
         is_description_update = request.data.get("description_html") is not None
@@ -343,6 +361,12 @@ class IntakeIssueViewSet(BaseViewSet):
             project_id=project_id,
             intake_id=intake_id,
         )
+        is_form_reviewer = can_review_intake_form_submission(request.user, intake_issue)
+        if hasattr(intake_issue, "form_submission") and not is_form_reviewer:
+            return Response(
+                {"error": "Only the assigned group or a Project Admin can process this request."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         project_member = ProjectMember.objects.filter(
             workspace__slug=slug,
@@ -364,6 +388,18 @@ class IntakeIssueViewSet(BaseViewSet):
                 status=status.HTTP_403_FORBIDDEN,
             )
 
+        if (
+            not hasattr(intake_issue, "form_submission")
+            and project_member
+            and project_member.role <= ROLE.MEMBER.value
+            and not is_workspace_admin
+            and str(intake_issue.created_by_id) != str(request.user.id)
+        ):
+            return Response(
+                {"error": "Only an admin or the creator can update this intake work item."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
         # Only project members admins and created_by users can access this endpoint
         if ((project_member and project_member.role <= ROLE.GUEST.value) and not is_workspace_admin) and str(
             intake_issue.created_by_id
@@ -381,7 +417,10 @@ class IntakeIssueViewSet(BaseViewSet):
         issue_requested_data = None
 
         # Validate issue data if provided
-        if bool(issue_data):
+        is_form_acceptance = (
+            hasattr(intake_issue, "form_submission") and request.data.get("status") == 1
+        )
+        if bool(issue_data) and not is_form_acceptance:
             issue = Issue.objects.annotate(
                 label_ids=Coalesce(
                     ArrayAgg(
@@ -422,9 +461,14 @@ class IntakeIssueViewSet(BaseViewSet):
         intake_serializer = None
         intake_current_instance = None
 
-        if (project_member and project_member.role > ROLE.MEMBER.value) or is_workspace_admin:
+        if (project_member and project_member.role > ROLE.MEMBER.value) or is_workspace_admin or is_form_reviewer:
             intake_current_instance = json.dumps(IntakeIssueSerializer(intake_issue).data, cls=DjangoJSONEncoder)
-            intake_serializer = IntakeIssueSerializer(intake_issue, data=request.data, partial=True)
+            intake_serializer = IntakeIssueSerializer(
+                intake_issue,
+                data=request.data,
+                partial=True,
+                context={"request": request, "issue_updates": issue_data or {}},
+            )
 
             if not intake_serializer.is_valid():
                 return Response(intake_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -475,7 +519,7 @@ class IntakeIssueViewSet(BaseViewSet):
 
         # Fetch and return the updated intake issue
         intake_issue = (
-            IntakeIssue.objects.select_related("issue")
+            IntakeIssue.objects.select_related("issue", "form_submission__form__reviewer_group")
             .prefetch_related("issue__labels", "issue__assignees")
             .annotate(
                 label_ids=Coalesce(
@@ -499,6 +543,13 @@ class IntakeIssueViewSet(BaseViewSet):
             )
             .get(intake_id=intake_id.id, issue_id=pk, project_id=project_id)
         )
+        if hasattr(intake_issue, "form_submission") and not can_review_intake_form_submission(
+            request.user, intake_issue
+        ):
+            return Response(
+                {"error": "Only the assigned group or a Project Admin can view this request."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         serializer = IntakeIssueDetailSerializer(intake_issue).data
         return Response(serializer, status=status.HTTP_200_OK)
 
@@ -507,7 +558,7 @@ class IntakeIssueViewSet(BaseViewSet):
         intake_id = Intake.objects.filter(workspace__slug=slug, project_id=project_id).first()
         project = Project.objects.get(pk=project_id)
         intake_issue = (
-            IntakeIssue.objects.select_related("issue")
+            IntakeIssue.objects.select_related("issue", "form_submission__form__reviewer_group")
             .prefetch_related("issue__labels", "issue__assignees")
             .annotate(
                 label_ids=Coalesce(
@@ -531,6 +582,13 @@ class IntakeIssueViewSet(BaseViewSet):
             )
             .get(intake_id=intake_id.id, issue_id=pk, project_id=project_id)
         )
+        if hasattr(intake_issue, "form_submission") and not can_review_intake_form_submission(
+            request.user, intake_issue
+        ):
+            return Response(
+                {"error": "Only the assigned group or a Project Admin can view this request."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         if (
             ProjectMember.objects.filter(
                 workspace__slug=slug,

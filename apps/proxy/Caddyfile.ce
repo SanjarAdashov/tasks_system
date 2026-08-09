@@ -1,6 +1,10 @@
 (plane_proxy) {
   redir /spaces /spaces/ permanent
 	reverse_proxy /spaces/* space:3000
+	handle /support/* {
+		rewrite * /spaces{uri}
+		reverse_proxy space:3000
+	}
 
   redir /god-mode /god-mode/ permanent
 	reverse_proxy /god-mode/* admin:3000

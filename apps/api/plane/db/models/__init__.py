@@ -24,6 +24,15 @@ from .estimate import Estimate, EstimatePoint
 from .exporter import ExporterHistory
 from .importer import Importer
 from .intake import Intake, IntakeIssue
+from .intake_form import (
+    IntakeForm,
+    IntakeFormAccessType,
+    IntakeFormEvent,
+    IntakeFormPublicStatus,
+    IntakeFormSubmission,
+    get_default_intake_form_fields,
+    get_default_public_status_mapping,
+)
 from .integration import (
     GithubCommentSync,
     GithubIssueSync,
