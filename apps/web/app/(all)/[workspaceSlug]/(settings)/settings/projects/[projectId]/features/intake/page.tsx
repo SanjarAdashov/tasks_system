@@ -388,8 +388,8 @@ function IntakeFormEditor({
   };
 
   return (
-    <ModalCore isOpen={Boolean(state)} handleClose={onClose} position={EModalPosition.CENTER} width={EModalWidth.XXL}>
-      <div className="flex h-[min(860px,92vh)] w-[min(1180px,94vw)] flex-col">
+    <ModalCore isOpen={Boolean(state)} handleClose={onClose} position={EModalPosition.CENTER} width={EModalWidth.VIXL}>
+      <div className="flex h-[min(860px,92vh)] w-full flex-col overflow-hidden">
         <div className="flex items-start justify-between border-b border-subtle px-5 py-4">
           <div><h2 className="text-18 font-semibold text-primary">{t(state?.form ? "project_settings.features.intake.form.edit_form" : "project_settings.features.intake.form.create_form")}</h2><p className="mt-1 text-12 text-secondary">{t("project_settings.features.intake.builder.editor_help")}</p></div>
           {draft && <span className="rounded-full bg-layer-2 px-2.5 py-1 text-11 text-secondary">/support/{draft.slug || "..."}</span>}

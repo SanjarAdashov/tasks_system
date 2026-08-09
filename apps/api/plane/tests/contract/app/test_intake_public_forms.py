@@ -64,6 +64,7 @@ def _form_payload(target_state, group, **overrides):
         "access_type": "PUBLIC",
         "target_state": str(target_state.id),
         "reviewer_group": str(group.id),
+        "title_template": "",
         "email_notifications_enabled": False,
         "max_attachments": 20,
         "field_schema": [
@@ -139,6 +140,34 @@ class TestIntakePublicForms:
         )
         assert duplicate.status_code == status.HTTP_400_BAD_REQUEST
         assert duplicate.data["slug"]["suggestions"]
+
+    def test_blank_title_template_is_only_rejected_when_title_is_hidden(
+        self,
+        session_client,
+        workspace,
+        intake_project,
+    ):
+        project, target_state, group = intake_project
+        visible_title = session_client.post(
+            _form_url(workspace, project),
+            _form_payload(target_state, group, slug="visible-title"),
+            format="json",
+        )
+
+        assert visible_title.status_code == status.HTTP_201_CREATED, visible_title.data
+        assert visible_title.data["title_template"] == ""
+
+        hidden_title_payload = _form_payload(target_state, group, slug="hidden-title")
+        hidden_title_payload["field_schema"][2]["visible"] = False
+        hidden_title_payload["field_schema"][2]["required"] = False
+        hidden_title = session_client.post(
+            _form_url(workspace, project),
+            hidden_title_payload,
+            format="json",
+        )
+
+        assert hidden_title.status_code == status.HTTP_400_BAD_REQUEST
+        assert "title_template" in hidden_title.data
 
     def test_code_and_workspace_access_modes(self, session_client, api_client, workspace, intake_project):
         project, target_state, group = intake_project
