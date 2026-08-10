@@ -4,7 +4,6 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router";
 import {
   AlertCircle,
   ArrowRight,
@@ -53,7 +52,6 @@ const visibleFieldIds = (form: TPublicIntakeForm, values: Record<string, unknown
 
 export default function PublicIntakeFormPage({ params }: Route.ComponentProps) {
   const { formSlug } = params;
-  const navigate = useNavigate();
   const [locale, setLocale] = useState<TSupportLocale>("ru");
   const [form, setForm] = useState<TPublicIntakeForm | null>(null);
   const [accessCode, setAccessCode] = useState("");
@@ -177,7 +175,12 @@ export default function PublicIntakeFormPage({ params }: Route.ComponentProps) {
         token
       );
       localStorage.setItem(`gts-intake-${result.reference}`, token);
-      navigate(result.tracking_path, { replace: true });
+      // Public Intake routes are exposed through a Caddy rewrite outside the
+      // Space app basename. A client-side route discovery request can therefore
+      // resolve against the internal `/spaces/*` path and crash before the
+      // tracking route mounts. A document navigation uses the public URL as-is
+      // and lets the server apply the rewrite consistently.
+      window.location.replace(result.tracking_path);
     } catch (error: any) {
       const serverErrors = error?.response?.data?.values;
       if (serverErrors && typeof serverErrors === "object") setErrors(serverErrors);
@@ -339,7 +342,7 @@ function PublicAttachmentsField({
   files: File[];
   maxFiles: number;
   error?: string;
-  fileInput: React.RefObject<HTMLInputElement | null>;
+  fileInput: React.RefObject<HTMLInputElement>;
   locale: TSupportLocale;
   onAdd: (files: FileList | File[]) => void;
   onRemove: (index: number) => void;
