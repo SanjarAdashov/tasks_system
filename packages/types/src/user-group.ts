@@ -2,6 +2,9 @@ export type TProjectUserGroupMember = {
   id: string;
   member_id: string;
   display_name: string;
+  legacy_display_name?: string;
+  first_name: string;
+  last_name: string;
   email: string;
   avatar_url: string | null;
   account_status: "active" | "inactive" | "blocked";

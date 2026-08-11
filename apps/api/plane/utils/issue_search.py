@@ -39,9 +39,11 @@ def search_issues(query, queryset):
         str(member_id)
         for member_id in User.objects.filter(
             Q(display_name__icontains=query)
+            | Q(legacy_display_name__icontains=query)
             | Q(username__icontains=query)
             | Q(first_name__icontains=query)
             | Q(last_name__icontains=query)
+            | Q(email__icontains=query)
         ).values_list("id", flat=True)
     ]
     for member_id in matching_member_ids:

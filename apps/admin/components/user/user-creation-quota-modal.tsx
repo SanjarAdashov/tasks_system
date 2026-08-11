@@ -5,6 +5,7 @@ import { Button } from "@plane/propel/button";
 import { InstanceService } from "@plane/services";
 import type { IInstanceUser } from "@plane/types";
 import { Input, Loader } from "@plane/ui";
+import { getUserFullName } from "@plane/utils";
 
 type Props = { user?: IInstanceUser; onClose: () => void };
 
@@ -50,7 +51,7 @@ export function UserCreationQuotaModal({ user, onClose }: Props) {
             <Dialog.Panel className="w-full max-w-2xl rounded-lg bg-surface-1 shadow-raised-200">
               <div className="border-b border-subtle p-6">
                 <Dialog.Title className="text-16 font-medium text-primary">Creation quotas</Dialog.Title>
-                <p className="mt-1 text-13 text-secondary">{user?.display_name || user?.email}</p>
+                <p className="mt-1 text-13 text-secondary">{getUserFullName(user)}</p>
               </div>
               <div className="max-h-[65vh] space-y-5 overflow-y-auto p-6">
                 {isLoading || !data ? (

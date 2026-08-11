@@ -68,6 +68,7 @@ class InstanceUserEndpoint(BaseAPIView):
             users = users.filter(
                 Q(email__icontains=search)
                 | Q(display_name__icontains=search)
+                | Q(legacy_display_name__icontains=search)
                 | Q(first_name__icontains=search)
                 | Q(last_name__icontains=search)
             )

@@ -11,6 +11,9 @@ from .base import BaseSerializer
 class ProjectUserGroupMemberSerializer(BaseSerializer):
     member_id = serializers.UUIDField(read_only=True)
     display_name = serializers.CharField(source="member.display_name", read_only=True)
+    legacy_display_name = serializers.CharField(source="member.legacy_display_name", read_only=True)
+    first_name = serializers.CharField(source="member.first_name", read_only=True)
+    last_name = serializers.CharField(source="member.last_name", read_only=True)
     email = serializers.CharField(source="member.email", read_only=True)
     avatar_url = serializers.CharField(source="member.avatar_url", read_only=True, allow_null=True)
     account_status = serializers.SerializerMethodField()
@@ -22,6 +25,9 @@ class ProjectUserGroupMemberSerializer(BaseSerializer):
             "id",
             "member_id",
             "display_name",
+            "legacy_display_name",
+            "first_name",
+            "last_name",
             "email",
             "avatar_url",
             "account_status",

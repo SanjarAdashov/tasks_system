@@ -10,13 +10,14 @@ import { useParams } from "next/navigation";
 import { CheckIcon, ChevronDownIcon } from "@plane/propel/icons";
 import type { TWorkItemSelectSource } from "@plane/types";
 import { Avatar, Dropdown as SingleSelectDropdown, MultiSelectDropdown } from "@plane/ui";
-import { cn, getFileURL } from "@plane/utils";
+import { cn, getDuplicateUserNames, getFileURL, getUserNameWithEmail, getUserSearchText } from "@plane/utils";
 import { useMember } from "@/hooks/store/use-member";
 
 export type TWorkItemSelectChoice = {
   id: string;
   label: string;
   archived?: boolean;
+  searchText?: string;
 };
 
 type TSharedProps = {
@@ -70,11 +71,13 @@ const useWorkItemSelectChoices = (
       (memberId) => getUserDetails(memberId)?.is_active !== false
     );
     const memberIds = [...new Set([...activeMemberIds, ...selectedIds])];
+    const duplicateNames = getDuplicateUserNames(memberIds.map((memberId) => getUserDetails(memberId)));
     return memberIds.map((memberId) => {
       const member = getUserDetails(memberId);
       return {
         id: memberId,
-        label: member?.display_name || memberId,
+        label: getUserNameWithEmail(member, duplicateNames) || memberId,
+        searchText: getUserSearchText(member),
         archived: !activeMemberIds.includes(memberId),
       };
     });
@@ -146,7 +149,7 @@ export const WorkItemSingleSelectInput = observer(function WorkItemSingleSelectI
     () =>
       choicesWithNone.map((choice) => ({
         value: choice.label,
-        data: { id: choice.id, label: choice.label, archived: choice.archived },
+        data: { id: choice.id, label: choice.label, searchText: choice.searchText, archived: choice.archived },
       })),
     [choicesWithNone]
   );
@@ -161,7 +164,7 @@ export const WorkItemSingleSelectInput = observer(function WorkItemSingleSelectI
       disabled={disabled}
       options={dropdownOptions}
       keyExtractor={(option) => option.data.id}
-      queryArray={["label"]}
+      queryArray={["label", "searchText"]}
       inputPlaceholder={source === "MEMBERS" ? "Search project members" : "Search options"}
       buttonContainerClassName="w-full"
       optionsContainerClassName="w-72"
@@ -215,7 +218,7 @@ export const WorkItemMultiSelectInput = observer(function WorkItemMultiSelectInp
     () =>
       choices.map((choice) => ({
         value: choice.label,
-        data: { id: choice.id, label: choice.label, archived: choice.archived },
+        data: { id: choice.id, label: choice.label, searchText: choice.searchText, archived: choice.archived },
       })),
     [choices]
   );
@@ -231,7 +234,7 @@ export const WorkItemMultiSelectInput = observer(function WorkItemMultiSelectInp
       disabled={disabled}
       options={dropdownOptions}
       keyExtractor={(option) => option.data.id}
-      queryArray={["label"]}
+      queryArray={["label", "searchText"]}
       inputPlaceholder={source === "MEMBERS" ? "Search project members" : "Search options"}
       buttonContainerClassName="w-full"
       optionsContainerClassName="w-72"

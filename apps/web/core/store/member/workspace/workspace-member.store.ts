@@ -10,6 +10,7 @@ import { computedFn } from "mobx-utils";
 // types
 import type { EUserPermissions } from "@plane/constants";
 import type { IWorkspaceBulkInviteFormData, IWorkspaceMember, IWorkspaceMemberInvitation } from "@plane/types";
+import { getUserSearchText } from "@plane/utils";
 // services
 import { WorkspaceService } from "@/services/workspace.service";
 // types
@@ -168,10 +169,7 @@ export class WorkspaceMemberStore implements IWorkspaceMemberStore {
     const searchedWorkspaceMemberIds = filteredMemberIds.filter((userId) => {
       const memberDetails = this.getWorkspaceMemberDetails(userId);
       if (!memberDetails) return false;
-      const memberSearchQuery = `${memberDetails.member.first_name} ${memberDetails.member.last_name} ${
-        memberDetails.member?.display_name
-      } ${memberDetails.member.email ?? ""}`;
-      return memberSearchQuery.toLowerCase()?.includes(searchQuery.toLowerCase());
+      return getUserSearchText(memberDetails.member).includes(searchQuery.toLowerCase());
     });
     return searchedWorkspaceMemberIds;
   });

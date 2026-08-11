@@ -103,9 +103,9 @@ class Adapter:
         """Check if sign up is enabled or not and raise exception if not enabled"""
 
         # Get configuration value
-        (ENABLE_SIGNUP,) = get_configuration_value([
-            {"key": "ENABLE_SIGNUP", "default": os.environ.get("ENABLE_SIGNUP", "1")}
-        ])
+        (ENABLE_SIGNUP,) = get_configuration_value(
+            [{"key": "ENABLE_SIGNUP", "default": os.environ.get("ENABLE_SIGNUP", "1")}]
+        )
 
         # Check if sign up is disabled and invite is present or not
         if ENABLE_SIGNUP == "0" and not WorkspaceMemberInvite.objects.filter(email=email).exists():
@@ -275,22 +275,29 @@ class Adapter:
 
     def sync_user_data(self, user):
         # Update user details
-        first_name = self.user_data.get("user", {}).get("first_name", "")
-        last_name = self.user_data.get("user", {}).get("last_name", "")
-        user.first_name = first_name if first_name else ""
-        user.last_name = last_name if last_name else ""
+        first_name = (self.user_data.get("user", {}).get("first_name") or "").strip()
+        last_name = (self.user_data.get("user", {}).get("last_name") or "").strip()
+        provider_display_name = (self.user_data.get("user", {}).get("display_name") or "").strip()
+
+        # Do not erase profile data when an identity provider omits a name.
+        if first_name:
+            user.first_name = first_name
+        if last_name:
+            user.last_name = last_name
+
+        # Preserve provider aliases for backwards-compatible search. For
+        # accounts that do not receive structured names, use the provider name
+        # as first name so every visible identity is still a real name field.
+        if provider_display_name:
+            user.legacy_display_name = provider_display_name
+            if not user.first_name and not user.last_name:
+                user.first_name = provider_display_name
 
         # Get email
         email = self.user_data.get("email")
 
-        # Get display name
-        display_name = self.user_data.get("user", {}).get("display_name")
-        # If display name is not provided, generate a random display name
-        if not display_name:
-            display_name = User.get_display_name(email)
-
-        # Set display name
-        user.display_name = display_name
+        if not user.first_name and not user.last_name:
+            user.first_name = User.get_display_name(email)
 
         # Download and upload avatar only if the avatar is different from the one in the storage
         avatar = self.user_data.get("user", {}).get("avatar", "")
@@ -372,6 +379,12 @@ class Adapter:
             last_name = self.user_data.get("user", {}).get("last_name", "")
             user.first_name = first_name if first_name else ""
             user.last_name = last_name if last_name else ""
+
+            provider_display_name = (self.user_data.get("user", {}).get("display_name") or "").strip()
+            if provider_display_name:
+                user.legacy_display_name = provider_display_name
+            if not user.first_name and not user.last_name:
+                user.first_name = provider_display_name or User.get_display_name(email)
 
             user.save()
 

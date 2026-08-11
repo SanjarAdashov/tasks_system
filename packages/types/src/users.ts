@@ -31,6 +31,7 @@ export interface IUserLite {
   is_active?: boolean;
   is_bot: boolean;
   last_name: string;
+  legacy_display_name?: string;
   joining_date?: string;
 }
 export interface IUser extends IUserLite {

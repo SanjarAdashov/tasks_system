@@ -15,16 +15,19 @@ export interface IMemberFilters {
 
 // Helper function to parse order key and direction
 export const parseOrderKey = (orderKey?: TMemberOrderByOptions): { field: string; direction: "asc" | "desc" } => {
-  // Default to sorting by display_name in ascending order when no order key is provided
+  // Default to the canonical first-name + last-name value.
   if (!orderKey) {
     return {
-      field: "display_name",
+      field: "full_name",
       direction: "asc",
     };
   }
 
   const isDescending = orderKey.startsWith("-");
-  const field = isDescending ? orderKey.slice(1) : orderKey;
+  const parsedField = isDescending ? orderKey.slice(1) : orderKey;
+  // Keep old persisted member preferences compatible after removing the
+  // independently editable display-name column.
+  const field = parsedField === "display_name" ? "full_name" : parsedField;
   return {
     field,
     direction: isDescending ? "desc" : "asc",
@@ -34,8 +37,6 @@ export const parseOrderKey = (orderKey?: TMemberOrderByOptions): { field: string
 // Unified function to get sort key for any member type
 export const getMemberSortKey = (memberDetails: IUserLite, field: string, memberRole?: string): string | Date => {
   switch (field) {
-    case "display_name":
-      return memberDetails.display_name?.toLowerCase() || "";
     case "full_name": {
       const firstName = memberDetails.first_name || "";
       const lastName = memberDetails.last_name || "";

@@ -8,7 +8,7 @@ import { Button } from "@plane/propel/button";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import type { TProjectUserGroup, TProjectUserGroupMember } from "@plane/types";
 import { Avatar, Checkbox, EModalPosition, EModalWidth, Input, ModalCore } from "@plane/ui";
-import { cn, getFileURL } from "@plane/utils";
+import { cn, getFileURL, getUserFullName, getUserSearchText } from "@plane/utils";
 import { NotAuthorizedView } from "@/components/auth-screens/not-authorized-view";
 import { SettingsContentWrapper } from "@/components/settings/content-wrapper";
 import { SettingsHeading } from "@/components/settings/heading";
@@ -324,12 +324,12 @@ function GroupMemberRow({ member }: { member: TProjectUserGroupMember }) {
       <div className="flex min-w-0 items-center gap-2.5">
         <Avatar
           src={getFileURL(member.avatar_url ?? "")}
-          name={member.display_name || member.email}
+          name={getUserFullName(member)}
           size="sm"
           className="shrink-0"
         />
         <div className="min-w-0">
-          <p className="truncate text-12 font-medium text-primary">{member.display_name || member.email}</p>
+          <p className="truncate text-12 font-medium text-primary">{getUserFullName(member)}</p>
           {member.display_name && <p className="truncate text-11 text-tertiary">{member.email}</p>}
         </div>
       </div>
@@ -378,7 +378,7 @@ function UserGroupEditorModal({
 
   const filteredMemberIds = memberIds.filter((memberId) => {
     const member = getUserDetails(memberId);
-    const haystack = `${member?.display_name ?? ""} ${member?.email ?? ""}`.toLocaleLowerCase();
+    const haystack = getUserSearchText(member);
     return haystack.includes(searchQuery.trim().toLocaleLowerCase());
   });
   const unavailableMembers = group?.members.filter((member) => !memberIds.includes(member.member_id)) ?? [];
@@ -521,15 +521,9 @@ function UserGroupEditorModal({
                       )}
                     >
                       <Checkbox checked={isSelected} readOnly tabIndex={-1} />
-                      <Avatar
-                        src={getFileURL(member?.avatar_url ?? "")}
-                        name={member?.display_name || member?.email}
-                        size="sm"
-                      />
+                      <Avatar src={getFileURL(member?.avatar_url ?? "")} name={getUserFullName(member)} size="sm" />
                       <div className="min-w-0">
-                        <p className="truncate text-12 font-medium text-primary">
-                          {member?.display_name || member?.email}
-                        </p>
+                        <p className="truncate text-12 font-medium text-primary">{getUserFullName(member)}</p>
                         {member?.display_name && <p className="truncate text-11 text-tertiary">{member?.email}</p>}
                       </div>
                     </button>
@@ -554,7 +548,7 @@ function UserGroupEditorModal({
               <div className="mt-2 flex flex-wrap gap-2">
                 {unavailableMembers.map((member) => (
                   <span key={member.id} className="rounded-full bg-layer-2 px-2.5 py-1 text-11 text-secondary">
-                    {member.display_name || member.email}
+                    {getUserFullName(member)}
                   </span>
                 ))}
               </div>

@@ -17,7 +17,9 @@ export type TSearchEntities = "user_mention" | "issue" | "project" | "cycle" | "
 export type TUserSearchResponse = {
   member__avatar_url: IUser["avatar_url"];
   member__display_name: IUser["display_name"];
+  member__email: IUser["email"];
   member__id: IUser["id"];
+  member__name_count: number;
 };
 
 export type TProjectSearchResponse = {

@@ -53,6 +53,7 @@ class BaseMemberLiteAPISerializer(BaseSerializer):
     avatar = serializers.CharField(source="member.avatar", read_only=True, allow_null=True)
     avatar_url = serializers.CharField(source="member.avatar_url", read_only=True, allow_null=True)
     display_name = serializers.CharField(source="member.display_name", read_only=True)
+    legacy_display_name = serializers.CharField(source="member.legacy_display_name", read_only=True)
     is_bot = serializers.BooleanField(source="member.is_bot", read_only=True)
 
     class Meta:
@@ -64,6 +65,7 @@ class BaseMemberLiteAPISerializer(BaseSerializer):
             "avatar",
             "avatar_url",
             "display_name",
+            "legacy_display_name",
             "role",
             "is_active",
             "is_bot",

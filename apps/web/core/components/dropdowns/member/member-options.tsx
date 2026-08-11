@@ -17,7 +17,15 @@ import { CheckIcon, SearchIcon, SuspendedUserIcon } from "@plane/propel/icons";
 import { EPillSize, EPillVariant, Pill } from "@plane/propel/pill";
 import type { IUserLite } from "@plane/types";
 import { Avatar } from "@plane/ui";
-import { cn, getFileURL, sortByCurrentUserThenSelected } from "@plane/utils";
+import {
+  cn,
+  getDuplicateUserNames,
+  getFileURL,
+  getUserFullName,
+  getUserNameWithEmail,
+  getUserSearchText,
+  sortByCurrentUserThenSelected,
+} from "@plane/utils";
 // hooks
 import { useMember } from "@/hooks/store/use-member";
 import { useUser } from "@/hooks/store/user";
@@ -90,19 +98,24 @@ export const MemberOptions = observer(function MemberOptions(props: Props) {
     }
   };
 
+  const memberUsers = memberIds?.map((userId) => getUserDetails(userId));
+  const duplicateNames = getDuplicateUserNames(memberUsers ?? []);
+
   const options = memberIds
     ?.map((userId) => {
       const userDetails = getUserDetails(userId);
+      const userName = getUserFullName(userDetails);
+      const userLabel = getUserNameWithEmail(userDetails, duplicateNames);
       return {
         value: userId,
-        query: `${userDetails?.display_name} ${userDetails?.first_name} ${userDetails?.last_name}`,
+        query: getUserSearchText(userDetails),
         content: (
           <div className="flex items-center gap-2">
             <div className="w-4">
               {isUserSuspended(userId, workspaceSlug?.toString()) ? (
                 <SuspendedUserIcon className="h-3.5 w-3.5 text-placeholder" />
               ) : (
-                <Avatar name={userDetails?.display_name} src={getFileURL(userDetails?.avatar_url ?? "")} />
+                <Avatar name={userName} src={getFileURL(userDetails?.avatar_url ?? "")} />
               )}
             </div>
             <span
@@ -111,7 +124,8 @@ export const MemberOptions = observer(function MemberOptions(props: Props) {
                 isUserSuspended(userId, workspaceSlug?.toString()) ? "text-placeholder" : ""
               )}
             >
-              {currentUser?.id === userId ? t("you") : userDetails?.display_name}
+              {userLabel}
+              {currentUser?.id === userId ? ` (${t("you")})` : ""}
             </span>
           </div>
         ),

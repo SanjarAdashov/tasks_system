@@ -20,7 +20,6 @@ export type TMemberOrderByOptions =
 
 export interface IProjectMemberDisplayProperties {
   full_name: boolean;
-  display_name: boolean;
   email: boolean;
   joining_date: boolean;
   role: boolean;
@@ -42,15 +41,6 @@ export const MEMBER_PROPERTY_DETAILS: {
     ascendingOrderKey: "full_name",
     ascendingOrderTitle: "A",
     descendingOrderKey: "-full_name",
-    descendingOrderTitle: "Z",
-    iconName: "User",
-    isSortingAllowed: true,
-  },
-  display_name: {
-    i18n_title: "project_members.display_name",
-    ascendingOrderKey: "display_name",
-    ascendingOrderTitle: "A",
-    descendingOrderKey: "-display_name",
     descendingOrderTitle: "Z",
     iconName: "User",
     isSortingAllowed: true,

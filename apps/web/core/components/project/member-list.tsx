@@ -11,6 +11,7 @@ import { EUserPermissions, EUserPermissionsLevel, MEMBER_TRACKER_ELEMENTS } from
 import { useTranslation } from "@plane/i18n";
 import { Button } from "@plane/propel/button";
 import { SearchIcon } from "@plane/propel/icons";
+import { getUserSearchText } from "@plane/utils";
 // components
 import { MembersSettingsLoader } from "@/components/ui/loader/settings/members";
 // hooks
@@ -43,10 +44,7 @@ export const ProjectMemberList = observer(function ProjectMemberList(props: TPro
 
     if (!memberDetails?.member || !memberDetails.original_role) return false;
 
-    const fullName = `${memberDetails?.member.first_name} ${memberDetails?.member.last_name}`.toLowerCase();
-    const displayName = memberDetails?.member.display_name.toLowerCase();
-
-    return displayName?.includes(searchQuery.toLowerCase()) || fullName.includes(searchQuery.toLowerCase());
+    return getUserSearchText(memberDetails.member).includes(searchQuery.toLowerCase());
   });
 
   const memberDetails = searchedProjectMembers?.map((memberId) =>

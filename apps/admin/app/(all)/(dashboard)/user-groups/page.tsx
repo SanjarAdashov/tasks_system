@@ -4,6 +4,7 @@ import { Button } from "@plane/propel/button";
 import { InstanceService } from "@plane/services";
 import { Input } from "@plane/ui";
 import type { IUserLite, TProjectUserGroup } from "@plane/types";
+import { getUserFullName } from "@plane/utils";
 import { PageWrapper } from "@/components/common/page-wrapper";
 import type { Route } from "./+types/page";
 
@@ -90,7 +91,7 @@ const UserGroupsPage = (_props: Route.ComponentProps) => {
                         )
                       }
                     />
-                    {member.display_name || member.email}
+                    {getUserFullName(member)}
                   </label>
                 ))}
               </div>
@@ -174,7 +175,7 @@ function AdminGroupCard({
                   setSelected(e.target.checked ? [...selected, member.id] : selected.filter((id) => id !== member.id))
                 }
               />
-              {member.display_name || member.email}
+              {getUserFullName(member)}
             </label>
           ))}
         </div>
@@ -228,7 +229,7 @@ function AdminGroupCard({
           .filter((member) => !member.project_member_active || member.account_status !== "active")
           .map((member) => (
             <span key={member.id} className="rounded bg-warning-subtle px-2 py-1 text-11">
-              {member.display_name || member.email}
+              {getUserFullName(member)}
               {!member.project_member_active ? " · not in project" : ` · ${member.account_status}`}
             </span>
           ))}

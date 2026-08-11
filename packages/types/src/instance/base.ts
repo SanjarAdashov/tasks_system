@@ -87,6 +87,7 @@ export interface IInstanceUser {
   id: string;
   email: string;
   display_name: string;
+  legacy_display_name?: string;
   first_name: string;
   last_name: string;
   avatar_url: string | null;

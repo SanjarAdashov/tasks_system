@@ -15,7 +15,7 @@ import { TOAST_TYPE, setPromiseToast, setToast } from "@plane/propel/toast";
 import { EFileAssetType } from "@plane/types";
 import type { IUser, TUserProfile } from "@plane/types";
 import { Input } from "@plane/ui";
-import { getFileURL } from "@plane/utils";
+import { getFileURL, getUserFullName } from "@plane/utils";
 // components
 import { DeactivateAccountModal } from "@/components/account/deactivate-account-modal";
 import { ImagePickerPopover } from "@/components/core/image-picker-popover";
@@ -29,7 +29,7 @@ import { handleCoverImageChange } from "@/helpers/cover-image.helper";
 import { useInstance } from "@/hooks/store/use-instance";
 import { useUser, useUserProfile } from "@/hooks/store/user";
 // utils
-import { validatePersonName, validateDisplayName } from "@plane/utils";
+import { validatePersonName } from "@plane/utils";
 
 type TUserProfileForm = {
   avatar_url: string;
@@ -38,7 +38,6 @@ type TUserProfileForm = {
   cover_image_url: string;
   first_name: string;
   last_name: string;
-  display_name: string;
   email: string;
   role: string;
   language: string;
@@ -73,7 +72,6 @@ export const GeneralProfileSettingsForm = observer(function GeneralProfileSettin
       cover_image_url: user.cover_image_url || "",
       first_name: user.first_name || "",
       last_name: user.last_name || "",
-      display_name: user.display_name || "",
       email: user.email || "",
       role: profile.role || "Product / Project Manager",
       language: profile.language || "en",
@@ -122,7 +120,6 @@ export const GeneralProfileSettingsForm = observer(function GeneralProfileSettin
       first_name: formData.first_name,
       last_name: formData.last_name,
       avatar_url: formData.avatar_url,
-      display_name: formData?.display_name,
     };
 
     try {
@@ -231,7 +228,7 @@ export const GeneralProfileSettingsForm = observer(function GeneralProfileSettin
                           src={getFileURL(userAvatar)}
                           className="absolute top-0 left-0 h-full w-full rounded-lg object-cover"
                           onClick={() => setIsImageUploadModalOpen(true)}
-                          alt={currentUser?.display_name}
+                          alt={getUserFullName(currentUser)}
                           role="button"
                         />
                       </div>
@@ -321,37 +318,6 @@ export const GeneralProfileSettingsForm = observer(function GeneralProfileSettin
                   )}
                 />
                 {errors.last_name && <span className="text-11 text-danger-primary">{errors.last_name.message}</span>}
-              </div>
-              <div className="flex flex-col gap-1">
-                <h4 className="text-13 font-medium text-secondary">
-                  {t("display_name")}&nbsp;
-                  <span className="text-danger-primary">*</span>
-                </h4>
-                <Controller
-                  control={control}
-                  name="display_name"
-                  rules={{
-                    required: "Display name is required.",
-                    validate: validateDisplayName,
-                  }}
-                  render={({ field: { value, onChange, ref } }) => (
-                    <Input
-                      id="display_name"
-                      name="display_name"
-                      type="text"
-                      value={value}
-                      onChange={onChange}
-                      ref={ref}
-                      hasError={Boolean(errors?.display_name)}
-                      placeholder="Enter your display name"
-                      className={`w-full ${errors?.display_name ? "border-danger-strong" : ""}`}
-                      maxLength={50}
-                    />
-                  )}
-                />
-                {errors?.display_name && (
-                  <span className="text-11 text-danger-primary">{errors?.display_name?.message}</span>
-                )}
               </div>
               <div className="flex flex-col gap-1">
                 <h4 className="text-13 font-medium text-secondary">

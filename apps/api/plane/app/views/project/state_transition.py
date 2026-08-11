@@ -154,6 +154,10 @@ class ProjectStateTransitionAuditLogViewSet(BaseViewSet):
                 Q(details__icontains=search)
                 | Q(issue__name__icontains=search)
                 | Q(created_by__display_name__icontains=search)
+                | Q(created_by__legacy_display_name__icontains=search)
+                | Q(created_by__first_name__icontains=search)
+                | Q(created_by__last_name__icontains=search)
+                | Q(created_by__email__icontains=search)
             )
         return queryset.order_by("-created_at")
 

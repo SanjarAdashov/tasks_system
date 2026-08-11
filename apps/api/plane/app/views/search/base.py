@@ -16,6 +16,9 @@ from django.db.models import (
     CharField,
     When,
     Case,
+    Count,
+    F,
+    Window,
 )
 from django.contrib.postgres.aggregates import ArrayAgg
 from django.contrib.postgres.fields import ArrayField
@@ -312,6 +315,8 @@ class SearchEndpoint(BaseAPIView):
                         "member__first_name",
                         "member__last_name",
                         "member__display_name",
+                        "member__legacy_display_name",
+                        "member__email",
                     ]
                     q = Q()
 
@@ -328,6 +333,10 @@ class SearchEndpoint(BaseAPIView):
                             project_id=project_id,
                         )
                         .annotate(
+                            member__name_count=Window(
+                                expression=Count("member__id"),
+                                partition_by=[F("member__display_name")],
+                            ),
                             member__avatar_url=Case(
                                 When(
                                     member__avatar_asset__isnull=False,
@@ -343,7 +352,7 @@ class SearchEndpoint(BaseAPIView):
                                 ),
                                 default=Value(None),
                                 output_field=CharField(),
-                            )
+                            ),
                         )
                         .order_by("-created_at")
                     )
@@ -351,7 +360,9 @@ class SearchEndpoint(BaseAPIView):
                     users = users.distinct().values(
                         "member__avatar_url",
                         "member__display_name",
+                        "member__email",
                         "member__id",
+                        "member__name_count",
                     )
 
                     response_data["user_mention"] = list(users[:count])
@@ -510,6 +521,8 @@ class SearchEndpoint(BaseAPIView):
                         "member__first_name",
                         "member__last_name",
                         "member__display_name",
+                        "member__legacy_display_name",
+                        "member__email",
                     ]
                     q = Q()
 
@@ -524,6 +537,10 @@ class SearchEndpoint(BaseAPIView):
                             member__is_bot=False,
                         )
                         .annotate(
+                            member__name_count=Window(
+                                expression=Count("member__id"),
+                                partition_by=[F("member__display_name")],
+                            ),
                             member__avatar_url=Case(
                                 When(
                                     member__avatar_asset__isnull=False,
@@ -539,10 +556,16 @@ class SearchEndpoint(BaseAPIView):
                                 ),
                                 default=Value(None),
                                 output_field=models.CharField(),
-                            )
+                            ),
                         )
                         .order_by("-created_at")
-                        .values("member__avatar_url", "member__display_name", "member__id")[:count]
+                        .values(
+                            "member__avatar_url",
+                            "member__display_name",
+                            "member__email",
+                            "member__id",
+                            "member__name_count",
+                        )[:count]
                     )
                     response_data["user_mention"] = list(users)
 

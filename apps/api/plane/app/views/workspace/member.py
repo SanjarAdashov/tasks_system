@@ -31,7 +31,13 @@ class WorkSpaceMemberViewSet(BaseViewSet):
     serializer_class = WorkspaceMemberAdminSerializer
     model = WorkspaceMember
 
-    search_fields = ["member__display_name", "member__first_name"]
+    search_fields = [
+        "member__display_name",
+        "member__legacy_display_name",
+        "member__first_name",
+        "member__last_name",
+        "member__email",
+    ]
     use_read_replica = True
 
     def get_queryset(self):

@@ -15,7 +15,7 @@ import { PlusIcon, CloseIcon, ChevronDownIcon } from "@plane/propel/icons";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { Avatar, CustomSelect, CustomSearchSelect, EModalPosition, EModalWidth, ModalCore } from "@plane/ui";
 // helpers
-import { getFileURL } from "@plane/utils";
+import { getDuplicateUserNames, getFileURL, getUserNameWithEmail, getUserSearchText } from "@plane/utils";
 // hooks
 import { useMember } from "@/hooks/store/use-member";
 import { useUserPermissions } from "@/hooks/store/user";
@@ -76,6 +76,9 @@ export const SendProjectInvitationModal = observer(function SendProjectInvitatio
     const isInvited = projectMemberDetails?.member.id && projectMemberDetails?.original_role;
     return !isInvited;
   });
+  const duplicateNames = getDuplicateUserNames(
+    uninvitedPeople?.map((userId) => getWorkspaceMemberDetails(userId)?.member) ?? []
+  );
 
   const onSubmit = async (formData: FormValues) => {
     if (!workspaceSlug || !projectId || isSubmitting) return;
@@ -132,20 +135,16 @@ export const SendProjectInvitationModal = observer(function SendProjectInvitatio
       const memberDetails = getWorkspaceMemberDetails(userId);
 
       if (!memberDetails?.member) return;
+      const memberName = getUserNameWithEmail(memberDetails.member, duplicateNames);
       return {
         value: `${memberDetails?.member.id}`,
-        query: `${memberDetails?.member.first_name} ${
-          memberDetails?.member.last_name
-        } ${memberDetails?.member.display_name.toLowerCase()}`,
+        query: getUserSearchText(memberDetails.member),
         content: (
           <div className="flex w-full items-center gap-2">
             <div className="shrink-0 pt-0.5">
-              <Avatar name={memberDetails?.member.display_name} src={getFileURL(memberDetails?.member.avatar_url)} />
+              <Avatar name={memberName} src={getFileURL(memberDetails?.member.avatar_url)} />
             </div>
-            <div className="truncate">
-              {memberDetails?.member.display_name} (
-              {memberDetails?.member.first_name + " " + memberDetails?.member.last_name})
-            </div>
+            <div className="truncate">{memberName}</div>
           </div>
         ),
       };
@@ -192,6 +191,7 @@ export const SendProjectInvitationModal = observer(function SendProjectInvitatio
                     rules={{ required: "Please select a member" }}
                     render={({ field: { value, onChange } }) => {
                       const selectedMember = getWorkspaceMemberDetails(value);
+                      const selectedMemberName = getUserNameWithEmail(selectedMember?.member, duplicateNames);
                       return (
                         <CustomSearchSelect
                           value={value}
@@ -200,10 +200,10 @@ export const SendProjectInvitationModal = observer(function SendProjectInvitatio
                               {value && value !== "" ? (
                                 <div className="flex items-center gap-2">
                                   <Avatar
-                                    name={selectedMember?.member.display_name}
+                                    name={selectedMemberName}
                                     src={getFileURL(selectedMember?.member.avatar_url ?? "")}
                                   />
-                                  {selectedMember?.member.display_name}
+                                  {selectedMemberName}
                                 </div>
                               ) : (
                                 <div className="flex items-center gap-2 py-0.5">Select co-worker</div>

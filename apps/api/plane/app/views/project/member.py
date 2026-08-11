@@ -28,7 +28,13 @@ class ProjectMemberViewSet(BaseViewSet):
     serializer_class = ProjectMemberAdminSerializer
     model = ProjectMember
 
-    search_fields = ["member__display_name", "member__first_name"]
+    search_fields = [
+        "member__display_name",
+        "member__legacy_display_name",
+        "member__first_name",
+        "member__last_name",
+        "member__email",
+    ]
 
     def get_queryset(self):
         return self.filter_queryset(

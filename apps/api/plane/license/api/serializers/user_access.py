@@ -23,6 +23,7 @@ class InstanceUserSerializer(BaseSerializer):
             "id",
             "email",
             "display_name",
+            "legacy_display_name",
             "first_name",
             "last_name",
             "avatar_url",

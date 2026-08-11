@@ -13,7 +13,7 @@ import { ChevronDownIcon } from "@plane/propel/icons";
 import type { IUserLite } from "@plane/types";
 import { ComboDropDown } from "@plane/ui";
 // helpers
-import { cn } from "@plane/utils";
+import { cn, getDuplicateUserNames, getUserNameWithEmail } from "@plane/utils";
 // hooks
 import { useDropdown } from "@/hooks/use-dropdown";
 // local imports
@@ -88,22 +88,28 @@ export const MemberDropdownBase = observer(function MemberDropdownBase(props: TM
     if (!multiple) handleClose();
   };
 
-  const getDisplayName = (value: string | string[] | null, showUserDetails: boolean, placeholder: string = "") => {
-    if (Array.isArray(value)) {
-      if (value.length > 0) {
-        if (value.length === 1) {
-          return getUserDetails(value[0])?.display_name || placeholder;
+  const duplicateNames = getDuplicateUserNames(memberIds?.map((memberId) => getUserDetails(memberId)) ?? []);
+
+  const getDisplayName = (
+    selectedValue: string | string[] | null,
+    shouldShowUserDetails: boolean,
+    emptyLabel: string = ""
+  ) => {
+    if (Array.isArray(selectedValue)) {
+      if (selectedValue.length > 0) {
+        if (selectedValue.length === 1) {
+          return getUserNameWithEmail(getUserDetails(selectedValue[0]), duplicateNames) || emptyLabel;
         } else {
-          return showUserDetails ? `${value.length} ${t("members").toLocaleLowerCase()}` : "";
+          return shouldShowUserDetails ? `${selectedValue.length} ${t("members").toLocaleLowerCase()}` : "";
         }
       } else {
-        return placeholder;
+        return emptyLabel;
       }
     } else {
-      if (showUserDetails && value) {
-        return getUserDetails(value)?.display_name || placeholder;
+      if (shouldShowUserDetails && selectedValue) {
+        return getUserNameWithEmail(getUserDetails(selectedValue), duplicateNames) || emptyLabel;
       } else {
-        return placeholder;
+        return emptyLabel;
       }
     }
   };

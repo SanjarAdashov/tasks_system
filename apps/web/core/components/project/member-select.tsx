@@ -12,7 +12,13 @@ import { EUserProjectRoles } from "@plane/types";
 // plane ui
 import { Avatar, CustomSearchSelect } from "@plane/ui";
 // helpers
-import { getFileURL } from "@plane/utils";
+import {
+  getDuplicateUserNames,
+  getFileURL,
+  getUserFullName,
+  getUserNameWithEmail,
+  getUserSearchText,
+} from "@plane/utils";
 // hooks
 import { useMember } from "@/hooks/store/use-member";
 
@@ -30,6 +36,11 @@ export const MemberSelect = observer(function MemberSelect(props: Props) {
   const {
     project: { projectMemberIds, getProjectMemberDetails },
   } = useMember();
+  const projectMembers =
+    projectMemberIds?.map((userId) =>
+      projectId ? getProjectMemberDetails(userId, projectId.toString())?.member : undefined
+    ) ?? [];
+  const duplicateNames = getDuplicateUserNames(projectMembers);
 
   const options = projectMemberIds
     ?.map((userId) => {
@@ -38,14 +49,15 @@ export const MemberSelect = observer(function MemberSelect(props: Props) {
       if (!memberDetails?.member) return;
       const isGuest = memberDetails.role === EUserProjectRoles.GUEST;
       if (isGuest) return;
+      const memberName = getUserNameWithEmail(memberDetails.member, duplicateNames);
 
       return {
         value: `${memberDetails?.member.id}`,
-        query: `${memberDetails?.member.display_name}`,
+        query: getUserSearchText(memberDetails.member),
         content: (
           <div className="flex items-center gap-2">
-            <Avatar name={memberDetails?.member.display_name} src={getFileURL(memberDetails?.member.avatar_url)} />
-            {memberDetails?.member.display_name}
+            <Avatar name={memberName} src={getFileURL(memberDetails?.member.avatar_url)} />
+            {memberName}
           </div>
         ),
       };
@@ -58,6 +70,7 @@ export const MemberSelect = observer(function MemberSelect(props: Props) {
       }[]
     | undefined;
   const selectedOption = projectId ? getProjectMemberDetails(value, projectId.toString()) : null;
+  const selectedName = getUserNameWithEmail(selectedOption?.member, duplicateNames);
 
   return (
     <CustomSearchSelect
@@ -65,10 +78,10 @@ export const MemberSelect = observer(function MemberSelect(props: Props) {
       label={
         <div className="flex h-3.5 items-center gap-2">
           {selectedOption && (
-            <Avatar name={selectedOption.member?.display_name} src={getFileURL(selectedOption.member?.avatar_url)} />
+            <Avatar name={getUserFullName(selectedOption.member)} src={getFileURL(selectedOption.member?.avatar_url)} />
           )}
           {selectedOption ? (
-            selectedOption.member?.display_name
+            selectedName
           ) : (
             <div className="flex items-center gap-2">
               <Ban className="h-3.5 w-3.5 rotate-90 text-placeholder" />

@@ -79,18 +79,6 @@ export const useProjectColumns = (props: TUseProjectColumnsProps) => {
       ),
     },
     {
-      key: "Display Name",
-      content: "Display name",
-      thRender: () => (
-        <MemberHeaderColumn
-          property="display_name"
-          displayFilters={displayFilters}
-          handleDisplayFilterUpdate={handleDisplayFilterUpdate}
-        />
-      ),
-      tdRender: (rowData: RowData) => <div className="w-32">{rowData.member.display_name}</div>,
-    },
-    {
       key: "Email",
       content: "Email",
       thRender: () => (

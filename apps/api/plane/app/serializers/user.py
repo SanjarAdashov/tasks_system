@@ -14,11 +14,15 @@ from .base import BaseSerializer
 
 class UserSerializer(BaseSerializer):
     def validate_first_name(self, value):
+        value = value.strip()
+        if not value:
+            raise serializers.ValidationError("First name is required.")
         if contains_url(value):
             raise serializers.ValidationError("First name cannot contain a URL.")
         return value
 
     def validate_last_name(self, value):
+        value = value.strip()
         if contains_url(value):
             raise serializers.ValidationError("Last name cannot contain a URL.")
         return value
@@ -53,6 +57,8 @@ class UserSerializer(BaseSerializer):
             "is_email_verified",
             "is_active",
             "token_updated_at",
+            "display_name",
+            "legacy_display_name",
         ]
 
         # If the user has already filled first name or last name then he is onboarded
@@ -149,9 +155,10 @@ class UserLiteSerializer(BaseSerializer):
             "avatar_url",
             "is_bot",
             "display_name",
+            "legacy_display_name",
             "is_active",
         ]
-        read_only_fields = ["id", "is_bot", "is_active"]
+        read_only_fields = fields
 
 
 class UserAdminLiteSerializer(BaseSerializer):
@@ -165,11 +172,12 @@ class UserAdminLiteSerializer(BaseSerializer):
             "avatar_url",
             "is_bot",
             "display_name",
+            "legacy_display_name",
             "email",
             "last_login_medium",
             "is_active",
         ]
-        read_only_fields = ["id", "is_bot", "is_active"]
+        read_only_fields = fields
 
 
 class ChangePasswordSerializer(serializers.Serializer):

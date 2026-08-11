@@ -13,7 +13,7 @@ import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import { InstanceService } from "@plane/services";
 import type { IInstanceUser, TInstanceUserStatus } from "@plane/types";
 import { Input, Loader } from "@plane/ui";
-import { cn } from "@plane/utils";
+import { cn, getUserFullName } from "@plane/utils";
 // components
 import { PageWrapper } from "@/components/common/page-wrapper";
 import { UserAccessModal, type TUserAccessAction } from "@/components/user/user-access-modal";
@@ -30,7 +30,7 @@ const STATUS_STYLES: Record<TInstanceUserStatus, string> = {
 };
 
 function getUserName(user: IInstanceUser) {
-  return user.display_name || [user.first_name, user.last_name].filter(Boolean).join(" ") || user.email;
+  return getUserFullName(user);
 }
 
 function getInitials(user: IInstanceUser) {

@@ -44,19 +44,25 @@ export const useEditorMention = (args: TArgs) => {
           const responseKey = key as TSearchEntities;
           const response = res[responseKey];
           if (responseKey === "user_mention" && response && response.length > 0) {
-            const items: TMentionSuggestion[] = (response as TUserSearchResponse[]).map((user) => ({
-              icon: (
-                <Avatar
-                  className="flex-shrink-0"
-                  src={getFileURL(user.member__avatar_url)}
-                  name={user.member__display_name}
-                />
-              ),
-              id: user.member__id,
-              entity_identifier: user.member__id,
-              entity_name: "user_mention",
-              title: user.member__display_name,
-            }));
+            const items: TMentionSuggestion[] = (response as TUserSearchResponse[]).map((user) => {
+              const title =
+                user.member__name_count > 1
+                  ? `${user.member__display_name} (${user.member__email})`
+                  : user.member__display_name;
+              return {
+                icon: (
+                  <Avatar
+                    className="flex-shrink-0"
+                    src={getFileURL(user.member__avatar_url)}
+                    name={user.member__display_name}
+                  />
+                ),
+                id: user.member__id,
+                entity_identifier: user.member__id,
+                entity_name: "user_mention",
+                title,
+              };
+            });
             suggestionSections.push({
               key: "users",
               title: "Users",

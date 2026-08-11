@@ -61,7 +61,12 @@ class User(AbstractBaseUser, PermissionsMixin):
     email = models.CharField(max_length=255, null=True, blank=True, unique=True)
 
     # identity
+    # Backwards-compatible serialized name. It is derived from first_name and
+    # last_name and is no longer directly editable by users.
     display_name = models.CharField(max_length=255, default="")
+    # Keep the former manually configured display name searchable after the
+    # public display value is normalized to the user's full name.
+    legacy_display_name = models.CharField(max_length=255, blank=True, default="")
     first_name = models.CharField(max_length=255, blank=True)
     last_name = models.CharField(max_length=255, blank=True)
     # avatar
@@ -178,22 +183,44 @@ class User(AbstractBaseUser, PermissionsMixin):
     @property
     def full_name(self):
         """Return user's full name (first + last)."""
-        return f"{self.first_name} {self.last_name}".strip()
+        return " ".join(part.strip() for part in (self.first_name or "", self.last_name or "") if part and part.strip())
 
     def save(self, *args, **kwargs):
         self.email = self.email.lower().strip()
         self.mobile_number = self.mobile_number
+        self.first_name = (self.first_name or "").strip()
+        self.last_name = (self.last_name or "").strip()
+        self.legacy_display_name = (self.legacy_display_name or "").strip()
 
         if self.token_updated_at is not None:
             self.token = uuid.uuid4().hex + uuid.uuid4().hex
             self.token_updated_at = timezone.now()
 
-        if not self.display_name:
+        previous_display_name = (self.display_name or "").strip()
+        if self.full_name:
+            if (
+                previous_display_name
+                and previous_display_name.casefold() != self.full_name.casefold()
+                and not self.legacy_display_name
+            ):
+                self.legacy_display_name = previous_display_name
+            self.display_name = self.full_name
+        elif not previous_display_name:
             self.display_name = (
                 self.email.split("@")[0]
                 if len(self.email.split("@"))
                 else "".join(random.choice(string.ascii_letters) for _ in range(6))
             )
+        else:
+            self.display_name = previous_display_name
+
+        if kwargs.get("update_fields") is not None:
+            kwargs["update_fields"] = set(kwargs["update_fields"]) | {
+                "display_name",
+                "first_name",
+                "last_name",
+                "legacy_display_name",
+            }
 
         if self.is_superuser:
             self.is_staff = True

@@ -81,6 +81,9 @@ class ProjectMembersEndpoint(BaseAPIView):
             "id",
             "member",
             "member__display_name",
+            "member__first_name",
+            "member__last_name",
+            "member__email",
             "member__avatar",
         )
         return Response(members, status=status.HTTP_200_OK)

@@ -10,7 +10,7 @@ import { ShieldCheck, UserX } from "lucide-react";
 // plane imports
 import { Button } from "@plane/propel/button";
 import type { IInstanceUser } from "@plane/types";
-import { cn } from "@plane/utils";
+import { cn, getUserFullName } from "@plane/utils";
 
 export type TUserAccessAction = "block" | "unblock";
 
@@ -28,7 +28,7 @@ export function UserAccessModal(props: Props) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isBlocking = action === "block";
-  const userName = user?.display_name || [user?.first_name, user?.last_name].filter(Boolean).join(" ") || user?.email;
+  const userName = getUserFullName(user);
 
   useEffect(() => {
     if (isOpen) {
