@@ -11,6 +11,7 @@ import type { TIssue, TIssuePropertyValues, TProjectWorkItemPropertyValue, TWork
 import { SidebarPropertyListItem } from "@/components/common/layout/sidebar/property-list-item";
 import { ProjectService } from "@/services/project";
 import { WorkItemPropertyFieldInput } from "./field-input";
+import { getProjectWorkItemPropertiesSWRKey } from "./swr-key";
 
 type Props = {
   workspaceSlug: string;
@@ -26,7 +27,7 @@ const COMMIT_ON_CHANGE_TYPES = new Set<TWorkItemPropertyType>(["CHECKBOX", "SING
 export function IssueCustomProperties(props: Props) {
   const { workspaceSlug, projectId, issueId, issue, isEditable, updateIssue } = props;
   const service = useMemo(() => new ProjectService(), []);
-  const { data: properties } = useSWR(`ISSUE_CUSTOM_PROPERTIES_${workspaceSlug}_${projectId}`, () =>
+  const { data: properties } = useSWR(getProjectWorkItemPropertiesSWRKey(workspaceSlug, projectId), () =>
     service.getWorkItemProperties(workspaceSlug, projectId)
   );
   const [values, setValues] = useState<TIssuePropertyValues>(issue.property_values ?? {});

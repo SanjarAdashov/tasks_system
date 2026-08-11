@@ -44,6 +44,7 @@ import { EModalPosition, EModalWidth, Input, ModalCore } from "@plane/ui";
 import { cn } from "@plane/utils";
 import { NotAuthorizedView } from "@/components/auth-screens/not-authorized-view";
 import { PageHead } from "@/components/core/page-title";
+import { getProjectWorkItemPropertiesSWRKey } from "@/components/issues/work-item-properties";
 import { SettingsContentWrapper } from "@/components/settings/content-wrapper";
 import { SettingsHeading } from "@/components/settings/heading";
 import { ProjectSettingsFeatureControlItem } from "@/components/settings/project/content/feature-control-item";
@@ -423,8 +424,9 @@ function IntakeFormEditor({
   const { data: groups = [] } = useSWR(state ? ["INTAKE_FORM_GROUPS", workspaceSlug, projectId] : null, () =>
     projectService.getUserGroups(workspaceSlug, projectId)
   );
-  const { data: properties = [] } = useSWR(state ? ["INTAKE_FORM_PROPERTIES", workspaceSlug, projectId] : null, () =>
-    projectService.getWorkItemProperties(workspaceSlug, projectId)
+  const { data: properties = [] } = useSWR(
+    state ? getProjectWorkItemPropertiesSWRKey(workspaceSlug, projectId) : null,
+    () => projectService.getWorkItemProperties(workspaceSlug, projectId)
   );
 
   useEffect(() => {

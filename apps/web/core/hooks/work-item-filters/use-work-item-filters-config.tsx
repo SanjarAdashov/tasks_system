@@ -71,6 +71,7 @@ import { useProjectState } from "@/hooks/store/use-project-state";
 import { useProjectWorkItemFieldVisibility } from "@/hooks/use-project-work-item-field-visibility";
 // plane web imports
 import { useFiltersOperatorConfigs } from "@/hooks/rich-filters/use-filters-operator-configs";
+import { getProjectWorkItemPropertiesSWRKey } from "@/components/issues/work-item-properties";
 import { ProjectService } from "@/services/project";
 
 const projectService = new ProjectService();
@@ -113,7 +114,7 @@ export const useWorkItemFiltersConfig = (props: TUseWorkItemFiltersConfigProps):
   // derived values
   const operatorConfigs = useFiltersOperatorConfigs({ workspaceSlug });
   const { data: customProperties } = useSWR(
-    projectId ? `ISSUE_CUSTOM_PROPERTIES_${workspaceSlug}_${projectId}` : null,
+    projectId ? getProjectWorkItemPropertiesSWRKey(workspaceSlug, projectId) : null,
     () => projectService.getWorkItemProperties(workspaceSlug, projectId as string)
   );
   const { isFilterPropertyVisible, isLoading: isFieldVisibilityLoading } = useProjectWorkItemFieldVisibility(

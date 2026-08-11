@@ -9,3 +9,4 @@ export * from "./badges";
 export * from "./field-input";
 export * from "./multi-select-input";
 export * from "./form-properties";
+export * from "./swr-key";

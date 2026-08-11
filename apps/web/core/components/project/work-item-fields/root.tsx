@@ -11,6 +11,7 @@ import { useTranslation } from "@plane/i18n";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import type { TProjectWorkItemProperty, TWorkItemBuiltInFieldKey, TWorkItemBuiltInFieldSettings } from "@plane/types";
 import { Button, Loader, ToggleSwitch } from "@plane/ui";
+import { getProjectWorkItemPropertiesSWRKey } from "@/components/issues/work-item-properties";
 import { ProjectService } from "@/services/project";
 import {
   BUILT_IN_FIELD_LABELS,
@@ -41,7 +42,7 @@ export function WorkItemFieldsSettings({ workspaceSlug, projectId }: Props) {
   const { t } = useTranslation();
   const service = useMemo(() => new ProjectService(), []);
   const configurationKey = `WORK_ITEM_FIELD_CONFIGURATION_${workspaceSlug}_${projectId}`;
-  const propertiesKey = `WORK_ITEM_PROPERTIES_${workspaceSlug}_${projectId}`;
+  const propertiesKey = getProjectWorkItemPropertiesSWRKey(workspaceSlug, projectId);
 
   const {
     data: configuration,

@@ -16,6 +16,7 @@ import type {
   TStateTransitionEvaluation,
 } from "@plane/types";
 import { Button, Input, Loader, ToggleSwitch } from "@plane/ui";
+import { getProjectWorkItemPropertiesSWRKey } from "@/components/issues/work-item-properties";
 import { SettingsHeading } from "@/components/settings/heading";
 import { ProjectService, ProjectStateService } from "@/services/project";
 import { StateTransitionRuleEditor } from "./state-transition-rule-editor";
@@ -60,7 +61,7 @@ export function StateTransitionSettings({ workspaceSlug, projectId }: Props) {
   const { data: states } = useSWR(`STATE_TRANSITION_STATES_${workspaceSlug}_${projectId}`, () =>
     stateService.getStates(workspaceSlug, projectId)
   );
-  const { data: properties = [] } = useSWR(`STATE_TRANSITION_PROPERTIES_${workspaceSlug}_${projectId}`, () =>
+  const { data: properties = [] } = useSWR(getProjectWorkItemPropertiesSWRKey(workspaceSlug, projectId), () =>
     service.getWorkItemProperties(workspaceSlug, projectId)
   );
   const { data: groups = [] } = useSWR(`STATE_TRANSITION_GROUPS_${workspaceSlug}_${projectId}`, () =>

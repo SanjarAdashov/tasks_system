@@ -12,6 +12,7 @@ import type { TIssue, TProjectWorkItemProperty, TProjectWorkItemPropertyValue } 
 import { cn } from "@plane/utils";
 import { useMember } from "@/hooks/store/use-member";
 import { ProjectService } from "@/services/project";
+import { getProjectWorkItemPropertiesSWRKey } from "./swr-key";
 
 type Props = {
   issue: TIssue;
@@ -54,7 +55,7 @@ export const IssuePropertyBadges = observer(function IssuePropertyBadges(props: 
   const hasPropertyValues = Object.values(issue.property_values ?? {}).some(hasValue);
   const { data: properties } = useSWR(
     workspaceSlug && issue.project_id && hasPropertyValues
-      ? `ISSUE_CUSTOM_PROPERTIES_${workspaceSlug}_${issue.project_id}`
+      ? getProjectWorkItemPropertiesSWRKey(workspaceSlug, issue.project_id)
       : null,
     () => projectService.getWorkItemProperties(workspaceSlug as string, issue.project_id as string)
   );

@@ -43,7 +43,11 @@ import {
   IssueProjectSelect,
   IssueTitleInput,
 } from "@/components/issues/issue-modal/components";
-import { buildDefaultPropertyValues, WorkItemPropertyFormFields } from "@/components/issues/work-item-properties";
+import {
+  buildDefaultPropertyValues,
+  getProjectWorkItemPropertiesSWRKey,
+  WorkItemPropertyFormFields,
+} from "@/components/issues/work-item-properties";
 // helpers
 // hooks
 import { useIssueModal } from "@/hooks/context/use-issue-modal";
@@ -171,7 +175,7 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
     () => projectService.getWorkItemFieldConfiguration(workspaceSlugString!, projectId!)
   );
   const { data: customProperties = [], isLoading: areCustomPropertiesLoading } = useSWR(
-    workspaceSlugString && projectId ? `WORK_ITEM_PROPERTIES_${workspaceSlugString}_${projectId}` : null,
+    workspaceSlugString && projectId ? getProjectWorkItemPropertiesSWRKey(workspaceSlugString, projectId) : null,
     () => projectService.getWorkItemProperties(workspaceSlugString!, projectId!)
   );
   const hiddenFieldKeys = Object.entries(fieldConfiguration?.built_in_fields ?? {})
