@@ -4,7 +4,9 @@
  * See the LICENSE file for details.
  */
 
-export const THEMES = ["light", "dark", "light-contrast", "dark-contrast", "custom"];
+export const GTS_GLASS_THEME = "gts-glass-dark";
+
+export const THEMES = ["light", "dark", "light-contrast", "dark-contrast", "custom", GTS_GLASS_THEME];
 
 export interface I_THEME_OPTION {
   key: string;
@@ -50,6 +52,17 @@ export const THEME_OPTIONS: I_THEME_OPTION[] = [
       border: "#2E3234",
       color1: "#191B1B",
       color2: "#3C85D9",
+    },
+  },
+  {
+    key: "GTS Glass",
+    value: GTS_GLASS_THEME,
+    i18n_label: "GTS Glass",
+    type: "dark",
+    icon: {
+      border: "#5E7892",
+      color1: "#021326",
+      color2: "#19A7F6",
     },
   },
   {

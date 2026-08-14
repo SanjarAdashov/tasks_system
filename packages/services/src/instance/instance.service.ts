@@ -20,9 +20,14 @@ import type {
   IInstanceProjectUserGroupContext,
   TProjectUserGroup,
   TProjectUserGroupPayload,
+  IInstanceThemeApplyResponse,
+  IInstanceThemeSettings,
+  TFileSignedURLResponse,
 } from "@plane/types";
 // api service
 import { APIService } from "../api.service";
+import { FileUploadService } from "../file/file-upload.service";
+import { generateFileUploadPayload, getFileMetaDataForUpload } from "../file/helper";
 
 /**
  * Service class for managing instance-related operations
@@ -233,6 +238,34 @@ export class InstanceService extends APIService {
    */
   async updateConfigurations(data: Partial<IFormattedInstanceConfiguration>): Promise<IInstanceConfiguration[]> {
     return this.patch("/api/instances/configurations/", data)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async uploadInterfaceThemeBackground(file: File): Promise<TFileSignedURLResponse> {
+    const fileMetaData = await getFileMetaDataForUpload(file);
+    const signedURLResponse = await this.post("/api/instances/interface-theme/background/", fileMetaData)
+      .then((response) => response?.data as TFileSignedURLResponse)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+
+    const fileUploadService = new FileUploadService();
+    await fileUploadService.uploadFile(
+      signedURLResponse.upload_data.url,
+      generateFileUploadPayload(signedURLResponse, file)
+    );
+    await this.patch(`/api/instances/interface-theme/background/${signedURLResponse.asset_id}/`).catch((error) => {
+      throw error?.response?.data;
+    });
+
+    return signedURLResponse;
+  }
+
+  async applyInterfaceThemeToAll(data: IInstanceThemeSettings): Promise<IInstanceThemeApplyResponse> {
+    return this.post("/api/instances/interface-theme/apply/", data)
       .then((response) => response?.data)
       .catch((error) => {
         throw error?.response?.data;

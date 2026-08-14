@@ -86,7 +86,7 @@ export const SpreadsheetView = observer(function SpreadsheetView(props: Props) {
 
   if (!issueIds || issueIds.length === 0) return <></>;
   return (
-    <div className="relative flex h-full w-full flex-col overflow-x-hidden bg-layer-1 whitespace-nowrap text-secondary">
+    <div className="gts-glass-spreadsheet-surface relative flex h-full w-full flex-col overflow-x-hidden bg-layer-1 whitespace-nowrap text-secondary">
       <div ref={portalRef} className="spreadsheet-menu-portal" />
       <MultipleSelectGroup
         containerRef={containerRef}

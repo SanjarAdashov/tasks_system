@@ -35,3 +35,5 @@ from .user_access import (
     InstanceProjectUserGroupContextEndpoint,
     InstanceUserUnblockEndpoint,
 )
+
+from .theme import InstanceThemeApplyEndpoint, InstanceThemeBackgroundAssetEndpoint

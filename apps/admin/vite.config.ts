@@ -36,6 +36,14 @@ export default defineConfig(() => ({
   },
   server: {
     host: "127.0.0.1",
+    proxy: process.env.VITE_DEV_API_PROXY_TARGET
+      ? {
+          "/api": {
+            target: process.env.VITE_DEV_API_PROXY_TARGET,
+            changeOrigin: true,
+          },
+        }
+      : undefined,
   },
   // No SSR-specific overrides needed; alias resolves to ESM build
 }));

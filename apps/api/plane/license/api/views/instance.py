@@ -63,6 +63,11 @@ class InstanceEndpoint(BaseAPIView):
             POSTHOG_HOST,
             UNSPLASH_ACCESS_KEY,
             LLM_API_KEY,
+            DEFAULT_INTERFACE_THEME,
+            DEFAULT_GLASS_ACCENT_COLOR,
+            DEFAULT_GLASS_BACKGROUND,
+            DEFAULT_GLASS_BACKGROUND_URL,
+            DEFAULT_GLASS_OVERLAY_OPACITY,
         ) = get_configuration_value(
             [
                 {
@@ -122,6 +127,26 @@ class InstanceEndpoint(BaseAPIView):
                     "key": "LLM_API_KEY",
                     "default": os.environ.get("LLM_API_KEY", ""),
                 },
+                {
+                    "key": "DEFAULT_INTERFACE_THEME",
+                    "default": os.environ.get("DEFAULT_INTERFACE_THEME", "dark"),
+                },
+                {
+                    "key": "DEFAULT_GLASS_ACCENT_COLOR",
+                    "default": os.environ.get("DEFAULT_GLASS_ACCENT_COLOR", "#19A7F6"),
+                },
+                {
+                    "key": "DEFAULT_GLASS_BACKGROUND",
+                    "default": os.environ.get("DEFAULT_GLASS_BACKGROUND", "gts-tasks"),
+                },
+                {
+                    "key": "DEFAULT_GLASS_BACKGROUND_URL",
+                    "default": os.environ.get("DEFAULT_GLASS_BACKGROUND_URL", ""),
+                },
+                {
+                    "key": "DEFAULT_GLASS_OVERLAY_OPACITY",
+                    "default": os.environ.get("DEFAULT_GLASS_OVERLAY_OPACITY", "46"),
+                },
             ]
         )
 
@@ -151,6 +176,29 @@ class InstanceEndpoint(BaseAPIView):
 
         # Open AI settings
         data["has_llm_configured"] = bool(LLM_API_KEY)
+
+        # Interface defaults
+        allowed_interface_themes = {
+            "light",
+            "dark",
+            "light-contrast",
+            "dark-contrast",
+            "gts-glass-dark",
+        }
+        data["default_interface_theme"] = (
+            DEFAULT_INTERFACE_THEME if DEFAULT_INTERFACE_THEME in allowed_interface_themes else "dark"
+        )
+        allowed_glass_backgrounds = {"gts-tasks", "custom", "none"}
+        data["default_glass_accent_color"] = DEFAULT_GLASS_ACCENT_COLOR or "#19A7F6"
+        data["default_glass_background"] = (
+            DEFAULT_GLASS_BACKGROUND if DEFAULT_GLASS_BACKGROUND in allowed_glass_backgrounds else "gts-tasks"
+        )
+        data["default_glass_background_url"] = DEFAULT_GLASS_BACKGROUND_URL or ""
+        try:
+            overlay_opacity = int(DEFAULT_GLASS_OVERLAY_OPACITY)
+        except (TypeError, ValueError):
+            overlay_opacity = 46
+        data["default_glass_overlay_opacity"] = min(58, max(42, overlay_opacity))
 
         # File size settings
         data["file_size_limit"] = float(os.environ.get("FILE_SIZE_LIMIT", 5242880))

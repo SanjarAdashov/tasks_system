@@ -5,12 +5,13 @@
  */
 
 import type { ReactNode } from "react";
+import { useEffect } from "react";
 import Script from "next/script";
 import { Links, Meta, Outlet, Scripts } from "react-router";
 import type { LinksFunction } from "react-router";
 import { ThemeProvider, useTheme } from "next-themes";
 // plane imports
-import { SITE_DESCRIPTION, SITE_NAME } from "@plane/constants";
+import { GTS_GLASS_THEME, SITE_DESCRIPTION, SITE_NAME, THEMES } from "@plane/constants";
 import { cn } from "@plane/utils";
 // types
 // assets
@@ -24,6 +25,7 @@ import globalStyles from "@/styles/globals.css?url";
 import type { Route } from "./+types/root";
 // components
 import { LogoSpinner } from "@/components/common/logo-spinner";
+import { GlassThemeBackdrop } from "@/components/core/theme/glass-theme-backdrop";
 // local
 import { CustomErrorComponent } from "./error";
 import { AppProvider } from "./provider";
@@ -34,6 +36,19 @@ import "@fontsource/material-symbols-rounded";
 import "@fontsource/ibm-plex-mono";
 
 const APP_TITLE = "Plane | Simple, extensible, open-source project management tool.";
+
+function DevelopmentThemePreview() {
+  const { setTheme } = useTheme();
+
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+
+    const previewTheme = new URLSearchParams(window.location.search).get("theme-preview");
+    if (previewTheme === GTS_GLASS_THEME) setTheme(GTS_GLASS_THEME);
+  }, [setTheme]);
+
+  return null;
+}
 
 export const links: LinksFunction = () => [
   { rel: "icon", type: "image/png", sizes: "32x32", href: favicon32 },
@@ -76,7 +91,8 @@ export function Layout({ children }: { children: ReactNode }) {
       <body suppressHydrationWarning>
         <div id="context-menu-portal" />
         <div id="editor-portal" />
-        <ThemeProvider themes={["light", "dark", "light-contrast", "dark-contrast", "custom"]} defaultTheme="system">
+        <ThemeProvider themes={THEMES} defaultTheme="system">
+          <DevelopmentThemePreview />
           {children}
         </ThemeProvider>
         <Scripts />
@@ -123,8 +139,14 @@ export const meta: Route.MetaFunction = () => [
 export default function Root() {
   return (
     <AppProvider>
-      <div className={cn("relative flex h-screen w-full flex-col overflow-hidden bg-canvas", "desktop-app-container")}>
-        <main className="relative h-full w-full overflow-hidden">
+      <div
+        className={cn(
+          "relative isolate flex h-screen w-full flex-col overflow-hidden bg-canvas",
+          "desktop-app-container"
+        )}
+      >
+        <GlassThemeBackdrop />
+        <main className="relative z-[1] h-full w-full overflow-hidden">
           <Outlet />
         </main>
       </div>

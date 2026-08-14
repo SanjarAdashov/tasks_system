@@ -66,12 +66,7 @@ export type TUserProfile = {
   user: string | undefined;
   role: string | undefined;
   last_workspace_id: string | undefined;
-  theme: {
-    theme: string | undefined;
-    primary: string | undefined;
-    background: string | undefined;
-    darkPalette: boolean | undefined;
-  };
+  theme: IUserTheme;
   onboarding_step: TOnboardingSteps;
   is_onboarded: boolean;
   is_tour_completed: boolean;
@@ -109,6 +104,12 @@ export interface IUserTheme {
   primary?: string | undefined;
   background?: string | undefined;
   darkPalette?: boolean | undefined;
+  glassAccentColor?: string;
+  glassBackground?: "inherit" | "airport-blue-hour" | "gts-tasks" | "custom" | "none";
+  glassBackgroundUrl?: string;
+  glassOverlayOpacity?: number;
+  glassWorkspaceOpacity?: number;
+  glassTaskOpacity?: number;
 }
 
 export interface IUserMemberLite extends IUserLite {

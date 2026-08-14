@@ -23,6 +23,8 @@ from plane.license.api.views import (
     InstanceUserCreationQuotaEndpoint,
     InstanceProjectUserGroupContextEndpoint,
     InstanceUserUnblockEndpoint,
+    InstanceThemeApplyEndpoint,
+    InstanceThemeBackgroundAssetEndpoint,
 )
 
 urlpatterns = [
@@ -96,5 +98,20 @@ urlpatterns = [
         "project-user-groups/",
         InstanceProjectUserGroupContextEndpoint.as_view(),
         name="instance-project-user-groups",
+    ),
+    path(
+        "interface-theme/apply/",
+        InstanceThemeApplyEndpoint.as_view(),
+        name="instance-interface-theme-apply",
+    ),
+    path(
+        "interface-theme/background/",
+        InstanceThemeBackgroundAssetEndpoint.as_view(),
+        name="instance-interface-theme-background",
+    ),
+    path(
+        "interface-theme/background/<uuid:asset_id>/",
+        InstanceThemeBackgroundAssetEndpoint.as_view(),
+        name="instance-interface-theme-background-detail",
     ),
 ]

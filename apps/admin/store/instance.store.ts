@@ -17,6 +17,9 @@ import type {
   IFormattedInstanceConfiguration,
   IInstanceInfo,
   IInstanceConfig,
+  IInstanceThemeApplyResponse,
+  IInstanceThemeSettings,
+  TFileSignedURLResponse,
 } from "@plane/types";
 // root store
 import type { RootStore } from "@/store/root.store";
@@ -39,6 +42,8 @@ export interface IInstanceStore {
   fetchInstanceAdmins: () => Promise<IInstanceAdmin[] | undefined>;
   fetchInstanceConfigurations: () => Promise<IInstanceConfiguration[] | undefined>;
   updateInstanceConfigurations: (data: Partial<IFormattedInstanceConfiguration>) => Promise<IInstanceConfiguration[]>;
+  uploadInterfaceThemeBackground: (file: File) => Promise<TFileSignedURLResponse>;
+  applyInterfaceThemeToAll: (data: IInstanceThemeSettings) => Promise<IInstanceThemeApplyResponse>;
   disableEmail: () => Promise<void>;
 }
 
@@ -71,6 +76,7 @@ export class InstanceStore implements IInstanceStore {
       updateInstanceInfo: action,
       fetchInstanceConfigurations: action,
       updateInstanceConfigurations: action,
+      applyInterfaceThemeToAll: action,
     });
 
     this.instanceService = new InstanceService();
@@ -194,6 +200,14 @@ export class InstanceStore implements IInstanceStore {
       console.error("Error updating the instance configurations");
       throw error;
     }
+  };
+
+  uploadInterfaceThemeBackground = async (file: File) => this.instanceService.uploadInterfaceThemeBackground(file);
+
+  applyInterfaceThemeToAll = async (data: IInstanceThemeSettings) => {
+    const response = await this.instanceService.applyInterfaceThemeToAll(data);
+    await this.fetchInstanceConfigurations();
+    return response;
   };
 
   disableEmail = async () => {

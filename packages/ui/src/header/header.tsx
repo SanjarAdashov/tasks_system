@@ -35,7 +35,8 @@ function Header(props: HeaderProps) {
     <HeaderContext.Provider value={variant}>
       <Row
         variant={variant === EHeaderVariant.PRIMARY ? ERowVariant.HUGGING : ERowVariant.REGULAR}
-        className={cn(style, className)}
+        className={cn("plane-ui-header", style, className)}
+        data-header-variant={variant}
         {...rest}
       >
         {children}

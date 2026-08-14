@@ -198,3 +198,295 @@
     0 0 4px --alpha(var(--background-color-accent-primary) / 40%) !important;
   will-change: transform, opacity;
 }
+
+/* GTS Glass theme --------------------------------------------------------- */
+
+[data-theme="gts-glass-dark"] {
+  color-scheme: dark;
+
+  --gts-glass-canvas-rgb: 2 19 38;
+  --gts-glass-surface-rgb: 8 38 64;
+  --gts-glass-deep-rgb: 3 20 38;
+  --gts-glass-layer-1-hover-rgb: 16 57 88;
+  --gts-glass-layer-1-active-rgb: 20 68 103;
+  --gts-glass-layer-2-hover-rgb: 10 47 76;
+  --gts-glass-layer-2-active-rgb: 13 57 91;
+  --gts-glass-layer-3-hover-rgb: 8 40 67;
+  --gts-glass-layer-3-active-rgb: 11 50 82;
+  --gts-glass-accent: #19a7f6;
+  --gts-glass-on-accent: #021326;
+  --gts-glass-bg-surface-1-opacity: 0.56;
+  --gts-glass-bg-surface-2-opacity: 0.66;
+  --gts-glass-bg-layer-1-opacity: 0.7;
+  --gts-glass-bg-layer-1-hover-opacity: 0.78;
+  --gts-glass-bg-layer-1-active-opacity: 0.84;
+  --gts-glass-bg-layer-1-selected-opacity: 0.86;
+  --gts-glass-workspace-opacity: 0.34;
+  --gts-glass-sidebar-opacity: 0.68;
+  --gts-glass-kanban-surface-opacity: 0.42;
+  --gts-glass-kanban-column-opacity: 0.48;
+  --gts-glass-kanban-card-opacity: 0.8;
+  --gts-glass-list-surface-opacity: 0.72;
+  --gts-glass-list-row-opacity: 0.78;
+  --gts-glass-list-row-hover-opacity: 0.86;
+  --gts-glass-spreadsheet-surface-opacity: 0.82;
+  --gts-glass-spreadsheet-row-opacity: 0.56;
+  --gts-glass-spreadsheet-row-hover-opacity: 0.64;
+
+  --brand-100: color-mix(in srgb, var(--gts-glass-accent) 14%, #031426);
+  --brand-200: color-mix(in srgb, var(--gts-glass-accent) 20%, #031426);
+  --brand-300: color-mix(in srgb, var(--gts-glass-accent) 28%, #031426);
+  --brand-400: color-mix(in srgb, var(--gts-glass-accent) 72%, #031426);
+  --brand-500: color-mix(in srgb, var(--gts-glass-accent) 84%, #031426);
+  --brand-600: color-mix(in srgb, var(--gts-glass-accent) 92%, #031426);
+  --brand-700: color-mix(in srgb, var(--gts-glass-accent) 78%, white);
+  --brand-800: color-mix(in srgb, var(--gts-glass-accent) 64%, white);
+  --brand-900: color-mix(in srgb, var(--gts-glass-accent) 48%, white);
+  --brand-1000: color-mix(in srgb, var(--gts-glass-accent) 34%, white);
+  --brand-1100: color-mix(in srgb, var(--gts-glass-accent) 22%, white);
+  --brand-1200: color-mix(in srgb, var(--gts-glass-accent) 12%, white);
+  --brand-default: var(--gts-glass-accent);
+
+  --bg-canvas: transparent;
+  --bg-surface-1: rgb(var(--gts-glass-surface-rgb) / var(--gts-glass-bg-surface-1-opacity));
+  --bg-surface-2: rgb(var(--gts-glass-surface-rgb) / var(--gts-glass-bg-surface-2-opacity));
+  --bg-layer-1: rgb(var(--gts-glass-surface-rgb) / var(--gts-glass-bg-layer-1-opacity));
+  --bg-layer-1-hover: rgb(var(--gts-glass-layer-1-hover-rgb) / var(--gts-glass-bg-layer-1-hover-opacity));
+  --bg-layer-1-active: rgb(var(--gts-glass-layer-1-active-rgb) / var(--gts-glass-bg-layer-1-active-opacity));
+  --bg-layer-1-selected: rgb(var(--gts-glass-layer-1-active-rgb) / var(--gts-glass-bg-layer-1-selected-opacity));
+  --bg-layer-2: rgb(var(--gts-glass-deep-rgb) / 0.8);
+  --bg-layer-2-hover: rgb(var(--gts-glass-layer-2-hover-rgb) / 0.86);
+  --bg-layer-2-active: rgb(var(--gts-glass-layer-2-active-rgb) / 0.9);
+  --bg-layer-2-selected: rgb(var(--gts-glass-layer-2-active-rgb) / 0.92);
+  --bg-layer-3: rgb(var(--gts-glass-deep-rgb) / 0.9);
+  --bg-layer-3-hover: rgb(var(--gts-glass-layer-3-hover-rgb) / 0.94);
+  --bg-layer-3-active: rgb(var(--gts-glass-layer-3-active-rgb) / 0.96);
+  --bg-layer-3-selected: rgb(var(--gts-glass-layer-3-active-rgb) / 0.96);
+  --bg-layer-transparent-hover: rgb(244 248 252 / 0.07);
+  --bg-layer-transparent-active: rgb(244 248 252 / 0.11);
+  --bg-layer-transparent-selected: color-mix(in srgb, var(--gts-glass-accent) 16%, transparent);
+  --bg-accent-primary: var(--gts-glass-accent);
+  --bg-accent-primary-hover: color-mix(in srgb, var(--gts-glass-accent) 78%, white);
+  --bg-accent-primary-active: color-mix(in srgb, var(--gts-glass-accent) 82%, #021326);
+  --bg-accent-subtle: color-mix(in srgb, var(--gts-glass-accent) 16%, transparent);
+  --bg-accent-subtle-hover: color-mix(in srgb, var(--gts-glass-accent) 22%, transparent);
+  --bg-accent-subtle-active: color-mix(in srgb, var(--gts-glass-accent) 28%, transparent);
+  --bg-backdrop: rgb(0 7 15 / 0.7);
+
+  --border-subtle: rgb(184 199 217 / 0.15);
+  --border-subtle-1: rgb(184 199 217 / 0.22);
+  --border-strong: rgb(184 199 217 / 0.32);
+  --border-strong-1: rgb(184 199 217 / 0.44);
+  --border-accent-strong: var(--gts-glass-accent);
+  --border-accent-subtle: color-mix(in srgb, var(--gts-glass-accent) 44%, transparent);
+
+  --txt-primary: #f4f8fc;
+  --txt-secondary: #b8c7d9;
+  --txt-tertiary: #8393a7;
+  --txt-placeholder: #718298;
+  --txt-disabled: #596b80;
+  --txt-accent-primary: color-mix(in srgb, var(--gts-glass-accent) 78%, white);
+  --txt-accent-secondary: color-mix(in srgb, var(--gts-glass-accent) 48%, white);
+  --txt-on-color: var(--gts-glass-on-accent);
+  --txt-icon-primary: #f4f8fc;
+  --txt-icon-secondary: #b8c7d9;
+  --txt-icon-tertiary: #8393a7;
+  --txt-icon-placeholder: #718298;
+  --txt-icon-on-color: var(--gts-glass-on-accent);
+  --txt-icon-accent-subtle: color-mix(in srgb, var(--gts-glass-accent) 66%, white);
+  --txt-icon-accent-primary: color-mix(in srgb, var(--gts-glass-accent) 78%, white);
+  --txt-icon-accent-primary-inverse: color-mix(in srgb, var(--gts-glass-accent) 48%, white);
+  --txt-icon-accent-secondary: color-mix(in srgb, var(--gts-glass-accent) 12%, white);
+  --txt-link-primary: color-mix(in srgb, var(--gts-glass-accent) 78%, white);
+  --txt-link-primary-hover: color-mix(in srgb, var(--gts-glass-accent) 48%, white);
+  --txt-link-secondary: #b8c7d9;
+
+  --scrollbar-thumb: rgb(184 199 217 / 0.18);
+  --scrollbar-thumb-surface-hover: rgb(184 199 217 / 0.26);
+  --scrollbar-thumb-hover: rgb(184 199 217 / 0.34);
+  --scrollbar-thumb-active: rgb(184 199 217 / 0.44);
+}
+
+.gts-glass-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background: rgb(var(--gts-glass-canvas-rgb, 2 19 38));
+  pointer-events: none;
+}
+
+.gts-glass-wallpaper {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 54%;
+  filter: saturate(0.86) contrast(1.03);
+  transform: scale(1.015);
+}
+
+.gts-glass-wallpaper-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgb(2 19 38 / 0.28) 0%, rgb(2 19 38 / 0.06) 42%, rgb(2 19 38 / 0.42) 100%), rgb(2 19 38);
+}
+
+[data-theme="gts-glass-dark"] .gts-glass-workspace-surface {
+  background: rgb(var(--gts-glass-deep-rgb) / var(--gts-glass-workspace-opacity)) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.08);
+  backdrop-filter: blur(20px) saturate(1.08);
+}
+
+[data-theme="gts-glass-dark"] .plane-ui-header[data-header-variant="primary"],
+[data-theme="gts-glass-dark"] .gts-glass-kanban-column-header {
+  background: transparent !important;
+}
+
+[data-theme="gts-glass-dark"] .gts-glass-sidebar-surface {
+  background: rgb(var(--gts-glass-surface-rgb) / var(--gts-glass-sidebar-opacity)) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(1.08);
+  backdrop-filter: blur(28px) saturate(1.08);
+}
+
+[data-theme="gts-glass-dark"] .gts-glass-kanban-surface {
+  background: rgb(var(--gts-glass-surface-rgb) / var(--gts-glass-kanban-surface-opacity)) !important;
+}
+
+[data-theme="gts-glass-dark"] .gts-glass-kanban-column {
+  border: 1px solid rgb(184 199 217 / 0.12);
+  border-radius: 8px;
+  background: rgb(var(--gts-glass-surface-rgb) / var(--gts-glass-kanban-column-opacity));
+}
+
+[data-theme="gts-glass-dark"] .gts-glass-kanban-card {
+  background: rgb(var(--gts-glass-deep-rgb) / var(--gts-glass-kanban-card-opacity)) !important;
+  box-shadow: 0 10px 28px rgb(0 8 18 / 0.18);
+}
+
+[data-theme="gts-glass-dark"] .gts-glass-list-surface {
+  background: rgb(var(--gts-glass-surface-rgb) / var(--gts-glass-list-surface-opacity)) !important;
+}
+
+[data-theme="gts-glass-dark"] .gts-glass-list-row {
+  background: rgb(var(--gts-glass-deep-rgb) / var(--gts-glass-list-row-opacity));
+}
+
+[data-theme="gts-glass-dark"] .gts-glass-list-row:hover {
+  background: rgb(var(--gts-glass-layer-2-hover-rgb) / var(--gts-glass-list-row-hover-opacity));
+}
+
+[data-theme="gts-glass-dark"] .gts-glass-spreadsheet-surface {
+  background: rgb(var(--gts-glass-deep-rgb) / var(--gts-glass-spreadsheet-surface-opacity)) !important;
+  -webkit-backdrop-filter: blur(22px) saturate(1.04);
+  backdrop-filter: blur(22px) saturate(1.04);
+}
+
+[data-theme="gts-glass-dark"] .gts-glass-spreadsheet-row > td {
+  background: rgb(var(--gts-glass-surface-rgb) / var(--gts-glass-spreadsheet-row-opacity)) !important;
+}
+
+[data-theme="gts-glass-dark"] .gts-glass-spreadsheet-row:hover > td {
+  background: rgb(var(--gts-glass-layer-1-hover-rgb) / var(--gts-glass-spreadsheet-row-hover-opacity)) !important;
+}
+
+[data-theme="gts-glass-dark"] .gts-glass-task-peek {
+  background: rgb(var(--gts-glass-deep-rgb) / 0.9) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(1.04);
+  backdrop-filter: blur(28px) saturate(1.04);
+}
+
+[data-theme="gts-glass-dark"] [role="dialog"] {
+  --bg-surface-1: rgb(var(--gts-glass-deep-rgb) / 0.92);
+}
+
+[data-theme="gts-glass-dark"] [role="dialog"] [id^="headlessui-dialog-panel"] {
+  -webkit-backdrop-filter: blur(32px) saturate(1.04);
+  backdrop-filter: blur(32px) saturate(1.04);
+}
+
+[data-theme="gts-glass-dark"] [data-radix-popper-content-wrapper] > * {
+  -webkit-backdrop-filter: blur(24px) saturate(1.04);
+  backdrop-filter: blur(24px) saturate(1.04);
+}
+
+[data-theme="gts-glass-dark"] .gts-glass-user-menu {
+  background: rgb(var(--gts-glass-deep-rgb) / 0.76) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(1.08);
+  backdrop-filter: blur(32px) saturate(1.08);
+}
+
+[data-theme="gts-glass-dark"] .gts-glass-workspace-switcher {
+  background: rgb(var(--gts-glass-deep-rgb) / 0.9) !important;
+  -webkit-backdrop-filter: blur(36px) saturate(1.08);
+  backdrop-filter: blur(36px) saturate(1.08);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.04),
+    0 18px 48px rgb(0 8 18 / 0.42);
+}
+
+[data-theme="gts-glass-dark"] .gts-glass-display-panel {
+  background: rgb(var(--gts-glass-deep-rgb) / 0.88) !important;
+  -webkit-backdrop-filter: blur(36px) saturate(1.08);
+  backdrop-filter: blur(36px) saturate(1.08);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.035);
+}
+
+@supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  [data-theme="gts-glass-dark"] {
+    --bg-surface-1: rgb(var(--gts-glass-surface-rgb) / 0.92);
+    --bg-surface-2: rgb(var(--gts-glass-surface-rgb) / 0.94);
+    --bg-layer-1: rgb(var(--gts-glass-deep-rgb) / 0.96);
+    --bg-layer-2: rgb(var(--gts-glass-deep-rgb) / 0.97);
+  }
+
+  [data-theme="gts-glass-dark"] .gts-glass-user-menu {
+    background: rgb(var(--gts-glass-deep-rgb) / 0.96) !important;
+  }
+
+  [data-theme="gts-glass-dark"] .gts-glass-workspace-switcher {
+    background: rgb(var(--gts-glass-deep-rgb) / 0.98) !important;
+  }
+
+  [data-theme="gts-glass-dark"] .gts-glass-display-panel {
+    background: rgb(var(--gts-glass-deep-rgb) / 0.97) !important;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  [data-theme="gts-glass-dark"] {
+    --bg-surface-1: rgb(var(--gts-glass-surface-rgb) / 0.94);
+    --bg-surface-2: rgb(var(--gts-glass-surface-rgb) / 0.96);
+    --bg-layer-1: rgb(var(--gts-glass-deep-rgb) / 0.97);
+    --bg-layer-2: rgb(var(--gts-glass-deep-rgb) / 0.98);
+  }
+
+  [data-theme="gts-glass-dark"] .gts-glass-user-menu {
+    background: rgb(var(--gts-glass-deep-rgb) / 0.97) !important;
+  }
+
+  [data-theme="gts-glass-dark"] .gts-glass-workspace-switcher {
+    background: rgb(var(--gts-glass-deep-rgb) / 0.98) !important;
+  }
+
+  [data-theme="gts-glass-dark"] .gts-glass-display-panel {
+    background: rgb(var(--gts-glass-deep-rgb) / 0.98) !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-theme="gts-glass-dark"] *,
+  [data-theme="gts-glass-dark"] *::before,
+  [data-theme="gts-glass-dark"] *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .gts-glass-wallpaper {
+    object-position: 58% center;
+  }
+}

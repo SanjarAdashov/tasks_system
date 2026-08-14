@@ -282,7 +282,7 @@ export const KanbanGroup = observer(function KanbanGroup(props: IKanbanGroup) {
     <div
       id={`${groupId}__${sub_group_id}`}
       className={cn(
-        "relative h-full min-h-[120px] transition-all",
+        "gts-glass-kanban-column relative h-full min-h-[120px] transition-all",
         { "rounded-sm bg-layer-1": isDraggingOverColumn },
         { "vertical-scrollbar scrollbar-md": !sub_group_by && !shouldOverlayBeVisible }
       )}

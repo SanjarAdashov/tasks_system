@@ -35,6 +35,39 @@ workspace_management_config_variables = [
     },
 ]
 
+interface_config_variables = [
+    {
+        "key": "DEFAULT_INTERFACE_THEME",
+        "value": os.environ.get("DEFAULT_INTERFACE_THEME", "dark"),
+        "category": "INTERFACE",
+        "is_encrypted": False,
+    },
+    {
+        "key": "DEFAULT_GLASS_ACCENT_COLOR",
+        "value": os.environ.get("DEFAULT_GLASS_ACCENT_COLOR", "#19A7F6"),
+        "category": "INTERFACE",
+        "is_encrypted": False,
+    },
+    {
+        "key": "DEFAULT_GLASS_BACKGROUND",
+        "value": os.environ.get("DEFAULT_GLASS_BACKGROUND", "gts-tasks"),
+        "category": "INTERFACE",
+        "is_encrypted": False,
+    },
+    {
+        "key": "DEFAULT_GLASS_BACKGROUND_URL",
+        "value": os.environ.get("DEFAULT_GLASS_BACKGROUND_URL", ""),
+        "category": "INTERFACE",
+        "is_encrypted": False,
+    },
+    {
+        "key": "DEFAULT_GLASS_OVERLAY_OPACITY",
+        "value": os.environ.get("DEFAULT_GLASS_OVERLAY_OPACITY", "46"),
+        "category": "INTERFACE",
+        "is_encrypted": False,
+    },
+]
+
 google_config_variables = [
     {
         "key": "IS_GOOGLE_ENABLED",
@@ -253,6 +286,7 @@ unsplash_config_variables = [
 core_config_variables = [
     *authentication_config_variables,
     *workspace_management_config_variables,
+    *interface_config_variables,
     *google_config_variables,
     *github_config_variables,
     *gitlab_config_variables,

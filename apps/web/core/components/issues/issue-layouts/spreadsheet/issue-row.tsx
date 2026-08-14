@@ -100,7 +100,7 @@ export const SpreadsheetIssueRow = observer(function SpreadsheetIssueRow(props: 
             style={{ height: "calc(2.75rem - 1px)" }}
           />
         }
-        classNames={cn("bg-surface-1 transition-[background-color]", {
+        classNames={cn("gts-glass-spreadsheet-row bg-surface-1 transition-[background-color]", {
           "group selected-issue-row": isIssueSelected,
           "border-[0.5px] border-strong-1": isIssueActive,
         })}

@@ -80,7 +80,7 @@ export const UserMenuRoot = observer(function UserMenuRoot() {
       onMenuClose={() => setIsUserMenuOpen(false)}
       placement="bottom-end"
       maxHeight="2xl"
-      optionsClassName="w-72 p-3 flex flex-col gap-y-3"
+      optionsClassName="gts-glass-user-menu w-72 p-3 flex flex-col gap-y-3"
       closeOnSelect
     >
       <div className="relative h-29 w-full rounded-lg">

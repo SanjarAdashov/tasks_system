@@ -67,6 +67,11 @@ export interface IInstanceConfig {
   admin_base_url: string | undefined;
   is_self_managed: boolean;
   instance_changelog_url?: string;
+  default_interface_theme?: string;
+  default_glass_accent_color?: string;
+  default_glass_background?: "gts-tasks" | "custom" | "none";
+  default_glass_background_url?: string;
+  default_glass_overlay_opacity?: number;
 }
 
 export interface IInstanceAdmin {
@@ -161,7 +166,24 @@ export type TInstanceConfigurationKeys =
   | TInstanceEmailConfigurationKeys
   | TInstanceImageConfigurationKeys
   | TInstanceAuthenticationKeys
-  | TInstanceWorkspaceConfigurationKeys;
+  | TInstanceWorkspaceConfigurationKeys
+  | "DEFAULT_INTERFACE_THEME"
+  | "DEFAULT_GLASS_ACCENT_COLOR"
+  | "DEFAULT_GLASS_BACKGROUND"
+  | "DEFAULT_GLASS_BACKGROUND_URL"
+  | "DEFAULT_GLASS_OVERLAY_OPACITY";
+
+export interface IInstanceThemeSettings {
+  theme: string;
+  glass_accent_color: string;
+  glass_background: "gts-tasks" | "custom" | "none";
+  glass_background_url: string;
+  glass_overlay_opacity: number;
+}
+
+export interface IInstanceThemeApplyResponse {
+  updated_count: number;
+}
 
 export interface IInstanceConfiguration {
   id: string;

@@ -13,6 +13,7 @@ import { useTheme } from "next-themes";
 import { applyCustomTheme, clearCustomTheme } from "@plane/utils";
 // hooks
 import { useAppTheme } from "@/hooks/store/use-app-theme";
+import { useInstance } from "@/hooks/store/use-instance";
 import { useRouterParams } from "@/hooks/store/use-router-params";
 import { useUserProfile } from "@/hooks/store/user";
 
@@ -29,6 +30,7 @@ function StoreWrapper(props: TStoreWrapper) {
   // store hooks
   const { setQuery } = useRouterParams();
   const { sidebarCollapsed, toggleSidebar } = useAppTheme();
+  const { config: instanceConfig } = useInstance();
   const { data: userProfile } = useUserProfile();
   // Track if we've initialized theme from server (one-time only)
   const hasInitializedThemeRef = useRef(false);
@@ -65,16 +67,16 @@ function StoreWrapper(props: TStoreWrapper) {
     }
 
     // Only initialize theme from server on FIRST load for this user
-    if (!userProfile?.theme?.theme || hasInitializedThemeRef.current) {
-      return; // Skip if already initialized or no profile data
+    if (!userId || !instanceConfig || hasInitializedThemeRef.current) {
+      return; // Skip until profile and instance defaults are available
     }
 
-    // Apply theme from server profile (one-time only)
-    setTheme(userProfile?.theme?.theme || "system");
+    // An explicit user choice wins. New users inherit the instance default.
+    setTheme(userProfile?.theme?.theme || instanceConfig.default_interface_theme || "dark");
 
     // Mark as initialized - prevents future syncs from server
     hasInitializedThemeRef.current = true;
-  }, [userProfile?.theme?.theme, setTheme]);
+  }, [instanceConfig, userProfile?.id, userProfile?.theme?.theme, setTheme]);
 
   /**
    * Effect 2: Custom theme CSS application (runs on every change)

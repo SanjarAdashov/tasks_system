@@ -9,12 +9,13 @@ import { observer } from "mobx-react";
 import { useTheme } from "next-themes";
 // plane imports
 import type { I_THEME_OPTION } from "@plane/constants";
-import { THEME_OPTIONS } from "@plane/constants";
+import { GTS_GLASS_THEME, THEME_OPTIONS } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
 import { setPromiseToast } from "@plane/propel/toast";
 import { applyCustomTheme } from "@plane/utils";
 // components
 import { CustomThemeSelector } from "@/components/core/theme/custom-theme-selector";
+import { GlassThemeSelector } from "@/components/core/theme/glass-theme-selector";
 import { ThemeSwitch } from "@/components/core/theme/theme-switch";
 import { SettingsControlItem } from "@/components/settings/control-item";
 // hooks
@@ -98,6 +99,7 @@ export const ThemeSwitcher = observer(function ThemeSwitcher(props: {
         }
       />
       {userProfile.theme?.theme === "custom" && <CustomThemeSelector />}
+      {userProfile.theme?.theme === GTS_GLASS_THEME && <GlassThemeSelector />}
     </>
   );
 });
