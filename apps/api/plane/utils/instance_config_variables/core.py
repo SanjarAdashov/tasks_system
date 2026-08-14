@@ -66,6 +66,18 @@ interface_config_variables = [
         "category": "INTERFACE",
         "is_encrypted": False,
     },
+    {
+        "key": "DEFAULT_GLASS_WORKSPACE_OPACITY",
+        "value": os.environ.get("DEFAULT_GLASS_WORKSPACE_OPACITY", "50"),
+        "category": "INTERFACE",
+        "is_encrypted": False,
+    },
+    {
+        "key": "DEFAULT_GLASS_TASK_OPACITY",
+        "value": os.environ.get("DEFAULT_GLASS_TASK_OPACITY", "80"),
+        "category": "INTERFACE",
+        "is_encrypted": False,
+    },
 ]
 
 google_config_variables = [

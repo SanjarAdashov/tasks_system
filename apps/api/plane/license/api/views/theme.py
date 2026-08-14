@@ -36,6 +36,19 @@ HEX_COLOR_PATTERN = re.compile(r"^#[0-9A-Fa-f]{6}$")
 STATIC_ASSET_PATTERN = re.compile(r"^/api/assets/v2/static/([0-9a-fA-F-]{36})/$")
 
 
+def _validated_optional_opacity(data, key, label, minimum, maximum):
+    if key not in data:
+        return None
+
+    try:
+        value = int(data.get(key))
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{label} must be a number.") from exc
+    if value < minimum or value > maximum:
+        raise ValueError(f"{label} must be between {minimum} and {maximum}.")
+    return value
+
+
 def _validated_theme_settings(data):
     theme = str(data.get("theme", "")).strip()
     if theme not in ALLOWED_INTERFACE_THEMES:
@@ -71,12 +84,29 @@ def _validated_theme_settings(data):
     if overlay_opacity < 42 or overlay_opacity > 58:
         raise ValueError("Background dimming must be between 42 and 58.")
 
+    workspace_opacity = _validated_optional_opacity(
+        data,
+        "glass_workspace_opacity",
+        "Main window opacity",
+        10,
+        80,
+    )
+    task_opacity = _validated_optional_opacity(
+        data,
+        "glass_task_opacity",
+        "Task card opacity",
+        10,
+        95,
+    )
+
     return {
         "theme": theme,
         "glass_accent_color": accent_color,
         "glass_background": background,
         "glass_background_url": background_url,
         "glass_overlay_opacity": overlay_opacity,
+        "glass_workspace_opacity": workspace_opacity,
+        "glass_task_opacity": task_opacity,
     }
 
 
@@ -155,6 +185,10 @@ class InstanceThemeApplyEndpoint(BaseAPIView):
             "DEFAULT_GLASS_BACKGROUND_URL": settings["glass_background_url"],
             "DEFAULT_GLASS_OVERLAY_OPACITY": str(settings["glass_overlay_opacity"]),
         }
+        if settings["glass_workspace_opacity"] is not None:
+            configuration_values["DEFAULT_GLASS_WORKSPACE_OPACITY"] = str(settings["glass_workspace_opacity"])
+        if settings["glass_task_opacity"] is not None:
+            configuration_values["DEFAULT_GLASS_TASK_OPACITY"] = str(settings["glass_task_opacity"])
 
         with transaction.atomic():
             for key, value in configuration_values.items():
@@ -182,6 +216,10 @@ class InstanceThemeApplyEndpoint(BaseAPIView):
                         "glassOverlayOpacity": settings["glass_overlay_opacity"],
                     }
                 )
+                if settings["glass_workspace_opacity"] is not None:
+                    profile_theme["glassWorkspaceOpacity"] = settings["glass_workspace_opacity"]
+                if settings["glass_task_opacity"] is not None:
+                    profile_theme["glassTaskOpacity"] = settings["glass_task_opacity"]
                 profile.theme = profile_theme
 
             if profiles:

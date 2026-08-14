@@ -54,66 +54,74 @@ export const IssueAttachmentActionButton = observer(function IssueAttachmentActi
 
   const onDrop = useCallback(
     (acceptedFiles: File[], rejectedFiles: FileRejection[]) => {
-      const totalAttachedFiles = acceptedFiles.length + rejectedFiles.length;
+      if (rejectedFiles.length > 0) {
+        setToast({
+          type: TOAST_TYPE.ERROR,
+          title: t("toast.error"),
+          message: t("attachment.error"),
+        });
+      }
 
-      if (rejectedFiles.length === 0) {
-        const currentFile: File = acceptedFiles[0];
-        if (!currentFile || !workspaceSlug) return;
+      const validFiles = acceptedFiles.filter((file) => {
+        const validation = validateProjectAttachment(file, attachmentSettings);
+        if (validation.valid) return true;
 
-        const validation = validateProjectAttachment(currentFile, attachmentSettings);
-        if (!validation.valid) {
+        setToast({
+          type: TOAST_TYPE.ERROR,
+          title: t("toast.error"),
+          message:
+            validation.reason === "disabled"
+              ? t("attachment.category_disabled", {
+                  category: t(`attachment.categories.${validation.category}`),
+                })
+              : t("attachment.file_size_limit", { size: convertBytesToSize(validation.maxSize) }),
+        });
+        return false;
+      });
+
+      if (validFiles.length === 0 || !workspaceSlug) return;
+
+      setIsLoading(true);
+      Promise.all(validFiles.map((file) => attachmentOperations.create(file)))
+        .catch(() => {
           setToast({
             type: TOAST_TYPE.ERROR,
             title: t("toast.error"),
-            message:
-              validation.reason === "disabled"
-                ? t("attachment.category_disabled", {
-                    category: t(`attachment.categories.${validation.category}`),
-                  })
-                : t("attachment.file_size_limit", { size: convertBytesToSize(validation.maxSize) }),
+            message: t("attachment.error"),
           });
-          return;
-        }
-
-        setIsLoading(true);
-        attachmentOperations
-          .create(currentFile)
-          .catch(() => {
-            setToast({
-              type: TOAST_TYPE.ERROR,
-              title: t("toast.error"),
-              message: t("attachment.error"),
-            });
-          })
-          .finally(() => {
-            handleFetchPropertyActivities();
-            setLastWidgetAction("attachments");
-            setIsLoading(false);
-          });
-        return;
-      }
-
-      setToast({
-        type: TOAST_TYPE.ERROR,
-        title: t("toast.error"),
-        message: totalAttachedFiles > 1 ? t("attachment.only_one_file_allowed") : t("attachment.error"),
-      });
+        })
+        .finally(() => {
+          handleFetchPropertyActivities();
+          setLastWidgetAction("attachments");
+          setIsLoading(false);
+        });
     },
     [attachmentOperations, attachmentSettings, workspaceSlug, handleFetchPropertyActivities, setLastWidgetAction, t]
   );
 
   const { getRootProps, getInputProps } = useDropzone({
     onDrop,
-    multiple: false,
+    multiple: true,
     disabled: isLoading || disabled,
   });
 
   return (
-    <div>
-      <button {...getRootProps({ onClick: (event) => event.stopPropagation() })} type="button" disabled={disabled}>
-        <input {...getInputProps()} />
-        {customButton ? customButton : <PlusIcon className="h-4 w-4" />}
-      </button>
+    <div
+      role="presentation"
+      onClick={(event) => event.stopPropagation()}
+      onKeyDown={(event) => event.stopPropagation()}
+    >
+      {customButton ? (
+        <div {...getRootProps({ role: "presentation", tabIndex: -1 })}>
+          <input {...getInputProps()} />
+          {customButton}
+        </div>
+      ) : (
+        <button {...getRootProps()} type="button" disabled={disabled}>
+          <input {...getInputProps()} />
+          <PlusIcon className="h-4 w-4" />
+        </button>
+      )}
     </div>
   );
 });

@@ -72,6 +72,8 @@ export interface IInstanceConfig {
   default_glass_background?: "gts-tasks" | "custom" | "none";
   default_glass_background_url?: string;
   default_glass_overlay_opacity?: number;
+  default_glass_workspace_opacity?: number;
+  default_glass_task_opacity?: number;
 }
 
 export interface IInstanceAdmin {
@@ -171,7 +173,9 @@ export type TInstanceConfigurationKeys =
   | "DEFAULT_GLASS_ACCENT_COLOR"
   | "DEFAULT_GLASS_BACKGROUND"
   | "DEFAULT_GLASS_BACKGROUND_URL"
-  | "DEFAULT_GLASS_OVERLAY_OPACITY";
+  | "DEFAULT_GLASS_OVERLAY_OPACITY"
+  | "DEFAULT_GLASS_WORKSPACE_OPACITY"
+  | "DEFAULT_GLASS_TASK_OPACITY";
 
 export interface IInstanceThemeSettings {
   theme: string;
@@ -179,6 +183,8 @@ export interface IInstanceThemeSettings {
   glass_background: "gts-tasks" | "custom" | "none";
   glass_background_url: string;
   glass_overlay_opacity: number;
+  glass_workspace_opacity: number;
+  glass_task_opacity: number;
 }
 
 export interface IInstanceThemeApplyResponse {

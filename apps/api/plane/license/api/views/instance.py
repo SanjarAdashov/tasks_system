@@ -68,6 +68,8 @@ class InstanceEndpoint(BaseAPIView):
             DEFAULT_GLASS_BACKGROUND,
             DEFAULT_GLASS_BACKGROUND_URL,
             DEFAULT_GLASS_OVERLAY_OPACITY,
+            DEFAULT_GLASS_WORKSPACE_OPACITY,
+            DEFAULT_GLASS_TASK_OPACITY,
         ) = get_configuration_value(
             [
                 {
@@ -147,6 +149,14 @@ class InstanceEndpoint(BaseAPIView):
                     "key": "DEFAULT_GLASS_OVERLAY_OPACITY",
                     "default": os.environ.get("DEFAULT_GLASS_OVERLAY_OPACITY", "46"),
                 },
+                {
+                    "key": "DEFAULT_GLASS_WORKSPACE_OPACITY",
+                    "default": os.environ.get("DEFAULT_GLASS_WORKSPACE_OPACITY", "50"),
+                },
+                {
+                    "key": "DEFAULT_GLASS_TASK_OPACITY",
+                    "default": os.environ.get("DEFAULT_GLASS_TASK_OPACITY", "80"),
+                },
             ]
         )
 
@@ -199,6 +209,16 @@ class InstanceEndpoint(BaseAPIView):
         except (TypeError, ValueError):
             overlay_opacity = 46
         data["default_glass_overlay_opacity"] = min(58, max(42, overlay_opacity))
+        try:
+            workspace_opacity = int(DEFAULT_GLASS_WORKSPACE_OPACITY)
+        except (TypeError, ValueError):
+            workspace_opacity = 50
+        data["default_glass_workspace_opacity"] = min(80, max(10, workspace_opacity))
+        try:
+            task_opacity = int(DEFAULT_GLASS_TASK_OPACITY)
+        except (TypeError, ValueError):
+            task_opacity = 80
+        data["default_glass_task_opacity"] = min(95, max(10, task_opacity))
 
         # File size settings
         data["file_size_limit"] = float(os.environ.get("FILE_SIZE_LIMIT", 5242880))

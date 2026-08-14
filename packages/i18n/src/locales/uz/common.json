@@ -774,6 +774,7 @@
     "audio": "Audio",
     "unknown_type": "FAYL",
     "uploading": "{progress}% yuklangan",
+    "upload_failed_after_create": "Vazifa yaratildi, lekin ayrim fayllarni biriktirib bo‘lmadi. Vazifani ochib, ularni qayta yuklashga urinib ko‘ring.",
     "category_disabled": "Ushbu loyihada “{category}” toifasi uchun yuklamalar o‘chirib qo‘yilgan.",
     "categories": {
       "image": "Tasvirlar",

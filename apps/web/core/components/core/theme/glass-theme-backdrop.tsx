@@ -25,8 +25,8 @@ export const GlassThemeBackdrop = observer(function GlassThemeBackdrop() {
   const { data: userProfile } = useUserProfile();
   const { config: instanceConfig } = useInstance();
   const accentColor = userProfile?.theme?.glassAccentColor ?? instanceConfig?.default_glass_accent_color;
-  const workspaceOpacity = userProfile?.theme?.glassWorkspaceOpacity;
-  const taskOpacity = userProfile?.theme?.glassTaskOpacity;
+  const workspaceOpacity = userProfile?.theme?.glassWorkspaceOpacity ?? instanceConfig?.default_glass_workspace_opacity;
+  const taskOpacity = userProfile?.theme?.glassTaskOpacity ?? instanceConfig?.default_glass_task_opacity;
 
   useEffect(() => {
     if (resolvedTheme !== GTS_GLASS_THEME) {

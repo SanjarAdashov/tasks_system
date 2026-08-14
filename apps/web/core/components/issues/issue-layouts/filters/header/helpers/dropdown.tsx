@@ -5,6 +5,7 @@
  */
 
 import React, { Fragment, useState } from "react";
+import { createPortal } from "react-dom";
 import type { Placement } from "@popperjs/core";
 import { usePopper } from "react-popper";
 // headless ui
@@ -88,29 +89,33 @@ export function FiltersDropdown(props: Props) {
               </div>
             )}
           </Popover.Button>
-          <Transition
-            as={Fragment}
-            enter="transition ease-out duration-200"
-            enterFrom="opacity-0 translate-y-1"
-            enterTo="opacity-100 translate-y-0"
-            leave="transition ease-in duration-150"
-            leaveFrom="opacity-100 translate-y-0"
-            leaveTo="opacity-0 translate-y-1"
-          >
-            {/** translate-y-0 is a hack to create new stacking context. Required for safari  */}
-            <Popover.Panel className="fixed z-10 translate-y-0">
-              <div
-                className="my-1 overflow-hidden rounded-sm border border-subtle bg-surface-1 shadow-raised-100"
-                ref={setPopperElement}
-                style={styles.popper}
-                {...attributes.popper}
+          {typeof document !== "undefined" &&
+            createPortal(
+              <Transition
+                as={Fragment}
+                enter="transition ease-out duration-200"
+                enterFrom="opacity-0 translate-y-1"
+                enterTo="opacity-100 translate-y-0"
+                leave="transition ease-in duration-150"
+                leaveFrom="opacity-100 translate-y-0"
+                leaveTo="opacity-0 translate-y-1"
               >
-                <div className="flex max-h-[30rem] w-[18.75rem] flex-col overflow-hidden lg:max-h-[37.5rem]">
-                  {children}
-                </div>
-              </div>
-            </Popover.Panel>
-          </Transition>
+                {/** translate-y-0 is a hack to create new stacking context. Required for safari  */}
+                <Popover.Panel className="fixed z-50 translate-y-0" data-prevent-outside-click>
+                  <div
+                    className="gts-glass-popover-surface my-1 overflow-hidden rounded-sm border border-subtle bg-surface-1 shadow-raised-100"
+                    ref={setPopperElement}
+                    style={styles.popper}
+                    {...attributes.popper}
+                  >
+                    <div className="flex max-h-[min(30rem,calc(100vh-5rem))] w-[18.75rem] flex-col overflow-hidden lg:max-h-[min(37.5rem,calc(100vh-5rem))]">
+                      {children}
+                    </div>
+                  </div>
+                </Popover.Panel>
+              </Transition>,
+              document.body
+            )}
         </>
       )}
     </Popover>

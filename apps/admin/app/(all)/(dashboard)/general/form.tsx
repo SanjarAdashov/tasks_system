@@ -7,7 +7,18 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { observer } from "mobx-react";
 import { Controller, useForm } from "react-hook-form";
-import { Check, ImageIcon, ImagePlus, Moon, Palette, Telescope, Upload, Users } from "lucide-react";
+import {
+  Check,
+  ImageIcon,
+  ImagePlus,
+  Moon,
+  Palette,
+  RotateCcw,
+  SlidersHorizontal,
+  Telescope,
+  Upload,
+  Users,
+} from "lucide-react";
 // plane imports
 import { GTS_GLASS_THEME, THEME_OPTIONS } from "@plane/constants";
 import { Button } from "@plane/propel/button";
@@ -31,6 +42,12 @@ export interface IGeneralConfigurationForm {
 type TGlassBackground = IInstanceThemeSettings["glass_background"];
 
 const GTS_GLASS_DEFAULT_ACCENT = "#19A7F6";
+const GTS_GLASS_DEFAULT_WORKSPACE_OPACITY = 50;
+const GTS_GLASS_MIN_WORKSPACE_OPACITY = 10;
+const GTS_GLASS_MAX_WORKSPACE_OPACITY = 80;
+const GTS_GLASS_DEFAULT_TASK_OPACITY = 80;
+const GTS_GLASS_MIN_TASK_OPACITY = 10;
+const GTS_GLASS_MAX_TASK_OPACITY = 95;
 const GTS_GLASS_ACCENT_PRESETS = [
   { label: "Cyan", value: GTS_GLASS_DEFAULT_ACCENT },
   { label: "Azure", value: "#4F8CFF" },
@@ -47,6 +64,22 @@ const normalizeAccentColor = (value: string | undefined) =>
 const normalizeGlassBackground = (value: string | undefined): TGlassBackground =>
   value === "custom" || value === "none" ? value : "gts-tasks";
 
+const normalizeOpacity = (value: string | number | undefined, fallback: number, minimum: number, maximum: number) => {
+  const numericValue = Number(value);
+  if (!Number.isFinite(numericValue)) return fallback;
+  return Math.min(maximum, Math.max(minimum, Math.round(numericValue)));
+};
+
+const toConfigurationPayload = (settings: IInstanceThemeSettings) => ({
+  DEFAULT_INTERFACE_THEME: settings.theme,
+  DEFAULT_GLASS_ACCENT_COLOR: settings.glass_accent_color,
+  DEFAULT_GLASS_BACKGROUND: settings.glass_background,
+  DEFAULT_GLASS_BACKGROUND_URL: settings.glass_background_url,
+  DEFAULT_GLASS_OVERLAY_OPACITY: String(settings.glass_overlay_opacity),
+  DEFAULT_GLASS_WORKSPACE_OPACITY: String(settings.glass_workspace_opacity),
+  DEFAULT_GLASS_TASK_OPACITY: String(settings.glass_task_opacity),
+});
+
 export const GeneralConfigurationForm = observer(function GeneralConfigurationForm(props: IGeneralConfigurationForm) {
   const { instance, instanceAdmins, instanceConfig } = props;
   const { updateInstanceInfo, updateInstanceConfigurations, uploadInterfaceThemeBackground, applyInterfaceThemeToAll } =
@@ -58,6 +91,22 @@ export const GeneralConfigurationForm = observer(function GeneralConfigurationFo
   );
   const [customBackgroundUrl, setCustomBackgroundUrl] = useState(instanceConfig.DEFAULT_GLASS_BACKGROUND_URL || "");
   const [overlayOpacity, setOverlayOpacity] = useState(Number(instanceConfig.DEFAULT_GLASS_OVERLAY_OPACITY) || 46);
+  const [workspaceOpacity, setWorkspaceOpacity] = useState(
+    normalizeOpacity(
+      instanceConfig.DEFAULT_GLASS_WORKSPACE_OPACITY,
+      GTS_GLASS_DEFAULT_WORKSPACE_OPACITY,
+      GTS_GLASS_MIN_WORKSPACE_OPACITY,
+      GTS_GLASS_MAX_WORKSPACE_OPACITY
+    )
+  );
+  const [taskOpacity, setTaskOpacity] = useState(
+    normalizeOpacity(
+      instanceConfig.DEFAULT_GLASS_TASK_OPACITY,
+      GTS_GLASS_DEFAULT_TASK_OPACITY,
+      GTS_GLASS_MIN_TASK_OPACITY,
+      GTS_GLASS_MAX_TASK_OPACITY
+    )
+  );
   const [pendingBackgroundFile, setPendingBackgroundFile] = useState<File | null>(null);
   const [pendingBackgroundPreview, setPendingBackgroundPreview] = useState("");
   const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
@@ -70,11 +119,29 @@ export const GeneralConfigurationForm = observer(function GeneralConfigurationFo
     setBackground(normalizeGlassBackground(instanceConfig.DEFAULT_GLASS_BACKGROUND));
     setCustomBackgroundUrl(instanceConfig.DEFAULT_GLASS_BACKGROUND_URL || "");
     setOverlayOpacity(Number(instanceConfig.DEFAULT_GLASS_OVERLAY_OPACITY) || 46);
+    setWorkspaceOpacity(
+      normalizeOpacity(
+        instanceConfig.DEFAULT_GLASS_WORKSPACE_OPACITY,
+        GTS_GLASS_DEFAULT_WORKSPACE_OPACITY,
+        GTS_GLASS_MIN_WORKSPACE_OPACITY,
+        GTS_GLASS_MAX_WORKSPACE_OPACITY
+      )
+    );
+    setTaskOpacity(
+      normalizeOpacity(
+        instanceConfig.DEFAULT_GLASS_TASK_OPACITY,
+        GTS_GLASS_DEFAULT_TASK_OPACITY,
+        GTS_GLASS_MIN_TASK_OPACITY,
+        GTS_GLASS_MAX_TASK_OPACITY
+      )
+    );
   }, [
     instanceConfig.DEFAULT_GLASS_ACCENT_COLOR,
     instanceConfig.DEFAULT_GLASS_BACKGROUND,
     instanceConfig.DEFAULT_GLASS_BACKGROUND_URL,
     instanceConfig.DEFAULT_GLASS_OVERLAY_OPACITY,
+    instanceConfig.DEFAULT_GLASS_TASK_OPACITY,
+    instanceConfig.DEFAULT_GLASS_WORKSPACE_OPACITY,
     instanceConfig.DEFAULT_INTERFACE_THEME,
   ]);
 
@@ -121,16 +188,20 @@ export const GeneralConfigurationForm = observer(function GeneralConfigurationFo
       glass_background: background,
       glass_background_url: nextBackgroundUrl,
       glass_overlay_opacity: Math.min(58, Math.max(42, overlayOpacity)),
+      glass_workspace_opacity: normalizeOpacity(
+        workspaceOpacity,
+        GTS_GLASS_DEFAULT_WORKSPACE_OPACITY,
+        GTS_GLASS_MIN_WORKSPACE_OPACITY,
+        GTS_GLASS_MAX_WORKSPACE_OPACITY
+      ),
+      glass_task_opacity: normalizeOpacity(
+        taskOpacity,
+        GTS_GLASS_DEFAULT_TASK_OPACITY,
+        GTS_GLASS_MIN_TASK_OPACITY,
+        GTS_GLASS_MAX_TASK_OPACITY
+      ),
     };
   };
-
-  const toConfigurationPayload = (settings: IInstanceThemeSettings) => ({
-    DEFAULT_INTERFACE_THEME: settings.theme,
-    DEFAULT_GLASS_ACCENT_COLOR: settings.glass_accent_color,
-    DEFAULT_GLASS_BACKGROUND: settings.glass_background,
-    DEFAULT_GLASS_BACKGROUND_URL: settings.glass_background_url,
-    DEFAULT_GLASS_OVERLAY_OPACITY: String(settings.glass_overlay_opacity),
-  });
 
   const onSubmit = async (formData: Partial<IInstance>) => {
     try {
@@ -211,7 +282,7 @@ export const GeneralConfigurationForm = observer(function GeneralConfigurationFo
         handleSubmit={() => void handleApplyThemeToAll()}
         isSubmitting={isApplyingTheme}
         title="Применить тему ко всем пользователям?"
-        content={`Тема «${selectedThemeLabel}», акцентный цвет и фон заменят текущие настройки всех существующих пользователей. После этого пользователи смогут изменить оформление в своем профиле.`}
+        content={`Тема «${selectedThemeLabel}», акцентный цвет, прозрачность и фон заменят текущие настройки всех существующих пользователей. После этого пользователи смогут изменить оформление в своем профиле.`}
         primaryButtonText={{
           default: "Применить ко всем",
           loading: "Применение",
@@ -377,6 +448,75 @@ export const GeneralConfigurationForm = observer(function GeneralConfigurationFo
                   </div>
                 </section>
 
+                <section className="space-y-4 border-t border-subtle pt-5">
+                  <div className="flex items-start gap-3">
+                    <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-accent-subtle text-accent-primary">
+                      <SlidersHorizontal className="size-4" />
+                    </span>
+                    <div>
+                      <div className="text-13 font-medium text-primary">Glass transparency</div>
+                      <div className="text-11 leading-5 text-tertiary">
+                        Control the main interface separately from task cards and rows. Higher values make surfaces more
+                        solid.
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-5 rounded-lg border border-subtle bg-layer-2 p-4 sm:grid-cols-2">
+                    <label className="flex min-w-0 flex-col gap-2" htmlFor="instance-glass-workspace-opacity">
+                      <span className="flex items-center justify-between gap-4 text-11 font-medium text-secondary">
+                        Main window
+                        <span className="font-mono text-primary">{workspaceOpacity}%</span>
+                      </span>
+                      <input
+                        id="instance-glass-workspace-opacity"
+                        type="range"
+                        min={GTS_GLASS_MIN_WORKSPACE_OPACITY}
+                        max={GTS_GLASS_MAX_WORKSPACE_OPACITY}
+                        step={1}
+                        value={workspaceOpacity}
+                        className="accent-accent-primary h-1.5 w-full cursor-pointer"
+                        onChange={(event) => setWorkspaceOpacity(Number(event.target.value))}
+                      />
+                      <span className="text-11 leading-5 text-tertiary">
+                        Workspace, navigation, headers, and view surfaces.
+                      </span>
+                    </label>
+
+                    <label className="flex min-w-0 flex-col gap-2" htmlFor="instance-glass-task-opacity">
+                      <span className="flex items-center justify-between gap-4 text-11 font-medium text-secondary">
+                        Task cards and rows
+                        <span className="font-mono text-primary">{taskOpacity}%</span>
+                      </span>
+                      <input
+                        id="instance-glass-task-opacity"
+                        type="range"
+                        min={GTS_GLASS_MIN_TASK_OPACITY}
+                        max={GTS_GLASS_MAX_TASK_OPACITY}
+                        step={1}
+                        value={taskOpacity}
+                        className="accent-accent-primary h-1.5 w-full cursor-pointer"
+                        onChange={(event) => setTaskOpacity(Number(event.target.value))}
+                      />
+                      <span className="text-11 leading-5 text-tertiary">
+                        Kanban cards plus List, Custom grouping, and Spreadsheet rows.
+                      </span>
+                    </label>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="focus-visible:ring-accent-primary/30 inline-flex items-center gap-1.5 rounded-md px-2 py-1.5 text-11 font-medium text-secondary transition-colors outline-none hover:bg-layer-transparent-hover hover:text-primary focus-visible:ring-2"
+                    onClick={() => {
+                      setWorkspaceOpacity(GTS_GLASS_DEFAULT_WORKSPACE_OPACITY);
+                      setTaskOpacity(GTS_GLASS_DEFAULT_TASK_OPACITY);
+                    }}
+                  >
+                    <RotateCcw className="size-3.5" />
+                    Reset transparency
+                  </button>
+                </section>
+
                 <section className="space-y-3 border-t border-subtle pt-5">
                   <div className="flex items-start gap-3">
                     <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-accent-subtle text-accent-primary">
@@ -527,7 +667,8 @@ export const GeneralConfigurationForm = observer(function GeneralConfigurationFo
               <div className="max-w-2xl">
                 <div className="text-13 font-medium text-primary">Apply the selected appearance to existing users</div>
                 <div className="mt-1 text-11 leading-5 text-tertiary">
-                  This replaces each user&apos;s current theme, accent, and background. Confirmation is required.
+                  This replaces each user&apos;s current theme, accent, transparency, and background. Confirmation is
+                  required.
                 </div>
               </div>
             </div>

@@ -101,54 +101,53 @@ export const IssueAttachmentItemList = observer(function IssueAttachmentItemList
 
   const onDrop = useCallback(
     (acceptedFiles: File[], rejectedFiles: FileRejection[]) => {
-      const totalAttachedFiles = acceptedFiles.length + rejectedFiles.length;
-      if (rejectedFiles.length === 0 && acceptedFiles.length === 1) {
-        const currentFile: File = acceptedFiles[0];
-        if (!currentFile || !workspaceSlug) return;
+      if (rejectedFiles.length > 0) {
+        setToast({
+          type: TOAST_TYPE.ERROR,
+          title: t("toast.error"),
+          message: t("attachment.error"),
+        });
+      }
 
-        const validation = validateProjectAttachment(currentFile, attachmentSettings);
-        if (!validation.valid) {
+      const validFiles = acceptedFiles.filter((file) => {
+        const validation = validateProjectAttachment(file, attachmentSettings);
+        if (validation.valid) return true;
+
+        setToast({
+          type: TOAST_TYPE.ERROR,
+          title: t("toast.error"),
+          message:
+            validation.reason === "disabled"
+              ? t("attachment.category_disabled", {
+                  category: t(`attachment.categories.${validation.category}`),
+                })
+              : t("attachment.file_size_limit", { size: convertBytesToSize(validation.maxSize) }),
+        });
+        return false;
+      });
+
+      if (validFiles.length === 0 || !workspaceSlug) return;
+
+      setIsUploading(true);
+      Promise.all(validFiles.map((file) => createAttachment(file)))
+        .catch(() => {
           setToast({
             type: TOAST_TYPE.ERROR,
             title: t("toast.error"),
-            message:
-              validation.reason === "disabled"
-                ? t("attachment.category_disabled", {
-                    category: t(`attachment.categories.${validation.category}`),
-                  })
-                : t("attachment.file_size_limit", { size: convertBytesToSize(validation.maxSize) }),
+            message: t("attachment.error"),
           });
-          return;
-        }
-
-        setIsUploading(true);
-        createAttachment(currentFile)
-          .catch(() => {
-            setToast({
-              type: TOAST_TYPE.ERROR,
-              title: t("toast.error"),
-              message: t("attachment.error"),
-            });
-          })
-          .finally(() => {
-            handleFetchPropertyActivities();
-            setIsUploading(false);
-          });
-        return;
-      }
-
-      setToast({
-        type: TOAST_TYPE.ERROR,
-        title: t("toast.error"),
-        message: totalAttachedFiles > 1 ? t("attachment.only_one_file_allowed") : t("attachment.error"),
-      });
+        })
+        .finally(() => {
+          handleFetchPropertyActivities();
+          setIsUploading(false);
+        });
     },
     [attachmentSettings, createAttachment, handleFetchPropertyActivities, t, workspaceSlug]
   );
 
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
-    multiple: false,
+    multiple: true,
     disabled: isUploading || disabled,
     noClick: true,
   });

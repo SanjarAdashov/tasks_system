@@ -56,6 +56,8 @@ class TestInstanceInterfaceTheme:
                 "glass_background": "gts-tasks",
                 "glass_background_url": "",
                 "glass_overlay_opacity": 48,
+                "glass_workspace_opacity": 35,
+                "glass_task_opacity": 65,
             },
             format="json",
         )
@@ -71,12 +73,77 @@ class TestInstanceInterfaceTheme:
             assert profile.theme["glassBackground"] == "gts-tasks"
             assert profile.theme["glassBackgroundUrl"] == ""
             assert profile.theme["glassOverlayOpacity"] == 48
-        assert admin_profile.theme["glassTaskOpacity"] == 72
+            assert profile.theme["glassWorkspaceOpacity"] == 35
+            assert profile.theme["glassTaskOpacity"] == 65
 
         assert InstanceConfiguration.objects.get(key="DEFAULT_INTERFACE_THEME").value == "gts-glass-dark"
         assert InstanceConfiguration.objects.get(key="DEFAULT_GLASS_ACCENT_COLOR").value == "#4F8CFF"
         assert InstanceConfiguration.objects.get(key="DEFAULT_GLASS_BACKGROUND").value == "gts-tasks"
         assert InstanceConfiguration.objects.get(key="DEFAULT_GLASS_OVERLAY_OPACITY").value == "48"
+        assert InstanceConfiguration.objects.get(key="DEFAULT_GLASS_WORKSPACE_OPACITY").value == "35"
+        assert InstanceConfiguration.objects.get(key="DEFAULT_GLASS_TASK_OPACITY").value == "65"
+
+    @pytest.mark.parametrize(
+        ("field", "value", "error_text"),
+        [
+            ("glass_workspace_opacity", 9, "between 10 and 80"),
+            ("glass_workspace_opacity", 81, "between 10 and 80"),
+            ("glass_task_opacity", 9, "between 10 and 95"),
+            ("glass_task_opacity", 96, "between 10 and 95"),
+        ],
+    )
+    def test_apply_theme_rejects_invalid_transparency(self, field, value, error_text):
+        admin = create_user("admin")
+        create_instance(admin)
+        Profile.objects.create(user=admin, theme={"theme": "dark"})
+
+        client = APIClient()
+        client.force_authenticate(user=admin)
+        response = client.post(
+            "/api/instances/interface-theme/apply/",
+            {
+                "theme": "gts-glass-dark",
+                "glass_accent_color": "#19A7F6",
+                "glass_background": "gts-tasks",
+                "glass_background_url": "",
+                "glass_overlay_opacity": 46,
+                "glass_workspace_opacity": 50,
+                "glass_task_opacity": 80,
+                field: value,
+            },
+            format="json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert error_text in response.data["error"]
+        assert Profile.objects.get(user=admin).theme == {"theme": "dark"}
+
+    def test_legacy_apply_payload_keeps_existing_transparency(self):
+        admin = create_user("admin")
+        create_instance(admin)
+        Profile.objects.create(
+            user=admin,
+            theme={"theme": "dark", "glassWorkspaceOpacity": 25, "glassTaskOpacity": 70},
+        )
+
+        client = APIClient()
+        client.force_authenticate(user=admin)
+        response = client.post(
+            "/api/instances/interface-theme/apply/",
+            {
+                "theme": "gts-glass-dark",
+                "glass_accent_color": "#19A7F6",
+                "glass_background": "gts-tasks",
+                "glass_background_url": "",
+                "glass_overlay_opacity": 46,
+            },
+            format="json",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        profile = Profile.objects.get(user=admin)
+        assert profile.theme["glassWorkspaceOpacity"] == 25
+        assert profile.theme["glassTaskOpacity"] == 70
 
     def test_non_instance_admin_cannot_apply_theme(self):
         admin = create_user("admin")

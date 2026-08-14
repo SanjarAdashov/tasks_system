@@ -7,6 +7,7 @@
 import { useEffect, useRef, useState } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
+import { v4 as uuidv4 } from "uuid";
 // Plane imports
 import { useTranslation } from "@plane/i18n";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
@@ -22,13 +23,16 @@ import { useIssueStoreType } from "@/hooks/use-issue-layout-store";
 import { useIssuesActions } from "@/hooks/use-issues-actions";
 // services
 import { FileService } from "@/services/file.service";
+import { IssueAttachmentService } from "@/services/issue";
 const fileService = new FileService();
+const issueAttachmentService = new IssueAttachmentService();
 // local imports
 import { CreateIssueToastActionItems } from "../create-issue-toast-action-items";
 import { DraftIssueLayout } from "./draft-issue-layout";
 import { IssueFormRoot } from "./form";
 import type { IssueFormProps } from "./form";
 import type { IssuesModalProps } from "./modal";
+import type { TPendingIssueAttachment } from "./components/pending-attachments";
 
 const getStateTransitionErrorMessage = (error: any): string | undefined => {
   const transitionError = error?.state_transition ?? error?.response?.data?.state_transition;
@@ -67,6 +71,7 @@ export const CreateUpdateIssueModalBase = observer(function CreateUpdateIssueMod
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [description, setDescription] = useState<string | undefined>(undefined);
   const [uploadedAssetIds, setUploadedAssetIds] = useState<string[]>([]);
+  const [pendingAttachments, setPendingAttachments] = useState<TPendingIssueAttachment[]>([]);
   const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false);
   // store hooks
   const { t } = useTranslation();
@@ -104,6 +109,7 @@ export const CreateUpdateIssueModalBase = observer(function CreateUpdateIssueMod
     // and return to avoid activeProjectId being set to some other project
     if (!isOpen) {
       setActiveProjectId(null);
+      setPendingAttachments([]);
       return;
     }
 
@@ -134,6 +140,7 @@ export const CreateUpdateIssueModalBase = observer(function CreateUpdateIssueMod
 
     setActiveProjectId(null);
     setChangesMade(null);
+    setPendingAttachments([]);
     onClose();
     handleDuplicateIssueModal(false);
   };
@@ -146,6 +153,7 @@ export const CreateUpdateIssueModalBase = observer(function CreateUpdateIssueMod
 
     try {
       let response: TIssue | undefined;
+      let failedAttachmentUploads = 0;
       // if draft issue, use draft issue store to create issue
       if (is_draft_issue) {
         response = (await draftIssues.createIssue(workspaceSlug.toString(), payload)) as TIssue;
@@ -163,12 +171,15 @@ export const CreateUpdateIssueModalBase = observer(function CreateUpdateIssueMod
         response = await createIssue(payload.project_id, payload);
       }
 
+      if (!response) throw new Error();
+      const responseProjectId = response.project_id ?? payload.project_id;
+
       // update uploaded assets' status
       if (uploadedAssetIds.length > 0) {
         await fileService.updateBulkProjectAssetsUploadStatus(
           workspaceSlug?.toString() ?? "",
-          response?.project_id ?? "",
-          response?.id ?? "",
+          responseProjectId,
+          response.id,
           {
             asset_ids: uploadedAssetIds,
           }
@@ -176,7 +187,34 @@ export const CreateUpdateIssueModalBase = observer(function CreateUpdateIssueMod
         setUploadedAssetIds([]);
       }
 
-      if (!response) throw new Error();
+      if (!is_draft_issue && pendingAttachments.length > 0) {
+        setPendingAttachments((currentAttachments) =>
+          currentAttachments.map((attachment) => ({ ...attachment, progress: 0, status: "uploading" }))
+        );
+
+        const uploadResults = await Promise.allSettled(
+          pendingAttachments.map((attachment) =>
+            issueAttachmentService.uploadIssueAttachment(
+              workspaceSlug.toString(),
+              responseProjectId,
+              response.id,
+              attachment.file,
+              (progressEvent) => {
+                const progress = Math.round((progressEvent.progress ?? 0) * 100);
+                setPendingAttachments((currentAttachments) =>
+                  currentAttachments.map((currentAttachment) =>
+                    currentAttachment.id === attachment.id
+                      ? { ...currentAttachment, progress, status: "uploading" }
+                      : currentAttachment
+                  )
+                );
+              }
+            )
+          )
+        );
+        failedAttachmentUploads = uploadResults.filter((result) => result.status === "rejected").length;
+        setPendingAttachments([]);
+      }
 
       // create sub work item after the issue exists
       if (response.id && response.project_id) {
@@ -188,9 +226,12 @@ export const CreateUpdateIssueModalBase = observer(function CreateUpdateIssueMod
       }
 
       setToast({
-        type: TOAST_TYPE.SUCCESS,
+        type: failedAttachmentUploads > 0 ? TOAST_TYPE.WARNING : TOAST_TYPE.SUCCESS,
         title: t("success"),
-        message: `${is_draft_issue ? t("draft_created") : t("issue_created_successfully")} `,
+        message:
+          failedAttachmentUploads > 0
+            ? t("attachment.upload_failed_after_create")
+            : `${is_draft_issue ? t("draft_created") : t("issue_created_successfully")} `,
         actionItems: !is_draft_issue && response?.project_id && (
           <CreateIssueToastActionItems
             workspaceSlug={workspaceSlug.toString()}
@@ -268,6 +309,28 @@ export const CreateUpdateIssueModalBase = observer(function CreateUpdateIssueMod
 
   const handleUpdateUploadedAssetIds = (assetId: string) => setUploadedAssetIds((prev) => [...prev, assetId]);
 
+  const handlePendingAttachmentsAdd = (files: File[]) => {
+    setPendingAttachments((currentAttachments) => {
+      const existingFileKeys = new Set(
+        currentAttachments.map(({ file }) => `${file.name}:${file.size}:${file.lastModified}`)
+      );
+      const newAttachments = files
+        .filter((file) => !existingFileKeys.has(`${file.name}:${file.size}:${file.lastModified}`))
+        .map((file) => ({
+          id: uuidv4(),
+          file,
+          progress: 0,
+          status: "queued" as const,
+        }));
+      return [...currentAttachments, ...newAttachments];
+    });
+  };
+
+  const handlePendingAttachmentRemove = (attachmentId: string) =>
+    setPendingAttachments((currentAttachments) =>
+      currentAttachments.filter((attachment) => attachment.id !== attachmentId)
+    );
+
   const handleDuplicateIssueModal = (value: boolean) => setIsDuplicateModalOpen(value);
 
   // don't open the modal if there are no projects
@@ -282,6 +345,10 @@ export const CreateUpdateIssueModalBase = observer(function CreateUpdateIssueMod
       module_ids: data?.module_ids ? data?.module_ids : moduleId ? [moduleId.toString()] : null,
     },
     onAssetUpload: handleUpdateUploadedAssetIds,
+    pendingAttachments,
+    onPendingAttachmentsAdd: handlePendingAttachmentsAdd,
+    onPendingAttachmentRemove: handlePendingAttachmentRemove,
+    onPendingAttachmentsClear: () => setPendingAttachments([]),
     onClose: handleClose,
     onSubmit: (payload) => handleFormSubmit(payload, isDraft),
     projectId: activeProjectId,

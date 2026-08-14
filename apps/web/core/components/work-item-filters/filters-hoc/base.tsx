@@ -4,7 +4,7 @@
  * See the LICENSE file for details.
  */
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { observer } from "mobx-react";
 import { v4 as uuidv4 } from "uuid";
 // plane imports
@@ -62,6 +62,7 @@ const WorkItemFilterRoot = observer(function WorkItemFilterRoot(props: TWorkItem
   } = props;
   // store hooks
   const { getOrCreateFilter, deleteFilter } = useWorkItemFilters();
+  const pendingDeleteTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // derived values
   const workItemEntityID = useMemo(
     () => (isTemporary ? `TEMP-${entityId ?? uuidv4()}` : entityId),
@@ -91,13 +92,23 @@ const WorkItemFilterRoot = observer(function WorkItemFilterRoot(props: TWorkItem
     [entityType, workItemEntityID, saveViewOptions, updateViewOptions, updateFilters]
   );
 
-  // delete filter instance when component unmounts
-  useEffect(
-    () => () => {
-      deleteFilter(entityType, workItemEntityID);
-    },
-    [deleteFilter, entityType, workItemEntityID]
-  );
+  // Delete the filter instance only after a real unmount. React Strict Mode runs
+  // effect cleanup once during its development-only remount check; deleting the
+  // store entry synchronously there leaves header controls without the instance
+  // that is still used by the layout below.
+  useEffect(() => {
+    if (pendingDeleteTimeoutRef.current) {
+      clearTimeout(pendingDeleteTimeoutRef.current);
+      pendingDeleteTimeoutRef.current = null;
+    }
+
+    return () => {
+      pendingDeleteTimeoutRef.current = setTimeout(() => {
+        deleteFilter(entityType, workItemEntityID);
+        pendingDeleteTimeoutRef.current = null;
+      }, 0);
+    };
+  }, [deleteFilter, entityType, workItemEntityID]);
 
   useEffect(() => {
     workItemLayoutFilter.configManager.setAreConfigsReady(workItemFiltersConfig.areAllConfigsInitialized);

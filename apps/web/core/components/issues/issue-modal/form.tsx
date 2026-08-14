@@ -58,12 +58,18 @@ import { useWorkspaceDraftIssues } from "@/hooks/store/workspace-draft";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 import { useProjectIssueProperties } from "@/hooks/use-project-issue-properties";
 import { ProjectService } from "@/services/project";
+import { PendingIssueAttachments } from "./components/pending-attachments";
+import type { TPendingIssueAttachment } from "./components/pending-attachments";
 
 export interface IssueFormProps {
   data?: Partial<TIssue>;
   issueTitleRef: React.MutableRefObject<HTMLInputElement | null>;
   isCreateMoreToggleEnabled: boolean;
   onAssetUpload: (assetId: string) => void;
+  pendingAttachments: TPendingIssueAttachment[];
+  onPendingAttachmentsAdd: (files: File[]) => void;
+  onPendingAttachmentRemove: (attachmentId: string) => void;
+  onPendingAttachmentsClear: () => void;
   onCreateMoreToggleChange: (value: boolean) => void;
   onChange?: (formData: Partial<TIssue> | null) => void;
   onClose: () => void;
@@ -97,6 +103,10 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
     data,
     issueTitleRef,
     onAssetUpload,
+    pendingAttachments,
+    onPendingAttachmentsAdd,
+    onPendingAttachmentRemove,
+    onPendingAttachmentsClear,
     onChange,
     onClose,
     onSubmit,
@@ -149,7 +159,7 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
     issue: { getIssueById },
   } = useIssueDetail();
   const { fetchCycles } = useProjectIssueProperties();
-  const { getStateById } = useProjectState();
+  const { fetchProjectStates, getProjectDefaultStateId, getStateById } = useProjectState();
   const projectService = useMemo(() => new ProjectService(), []);
 
   // form info
@@ -169,6 +179,8 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
   } = methods;
 
   const projectId = watch("project_id");
+  const stateId = watch("state_id");
+  const previousAttachmentProjectIdRef = useRef(projectId);
   const workspaceSlugString = workspaceSlug?.toString();
   const { data: fieldConfiguration, isLoading: isFieldConfigurationLoading } = useSWR(
     workspaceSlugString && projectId ? `WORK_ITEM_FIELD_CONFIGURATION_${workspaceSlugString}_${projectId}` : null,
@@ -191,6 +203,13 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
   const isDisabled = isSubmitting || isApplyingTemplate || isFieldConfigurationLoading || areCustomPropertiesLoading;
 
   const { getIndex } = getTabIndex(ETabIndices.ISSUE_FORM, isMobile);
+
+  useEffect(() => {
+    if (previousAttachmentProjectIdRef.current !== projectId) {
+      onPendingAttachmentsClear();
+      previousAttachmentProjectIdRef.current = projectId;
+    }
+  }, [onPendingAttachmentsClear, projectId]);
 
   //reset few fields on projectId change
   useEffect(() => {
@@ -216,6 +235,36 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [...dataResetProperties]);
+
+  // StateDropdown can render the project's default state without writing it to
+  // react-hook-form. Run this after the form reset effects so the actual value
+  // cannot be overwritten before the untouched form is submitted.
+  useEffect(() => {
+    if (!workspaceSlug || !projectId || data?.id || stateId) return;
+
+    let isActive = true;
+    const initializeDefaultState = async () => {
+      let defaultStateId: string | undefined;
+      try {
+        defaultStateId = getProjectDefaultStateId(projectId);
+        if (!defaultStateId) {
+          const states = await fetchProjectStates(workspaceSlug.toString(), projectId);
+          defaultStateId = states.find((state) => state.default)?.id;
+        }
+      } catch {
+        return;
+      }
+
+      if (isActive && defaultStateId && !getValues("state_id")) {
+        setValue("state_id", defaultStateId, { shouldValidate: true });
+      }
+    };
+
+    initializeDefaultState();
+    return () => {
+      isActive = false;
+    };
+  }, [data?.id, fetchProjectStates, getProjectDefaultStateId, getValues, projectId, setValue, stateId, workspaceSlug]);
 
   useEffect(() => {
     const sourceValues = data?.project_id === projectId ? data.property_values : {};
@@ -519,6 +568,18 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
                   onClose={onClose}
                 />
               </div>
+              {!data?.id && !isDraft && workspaceSlugString && projectId && (
+                <div className="px-5">
+                  <PendingIssueAttachments
+                    attachments={pendingAttachments}
+                    disabled={isDisabled}
+                    workspaceSlug={workspaceSlugString}
+                    projectId={projectId}
+                    onFilesAdd={onPendingAttachmentsAdd}
+                    onFileRemove={onPendingAttachmentRemove}
+                  />
+                </div>
+              )}
               <div className="px-5">
                 <WorkItemPropertyFormFields
                   properties={customProperties}
@@ -574,6 +635,7 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
                       <Button
                         variant="secondary"
                         size="lg"
+                        disabled={isDisabled}
                         onClick={() => {
                           if (editorRef.current?.isEditorReadyToDiscard()) {
                             onClose();

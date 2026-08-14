@@ -774,6 +774,7 @@
     "audio": "Audio",
     "unknown_type": "FILE",
     "uploading": "{progress}% uploaded",
+    "upload_failed_after_create": "Task created, but some files could not be attached. Open the task and try uploading them again.",
     "category_disabled": "Uploads for the “{category}” category are disabled in this project.",
     "categories": {
       "image": "Images",

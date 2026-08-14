@@ -18,6 +18,7 @@ import { cn, getFileURL } from "@plane/utils";
 import gtsTasksWallpaper from "@/app/assets/backgrounds/gts-tasks-airport-sunset.png?url";
 // hooks
 import { useUserProfile } from "@/hooks/store/user";
+import { useInstance } from "@/hooks/store/use-instance";
 // services
 import { FileService } from "@/services/file.service";
 // local imports
@@ -51,12 +52,17 @@ const normalizeGlassBackground = (value: IUserTheme["glassBackground"]): TGlassB
 
 export const GlassThemeSelector = observer(function GlassThemeSelector() {
   const { data: userProfile, updateUserTheme } = useUserProfile();
+  const { config: instanceConfig } = useInstance();
   const savedAccentColor = normalizeGtsGlassAccent(userProfile?.theme?.glassAccentColor);
   const savedBackground = normalizeGlassBackground(userProfile?.theme?.glassBackground);
   const savedBackgroundUrl = userProfile?.theme?.glassBackgroundUrl ?? "";
   const savedOverlayOpacity = userProfile?.theme?.glassOverlayOpacity ?? 46;
-  const savedWorkspaceOpacity = normalizeGtsGlassWorkspaceOpacity(userProfile?.theme?.glassWorkspaceOpacity);
-  const savedTaskOpacity = normalizeGtsGlassTaskOpacity(userProfile?.theme?.glassTaskOpacity);
+  const savedWorkspaceOpacity = normalizeGtsGlassWorkspaceOpacity(
+    userProfile?.theme?.glassWorkspaceOpacity ?? instanceConfig?.default_glass_workspace_opacity
+  );
+  const savedTaskOpacity = normalizeGtsGlassTaskOpacity(
+    userProfile?.theme?.glassTaskOpacity ?? instanceConfig?.default_glass_task_opacity
+  );
   const [accentColor, setAccentColor] = useState(savedAccentColor);
   const [background, setBackground] = useState<TGlassBackground>(savedBackground);
   const [customBackgroundUrl, setCustomBackgroundUrl] = useState(savedBackgroundUrl);
