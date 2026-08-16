@@ -200,7 +200,7 @@ export const ImagePickerPopover = observer(function ImagePickerPopover(props: Pr
         >
           <div
             ref={imagePickerRef}
-            className="flex h-96 w-80 flex-col overflow-auto rounded border border-subtle bg-surface-1 shadow-raised-200 md:h-[36rem] md:w-[36rem]"
+            className="gts-glass-popover-surface flex h-96 w-80 flex-col overflow-auto rounded border border-subtle bg-surface-1 shadow-raised-200 md:h-[36rem] md:w-[36rem]"
           >
             <Tabs defaultValue={enabledTabs[0]?.key || "images"} className="flex h-full flex-col p-3">
               <Tabs.List className="flex rounded bg-layer-3 p-1">

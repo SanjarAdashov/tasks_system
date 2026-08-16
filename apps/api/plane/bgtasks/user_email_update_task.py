@@ -14,7 +14,7 @@ from django.template.loader import render_to_string
 
 # Module imports
 from plane.license.utils.instance_value import get_email_configuration
-from plane.utils.email import generate_plain_text_from_html
+from plane.utils.email import attach_inline_email_assets, generate_plain_text_from_html
 from plane.utils.exception_logger import log_exception
 
 
@@ -33,7 +33,7 @@ def send_email_update_magic_code(email, token):
 
         # Send the mail
         subject = "Verify your new email address"
-        context = {"code": token, "email": email}
+        context = {"code": token, "email": email, "email_update": True}
 
         html_content = render_to_string("emails/auth/magic_signin.html", context)
         text_content = generate_plain_text_from_html(html_content)
@@ -55,6 +55,7 @@ def send_email_update_magic_code(email, token):
             connection=connection,
         )
         msg.attach_alternative(html_content, "text/html")
+        attach_inline_email_assets(msg, html_content)
         msg.send()
         logging.getLogger("plane.worker").info("Email sent successfully.")
         return
@@ -83,7 +84,7 @@ def send_email_update_confirmation(email):
         ) = get_email_configuration()
 
         # Send the confirmation email
-        subject = "Plane email address successfully updated"
+        subject = "GTS Tasks System email address successfully updated"
         context = {"email": email}
 
         html_content = render_to_string("emails/user/email_updated.html", context)
@@ -106,6 +107,7 @@ def send_email_update_confirmation(email):
             connection=connection,
         )
         msg.attach_alternative(html_content, "text/html")
+        attach_inline_email_assets(msg, html_content)
         msg.send()
         logging.getLogger("plane.worker").info(f"Email update confirmation sent successfully to {email}.")
         return

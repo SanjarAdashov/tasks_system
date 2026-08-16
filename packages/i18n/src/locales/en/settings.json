@@ -62,11 +62,63 @@
       }
     },
     "notifications": {
-      "heading": "Email notifications",
-      "description": "Stay in the loop on Work items you are subscribed to. Enable this to get notified.",
+      "heading": "Notification settings",
+      "description": "Choose which notifications you receive by email and in Telegram.",
+      "email_heading": "Email notifications",
       "select_default_view": "Select default view",
       "compact": "Compact",
-      "full": "Full Screen"
+      "full": "Full Screen",
+      "telegram": {
+        "heading": "Telegram notifications",
+        "description": "Receive your personal GTS Tasks System notifications in a private chat with the bot.",
+        "connected_as": "Connected as {name}",
+        "not_configured": "The instance administrator has not configured the Telegram bot yet.",
+        "connect": "Connect Telegram",
+        "connect_started": "Telegram opened",
+        "connect_started_help": "Press Start in the bot. This one-time link is valid for 15 minutes.",
+        "disconnect": "Disconnect",
+        "disconnect_confirm": "Disconnect Telegram and remove all pending messages?",
+        "refresh": "Check connection",
+        "update_error": "Telegram settings could not be updated.",
+        "master": "Telegram delivery",
+        "master_help": "Turn off all Telegram notifications without disconnecting your account.",
+        "categories": "Notification types",
+        "quiet_hours": "Quiet hours",
+        "quiet_hours_help": "Messages are queued and delivered in order after quiet hours. Timezone: {timezone}.",
+        "category": {
+          "task_assignment": { "title": "Assignments", "description": "When you are assigned to a task." },
+          "mention": { "title": "Mentions", "description": "Mentions in task descriptions and comments." },
+          "comment": { "title": "Comments", "description": "New comments on tasks you follow." },
+          "state_change": { "title": "Status changes", "description": "Task status changes." },
+          "issue_completed": {
+            "title": "Task completion",
+            "description": "When a task is moved to a completed status."
+          },
+          "priority": { "title": "Priority", "description": "Task priority changes." },
+          "due_date": { "title": "Dates", "description": "Start date and due date changes." },
+          "property_change": {
+            "title": "Other task properties",
+            "description": "Attachments, custom fields, and other property changes."
+          },
+          "role_change": {
+            "title": "Roles and access",
+            "description": "Workspace and project role or membership changes."
+          },
+          "account_activity": {
+            "title": "Account and system",
+            "description": "Important security, account, and quota messages."
+          }
+        },
+        "weekday": {
+          "monday": "Monday",
+          "tuesday": "Tuesday",
+          "wednesday": "Wednesday",
+          "thursday": "Thursday",
+          "friday": "Friday",
+          "saturday": "Saturday",
+          "sunday": "Sunday"
+        }
+      }
     },
     "security": {
       "heading": "Security"

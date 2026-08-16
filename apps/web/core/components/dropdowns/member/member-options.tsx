@@ -143,7 +143,7 @@ export const MemberOptions = observer(function MemberOptions(props: Props) {
     <Combobox.Options data-prevent-outside-click static>
       <div
         className={cn(
-          "z-30 my-1 w-48 rounded-sm border-[0.5px] border-strong bg-surface-1 px-2 py-2.5 text-11 shadow-raised-200 focus:outline-none",
+          "gts-glass-popover-surface z-30 my-1 w-48 rounded-sm border-[0.5px] border-strong bg-surface-1 px-2 py-2.5 text-11 shadow-raised-200 focus:outline-none",
           optionsClassName
         )}
         ref={setPopperElement}

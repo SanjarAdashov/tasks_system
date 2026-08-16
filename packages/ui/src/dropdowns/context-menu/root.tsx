@@ -212,7 +212,7 @@ function ContextMenuWithoutPortal(props: ContextMenuProps) {
     >
       <div
         ref={contextMenuRef}
-        className="vertical-scrollbar fixed scrollbar-sm max-h-72 min-w-[12rem] overflow-y-scroll rounded-md border-[0.5px] border-subtle-1 bg-surface-1 px-2 py-2.5"
+        className="gts-glass-popover-surface vertical-scrollbar fixed scrollbar-sm max-h-72 min-w-[12rem] overflow-y-scroll rounded-md border-[0.5px] border-subtle-1 bg-surface-1 px-2 py-2.5"
         style={{
           top: position.y,
           left: position.x,

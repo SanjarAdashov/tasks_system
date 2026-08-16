@@ -29,6 +29,7 @@ from django.db.models import Subquery
 # Third Party imports
 from celery import shared_task
 from bs4 import BeautifulSoup
+from plane.utils.telegram import enqueue_telegram_notifications
 
 
 # =========== Issue Description Html Parsing and notification Functions ======================
@@ -187,6 +188,23 @@ def create_mention_notification(project, notification_comment, issue, actor_id, 
     )
 
 
+def _should_send_issue_activity_email(field, preference, is_completed_state=False):
+    """Match an issue activity to exactly one email preference category."""
+    if field == "state":
+        return preference.state_change or (preference.issue_completed and is_completed_state)
+
+    if field == "comment":
+        return preference.comment
+
+    if field == "mention":
+        return preference.mention
+
+    if field == "description":
+        return False
+
+    return preference.property_change
+
+
 @shared_task
 def notifications(
     type,
@@ -327,26 +345,25 @@ def notifications(
                     if issue_activity.get("field") == "description":
                         continue
 
-                    # Check if the value should be sent or not
-                    send_email = False
-                    if issue_activity.get("field") == "state" and preference.state_change:
-                        send_email = True
-                    elif (
-                        issue_activity.get("field") == "state"
+                    # Match the activity to one independent email preference.
+                    # State and comment events must never fall through to the
+                    # broad property-change category.
+                    activity_field = issue_activity.get("field")
+                    is_completed_state = (
+                        activity_field == "state"
+                        and not preference.state_change
                         and preference.issue_completed
                         and State.objects.filter(
                             project_id=project_id,
                             pk=issue_activity.get("new_identifier"),
                             group="completed",
                         ).exists()
-                    ):
-                        send_email = True
-                    elif issue_activity.get("field") == "comment" and preference.comment:
-                        send_email = True
-                    elif preference.property_change:
-                        send_email = True
-                    else:
-                        send_email = False
+                    )
+                    send_email = _should_send_issue_activity_email(
+                        field=activity_field,
+                        preference=preference,
+                        is_completed_state=is_completed_state,
+                    )
 
                     # If activity is of issue comment fetch the comment
                     issue_comment = (
@@ -666,7 +683,8 @@ def notifications(
                 removed_mention=removed_mention,
             )
             # Bulk create notifications
-            Notification.objects.bulk_create(bulk_notifications, batch_size=100)
+            created_notifications = Notification.objects.bulk_create(bulk_notifications, batch_size=100)
+            enqueue_telegram_notifications(created_notifications)
             EmailNotificationLog.objects.bulk_create(bulk_email_logs, batch_size=100, ignore_conflicts=True)
         return
     except Exception as e:

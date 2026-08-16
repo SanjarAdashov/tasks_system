@@ -25,6 +25,10 @@ from plane.license.api.views import (
     InstanceUserUnblockEndpoint,
     InstanceThemeApplyEndpoint,
     InstanceThemeBackgroundAssetEndpoint,
+    InstanceTelegramConnectionDisconnectEndpoint,
+    InstanceTelegramConnectionEndpoint,
+    InstanceTelegramEndpoint,
+    InstanceTelegramTestEndpoint,
 )
 
 urlpatterns = [
@@ -113,5 +117,17 @@ urlpatterns = [
         "interface-theme/background/<uuid:asset_id>/",
         InstanceThemeBackgroundAssetEndpoint.as_view(),
         name="instance-interface-theme-background-detail",
+    ),
+    path("telegram/", InstanceTelegramEndpoint.as_view(), name="instance-telegram"),
+    path("telegram/test/", InstanceTelegramTestEndpoint.as_view(), name="instance-telegram-test"),
+    path(
+        "telegram/connections/",
+        InstanceTelegramConnectionEndpoint.as_view(),
+        name="instance-telegram-connections",
+    ),
+    path(
+        "telegram/connections/<uuid:connection_id>/",
+        InstanceTelegramConnectionDisconnectEndpoint.as_view(),
+        name="instance-telegram-connection-disconnect",
     ),
 ]

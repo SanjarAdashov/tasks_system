@@ -16,6 +16,7 @@ export default [
     route("user-groups", "./(all)/(dashboard)/user-groups/page.tsx"),
     route("workspace/create", "./(all)/(dashboard)/workspace/create/page.tsx"),
     route("email", "./(all)/(dashboard)/email/page.tsx"),
+    route("telegram", "./(all)/(dashboard)/telegram/page.tsx"),
     route("authentication", "./(all)/(dashboard)/authentication/page.tsx"),
     route("authentication/github", "./(all)/(dashboard)/authentication/github/page.tsx"),
     route("authentication/gitlab", "./(all)/(dashboard)/authentication/gitlab/page.tsx"),

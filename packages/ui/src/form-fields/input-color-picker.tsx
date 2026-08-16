@@ -94,7 +94,7 @@ export function InputColorPicker(props: InputColorPickerProps) {
             >
               <Popover.Panel>
                 <div
-                  className="z-10 overflow-hidden rounded-sm border border-subtle bg-surface-1 shadow-raised-200"
+                  className="gts-glass-popover-surface z-10 overflow-hidden rounded-sm border border-subtle bg-surface-1 shadow-raised-200"
                   ref={setPopperElement}
                   style={styles.popper}
                   {...attributes.popper}

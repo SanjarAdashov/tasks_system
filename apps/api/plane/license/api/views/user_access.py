@@ -25,6 +25,7 @@ from plane.license.services import (
     unblock_user,
 )
 from .base import BaseAPIView
+from plane.utils.telegram import enqueue_system_telegram_notification
 
 
 def instance_user_queryset():
@@ -166,8 +167,23 @@ class InstanceUserCreationQuotaEndpoint(BaseAPIView):
         except CreationQuotaError as exc:
             return Response({"error": {"code": exc.code, "message": exc.message}}, status=exc.status_code)
 
+        snapshot = creation_quota_snapshot(user, include_inactive_memberships=True)
+        enqueue_system_telegram_notification(
+            user=user,
+            category="account_activity",
+            event="creation_quota_changed",
+            actor=request.user,
+            context={
+                "localized": {
+                    "en": "Your workspace or project creation quota was changed.",
+                    "ru": "Квота на создание рабочих пространств или проектов изменена.",
+                    "uz": "Ish maydoni yoki loyiha yaratish kvotangiz o‘zgardi.",
+                },
+                "url": "",
+            },
+        )
         return Response(
-            creation_quota_snapshot(user, include_inactive_memberships=True),
+            snapshot,
             status=status.HTTP_200_OK,
         )
 

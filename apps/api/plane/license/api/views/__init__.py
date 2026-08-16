@@ -37,3 +37,9 @@ from .user_access import (
 )
 
 from .theme import InstanceThemeApplyEndpoint, InstanceThemeBackgroundAssetEndpoint
+from .telegram import (
+    InstanceTelegramConnectionDisconnectEndpoint,
+    InstanceTelegramConnectionEndpoint,
+    InstanceTelegramEndpoint,
+    InstanceTelegramTestEndpoint,
+)

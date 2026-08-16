@@ -22,6 +22,30 @@ from plane.db.models import Project, ProjectMember, ProjectUserProperty, Workspa
 from plane.bgtasks.project_add_user_email_task import project_add_user_email
 from plane.utils.host import base_host
 from plane.app.permissions.base import allow_permission, ROLE
+from plane.utils.telegram import application_url, enqueue_system_telegram_notification
+
+
+ROLE_LABELS = {
+    5: {"en": "Guest", "ru": "Гость", "uz": "Mehmon"},
+    15: {"en": "Member", "ru": "Участник", "uz": "A’zo"},
+    20: {"en": "Project administrator", "ru": "Администратор проекта", "uz": "Loyiha administratori"},
+}
+
+
+def notify_project_access(project_member, actor, event, message):
+    project = project_member.project
+    enqueue_system_telegram_notification(
+        user=project_member.member,
+        category="role_change",
+        event=event,
+        actor=actor,
+        context={
+            "workspace_id": str(project.workspace_id),
+            "project_id": str(project.id),
+            "localized": message,
+            "url": application_url(f"{project.workspace.slug}/projects/{project.id}/issues/"),
+        },
+    )
 
 
 class ProjectMemberViewSet(BaseViewSet):
@@ -154,6 +178,18 @@ class ProjectMemberViewSet(BaseViewSet):
             )
             for project_member in project_members
         ]
+        for project_member in project_members.select_related("member", "project", "project__workspace"):
+            role = ROLE_LABELS.get(project_member.role, {key: str(project_member.role) for key in ("en", "ru", "uz")})
+            notify_project_access(
+                project_member,
+                request.user,
+                "project_membership_added",
+                {
+                    "en": f"You were added to project “{project.name}” with role {role['en']}.",
+                    "ru": f"Вас добавили в проект «{project.name}». Роль: {role['ru']}.",
+                    "uz": f"Siz “{project.name}” loyihasiga qo‘shildingiz. Rol: {role['uz']}.",
+                },
+            )
         # Serialize the project members
         serializer = ProjectMemberRoleSerializer(project_members, many=True)
         # Return the serialized data
@@ -211,6 +247,8 @@ class ProjectMemberViewSet(BaseViewSet):
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
     def partial_update(self, request, slug, project_id, pk):
         project_member = ProjectMember.objects.get(pk=pk, workspace__slug=slug, project_id=project_id, is_active=True)
+        previous_role = project_member.role
+        previous_active = project_member.is_active
 
         # Fetch the target's workspace role (used to cap the new project role)
         target_workspace_role = WorkspaceMember.objects.get(
@@ -290,6 +328,32 @@ class ProjectMemberViewSet(BaseViewSet):
 
         if serializer.is_valid():
             serializer.save()
+            project_member.refresh_from_db()
+            if project_member.role != previous_role:
+                role = ROLE_LABELS.get(
+                    project_member.role, {key: str(project_member.role) for key in ("en", "ru", "uz")}
+                )
+                notify_project_access(
+                    project_member,
+                    request.user,
+                    "project_role_changed",
+                    {
+                        "en": f"Your role in project “{project_member.project.name}” was changed to {role['en']}.",
+                        "ru": f"Ваша роль в проекте «{project_member.project.name}» изменена: {role['ru']}.",
+                        "uz": f"“{project_member.project.name}” loyihasidagi rolingiz o‘zgardi: {role['uz']}.",
+                    },
+                )
+            elif project_member.is_active != previous_active:
+                notify_project_access(
+                    project_member,
+                    request.user,
+                    "project_membership_changed",
+                    {
+                        "en": f"Your access to project “{project_member.project.name}” was changed.",
+                        "ru": f"Ваш доступ к проекту «{project_member.project.name}» изменён.",
+                        "uz": f"“{project_member.project.name}” loyihasiga kirishingiz o‘zgardi.",
+                    },
+                )
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -324,6 +388,16 @@ class ProjectMemberViewSet(BaseViewSet):
 
         project_member.is_active = False
         project_member.save()
+        notify_project_access(
+            project_member,
+            request.user,
+            "project_membership_removed",
+            {
+                "en": f"You were removed from project “{project_member.project.name}”.",
+                "ru": f"Вас удалили из проекта «{project_member.project.name}».",
+                "uz": f"Siz “{project_member.project.name}” loyihasidan chiqarildingiz.",
+            },
+        )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])

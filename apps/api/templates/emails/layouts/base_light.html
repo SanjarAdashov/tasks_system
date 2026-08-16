@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}GTS Tasks System{% endblock %}</title>
+  </head>
+  <body style="margin: 0; padding: 0; background: #eef3f9; color: #17213a; font-family: Arial, Helvetica, sans-serif;">
+    <div style="display: none; max-height: 0; overflow: hidden; opacity: 0; color: transparent;">
+      {% block preheader %}{% endblock %}
+    </div>
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background: #eef3f9;">
+      <tr>
+        <td align="center" style="padding: 28px 12px;">
+          <table role="presentation" width="620" cellspacing="0" cellpadding="0" style="width: 100%; max-width: 620px; overflow: hidden; border: 1px solid #d9e2ef; border-radius: 14px; background: #ffffff; box-shadow: 0 8px 24px rgba(0, 24, 69, 0.08);">
+            <tr>
+              <td align="center" style="padding: 24px 32px; border-bottom: 1px solid #e7ebf2; background: #ffffff;">
+                <img src="cid:gts-logo-dark" width="154" height="42" alt="GTS Tasks System" style="display: block; width: 154px; height: 42px; border: 0;" />
+              </td>
+            </tr>
+            <tr>
+              <td style="padding: 36px 40px;">
+                {% block content %}{% endblock %}
+              </td>
+            </tr>
+            <tr>
+              <td align="center" style="padding: 20px 32px; border-top: 1px solid #e7ebf2; color: #6b7280; font-size: 12px; line-height: 18px;">
+                GTS Tasks System
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

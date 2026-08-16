@@ -35,7 +35,7 @@ export function PopoverMenu<T>(props: TPopoverMenu<T>) {
       button={button}
       disabled={disabled}
       panelClassName={cn(
-        "my-1 w-48 rounded-sm border-[0.5px] border-strong bg-surface-1 px-2 py-2 text-11 shadow-raised-200 focus:outline-none",
+        "gts-glass-popover-surface my-1 w-48 rounded-sm border-[0.5px] border-strong bg-surface-1 px-2 py-2 text-11 shadow-raised-200 focus:outline-none",
         panelClassName
       )}
       popoverClassName={popoverClassName}

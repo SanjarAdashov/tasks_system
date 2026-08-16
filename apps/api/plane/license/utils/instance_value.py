@@ -13,6 +13,9 @@ from plane.license.models import InstanceConfiguration
 from plane.license.utils.encryption import decrypt_data
 
 
+DEFAULT_EMAIL_FROM = "GTS Tasks System <tasks@globaltravel.space>"
+
+
 # Helper function to return value from the passed key
 def get_configuration_value(keys):
     environment_list = []
@@ -40,20 +43,25 @@ def get_configuration_value(keys):
 
 
 def get_email_configuration():
-    return get_configuration_value(
-        [
-            {"key": "EMAIL_HOST", "default": os.environ.get("EMAIL_HOST")},
-            {"key": "EMAIL_HOST_USER", "default": os.environ.get("EMAIL_HOST_USER")},
-            {
-                "key": "EMAIL_HOST_PASSWORD",
-                "default": os.environ.get("EMAIL_HOST_PASSWORD"),
-            },
-            {"key": "EMAIL_PORT", "default": os.environ.get("EMAIL_PORT", 587)},
-            {"key": "EMAIL_USE_TLS", "default": os.environ.get("EMAIL_USE_TLS", "1")},
-            {"key": "EMAIL_USE_SSL", "default": os.environ.get("EMAIL_USE_SSL", "0")},
-            {
-                "key": "EMAIL_FROM",
-                "default": os.environ.get("EMAIL_FROM", "Team Plane <team@mailer.plane.so>"),
-            },
-        ]
+    configuration = list(
+        get_configuration_value(
+            [
+                {"key": "EMAIL_HOST", "default": os.environ.get("EMAIL_HOST")},
+                {"key": "EMAIL_HOST_USER", "default": os.environ.get("EMAIL_HOST_USER")},
+                {
+                    "key": "EMAIL_HOST_PASSWORD",
+                    "default": os.environ.get("EMAIL_HOST_PASSWORD"),
+                },
+                {"key": "EMAIL_PORT", "default": os.environ.get("EMAIL_PORT", 587)},
+                {"key": "EMAIL_USE_TLS", "default": os.environ.get("EMAIL_USE_TLS", "1")},
+                {"key": "EMAIL_USE_SSL", "default": os.environ.get("EMAIL_USE_SSL", "0")},
+                {
+                    "key": "EMAIL_FROM",
+                    "default": os.environ.get("EMAIL_FROM", DEFAULT_EMAIL_FROM),
+                },
+            ]
+        )
     )
+    if not configuration[-1]:
+        configuration[-1] = DEFAULT_EMAIL_FROM
+    return tuple(configuration)

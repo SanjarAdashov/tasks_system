@@ -192,6 +192,49 @@ export interface IUserEmailNotificationSettings {
   issue_completed: boolean;
 }
 
+export type TTelegramNotificationCategory =
+  | "task_assignment"
+  | "mention"
+  | "comment"
+  | "state_change"
+  | "issue_completed"
+  | "priority"
+  | "due_date"
+  | "property_change"
+  | "role_change"
+  | "account_activity";
+
+export type TTelegramQuietHours = Record<
+  "1" | "2" | "3" | "4" | "5" | "6" | "7",
+  { enabled: boolean; start: string; end: string }
+>;
+
+export interface IUserTelegramNotificationPreferences extends Record<TTelegramNotificationCategory, boolean> {
+  enabled: boolean;
+  quiet_hours_enabled: boolean;
+  quiet_hours: TTelegramQuietHours;
+}
+
+export interface IUserTelegramNotificationSettings {
+  configured: boolean;
+  bot_username: string | null;
+  timezone: string;
+  connection: {
+    status: "connected" | "paused" | "error";
+    telegram_username: string;
+    telegram_first_name: string;
+    connected_at: string;
+    last_delivery_at: string | null;
+    last_error: string;
+  } | null;
+  preferences: IUserTelegramNotificationPreferences;
+}
+
+export interface IUserTelegramLink {
+  url: string;
+  expires_at: string;
+}
+
 export type TProfileViews = "assigned" | "created" | "subscribed";
 
 export type TPublicMember = {

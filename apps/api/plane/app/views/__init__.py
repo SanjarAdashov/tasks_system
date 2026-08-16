@@ -56,6 +56,12 @@ from .user.base import (
 
 
 from .base import BaseAPIView, BaseViewSet
+from .telegram import (
+    TelegramDisconnectEndpoint,
+    TelegramLinkEndpoint,
+    TelegramNotificationPreferenceEndpoint,
+    TelegramWebhookEndpoint,
+)
 
 from .workspace.base import (
     WorkSpaceViewSet,

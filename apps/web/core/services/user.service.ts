@@ -15,6 +15,9 @@ import type {
   IUserProfileProjectSegregation,
   IUserSettings,
   IUserEmailNotificationSettings,
+  IUserTelegramLink,
+  IUserTelegramNotificationPreferences,
+  IUserTelegramNotificationSettings,
   TIssuesResponse,
   TUserProfile,
   IEmailCheckResponse,
@@ -149,6 +152,40 @@ export class UserService extends APIService {
   async updateCurrentUserEmailNotificationSettings(data: Partial<IUserEmailNotificationSettings>): Promise<any> {
     return this.patch("/api/users/me/notification-preferences/", data)
       .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async currentUserTelegramNotificationSettings(): Promise<IUserTelegramNotificationSettings> {
+    return this.get("/api/users/me/telegram/")
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async updateCurrentUserTelegramNotificationSettings(
+    data: Partial<IUserTelegramNotificationPreferences>
+  ): Promise<IUserTelegramNotificationPreferences> {
+    return this.patch("/api/users/me/telegram/", data)
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async createCurrentUserTelegramLink(): Promise<IUserTelegramLink> {
+    return this.post("/api/users/me/telegram/link/")
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async disconnectCurrentUserTelegram(): Promise<void> {
+    return this.delete("/api/users/me/telegram/disconnect/")
+      .then(() => undefined)
       .catch((error) => {
         throw error?.response?.data;
       });

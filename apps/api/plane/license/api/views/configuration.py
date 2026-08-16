@@ -27,6 +27,7 @@ from plane.license.api.serializers import InstanceConfigurationSerializer
 from plane.license.utils.encryption import encrypt_data
 from plane.utils.cache import cache_response, invalidate_cache
 from plane.license.utils.instance_value import get_email_configuration
+from plane.utils.telegram import TELEGRAM_SECRET_CONFIGURATION_KEYS
 
 
 class InstanceConfigurationEndpoint(BaseAPIView):
@@ -34,7 +35,7 @@ class InstanceConfigurationEndpoint(BaseAPIView):
 
     @cache_response(60 * 60 * 2, user=False)
     def get(self, request):
-        instance_configurations = InstanceConfiguration.objects.all()
+        instance_configurations = InstanceConfiguration.objects.exclude(key__in=TELEGRAM_SECRET_CONFIGURATION_KEYS)
         serializer = InstanceConfigurationSerializer(instance_configurations, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -114,8 +115,8 @@ class EmailCredentialCheckEndpoint(BaseAPIView):
             use_ssl=EMAIL_USE_SSL == "1",
         )
         # Prepare email details
-        subject = "Email Notification from Plane"
-        message = "This is a sample email notification sent from Plane application."
+        subject = "Email notification from GTS Tasks System"
+        message = "This is a sample email notification sent from GTS Tasks System."
         # Send the email
         try:
             msg = EmailMultiAlternatives(

@@ -62,11 +62,63 @@
       }
     },
     "notifications": {
-      "heading": "Elektron pochta xabarnomalari",
-      "description": "Obuna boʻlgan Ish elementlari boʻyicha koʻchadan xabardor boʻling. Xabar olish uchun buni yoqing.",
+      "heading": "Bildirishnoma sozlamalari",
+      "description": "Email va Telegram orqali qaysi bildirishnomalarni olishni tanlang.",
+      "email_heading": "Email bildirishnomalari",
       "select_default_view": "Standart ko'rinishni tanlang",
       "compact": "Yilni",
-      "full": "To'liq ekran"
+      "full": "To'liq ekran",
+      "telegram": {
+        "heading": "Telegram bildirishnomalari",
+        "description": "GTS Tasks System shaxsiy bildirishnomalarini bot bilan yopiq chatda oling.",
+        "connected_as": "{name} sifatida ulangan",
+        "not_configured": "Tizim administratori Telegram botini hali sozlamagan.",
+        "connect": "Telegramni ulash",
+        "connect_started": "Telegram ochildi",
+        "connect_started_help": "Botda Start tugmasini bosing. Bir martalik havola 15 daqiqa amal qiladi.",
+        "disconnect": "Uzish",
+        "disconnect_confirm": "Telegramni uzib, navbatdagi barcha xabarlarni o‘chirish kerakmi?",
+        "refresh": "Ulanishni tekshirish",
+        "update_error": "Telegram sozlamalarini yangilab bo‘lmadi.",
+        "master": "Telegramga yuborish",
+        "master_help": "Hisobni uzmasdan barcha Telegram bildirishnomalarini o‘chiring.",
+        "categories": "Bildirishnoma turlari",
+        "quiet_hours": "Tinch soatlar",
+        "quiet_hours_help": "Xabarlar navbatda saqlanadi va tinch soatlardan keyin tartib bilan yuboriladi. Vaqt mintaqasi: {timezone}.",
+        "category": {
+          "task_assignment": { "title": "Tayinlashlar", "description": "Siz vazifaga tayinlanganda." },
+          "mention": { "title": "Eslatmalar", "description": "Vazifa tavsifi va izohlardagi eslatmalar." },
+          "comment": { "title": "Izohlar", "description": "Kuzatilayotgan vazifalardagi yangi izohlar." },
+          "state_change": { "title": "Holat o‘zgarishi", "description": "Vazifa holati o‘zgarganda." },
+          "issue_completed": {
+            "title": "Vazifa yakunlanishi",
+            "description": "Vazifa yakunlangan holatga o‘tkazilganda."
+          },
+          "priority": { "title": "Ustuvorlik", "description": "Vazifa ustuvorligi o‘zgarganda." },
+          "due_date": { "title": "Sanalar", "description": "Boshlanish va tugash sanalari o‘zgarganda." },
+          "property_change": {
+            "title": "Boshqa xususiyatlar",
+            "description": "Fayllar, maxsus maydonlar va boshqa o‘zgarishlar."
+          },
+          "role_change": {
+            "title": "Rollar va kirish",
+            "description": "Ish maydoni va loyihadagi rol yoki a’zolik o‘zgarishlari."
+          },
+          "account_activity": {
+            "title": "Hisob va tizim",
+            "description": "Xavfsizlik, hisob va kvota haqidagi muhim xabarlar."
+          }
+        },
+        "weekday": {
+          "monday": "Dushanba",
+          "tuesday": "Seshanba",
+          "wednesday": "Chorshanba",
+          "thursday": "Payshanba",
+          "friday": "Juma",
+          "saturday": "Shanba",
+          "sunday": "Yakshanba"
+        }
+      }
     },
     "security": {
       "heading": "Xavfsizlik"

@@ -240,7 +240,7 @@ smtp_config_variables = [
     },
     {
         "key": "EMAIL_FROM",
-        "value": os.environ.get("EMAIL_FROM", ""),
+        "value": os.environ.get("EMAIL_FROM", "GTS Tasks System <tasks@globaltravel.space>"),
         "category": "SMTP",
         "is_encrypted": False,
     },

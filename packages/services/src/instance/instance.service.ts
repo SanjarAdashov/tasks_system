@@ -23,6 +23,8 @@ import type {
   IInstanceThemeApplyResponse,
   IInstanceThemeSettings,
   TFileSignedURLResponse,
+  IInstanceTelegramConnectionPagination,
+  IInstanceTelegramStatus,
 } from "@plane/types";
 // api service
 import { APIService } from "../api.service";
@@ -267,6 +269,56 @@ export class InstanceService extends APIService {
   async applyInterfaceThemeToAll(data: IInstanceThemeSettings): Promise<IInstanceThemeApplyResponse> {
     return this.post("/api/instances/interface-theme/apply/", data)
       .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async telegramStatus(): Promise<IInstanceTelegramStatus> {
+    return this.get("/api/instances/telegram/")
+      .then((response) => response.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async configureTelegram(data: { token?: string; enabled?: boolean }): Promise<IInstanceTelegramStatus> {
+    return this.post("/api/instances/telegram/", data)
+      .then((response) => response.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async disableTelegram(): Promise<void> {
+    return this.delete("/api/instances/telegram/")
+      .then(() => undefined)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async testTelegram(): Promise<{ message: string }> {
+    return this.post("/api/instances/telegram/test/")
+      .then((response) => response.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async telegramConnections(search = "", cursor = ""): Promise<IInstanceTelegramConnectionPagination> {
+    return this.get("/api/instances/telegram/connections/", {
+      params: { search: search || undefined, cursor: cursor || undefined, per_page: 100 },
+    })
+      .then((response) => response.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async disconnectTelegramConnection(connectionId: string): Promise<void> {
+    return this.delete(`/api/instances/telegram/connections/${connectionId}/`)
+      .then(() => undefined)
       .catch((error) => {
         throw error?.response?.data;
       });

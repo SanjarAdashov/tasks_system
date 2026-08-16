@@ -47,6 +47,10 @@ app.conf.beat_schedule = {
         "task": "plane.bgtasks.email_notification_task.stack_email_notification",
         "schedule": crontab(minute="*/5"),  # Every 5 minutes
     },
+    "send-due-telegram-notifications": {
+        "task": "plane.bgtasks.telegram_notification_task.process_due_telegram_deliveries",
+        "schedule": crontab(minute="*"),
+    },
     "push-instance-metrics": {
         "task": "plane.license.bgtasks.telemetry_metrics.push_instance_metrics",
         "schedule": schedule(run_every=timedelta(minutes=METRICS_PUSH_INTERVAL_MINUTES)),

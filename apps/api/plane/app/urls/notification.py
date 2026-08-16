@@ -10,6 +10,10 @@ from plane.app.views import (
     UnreadNotificationEndpoint,
     MarkAllReadNotificationViewSet,
     UserNotificationPreferenceEndpoint,
+    TelegramDisconnectEndpoint,
+    TelegramLinkEndpoint,
+    TelegramNotificationPreferenceEndpoint,
+    TelegramWebhookEndpoint,
 )
 
 
@@ -49,4 +53,12 @@ urlpatterns = [
         UserNotificationPreferenceEndpoint.as_view(),
         name="user-notification-preferences",
     ),
+    path("users/me/telegram/", TelegramNotificationPreferenceEndpoint.as_view(), name="telegram-preferences"),
+    path("users/me/telegram/link/", TelegramLinkEndpoint.as_view(), name="telegram-link"),
+    path(
+        "users/me/telegram/disconnect/",
+        TelegramDisconnectEndpoint.as_view(),
+        name="telegram-disconnect",
+    ),
+    path("telegram/webhook/", TelegramWebhookEndpoint.as_view(), name="telegram-webhook"),
 ]

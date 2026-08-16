@@ -62,11 +62,60 @@
       }
     },
     "notifications": {
-      "heading": "Email-уведомления",
-      "description": "Будьте в курсе задач, на которые вы подписаны. Включите, чтобы получать уведомления.",
+      "heading": "Настройки уведомлений",
+      "description": "Выберите, какие уведомления получать по email и в Telegram.",
+      "email_heading": "Email-уведомления",
       "select_default_view": "Выбрать вид по умолчанию",
       "compact": "Компактный",
-      "full": "Полный экран"
+      "full": "Полный экран",
+      "telegram": {
+        "heading": "Telegram-уведомления",
+        "description": "Получайте личные уведомления GTS Tasks System в приватном чате с ботом.",
+        "connected_as": "Подключено как {name}",
+        "not_configured": "Администратор системы ещё не настроил Telegram-бота.",
+        "connect": "Подключить Telegram",
+        "connect_started": "Telegram открыт",
+        "connect_started_help": "Нажмите Start в боте. Одноразовая ссылка действует 15 минут.",
+        "disconnect": "Отключить",
+        "disconnect_confirm": "Отключить Telegram и удалить все ожидающие сообщения?",
+        "refresh": "Проверить подключение",
+        "update_error": "Не удалось обновить настройки Telegram.",
+        "master": "Отправка в Telegram",
+        "master_help": "Отключите все Telegram-уведомления, не разрывая подключение аккаунта.",
+        "categories": "Типы уведомлений",
+        "quiet_hours": "Тихие часы",
+        "quiet_hours_help": "Сообщения сохраняются и отправляются по порядку после тихих часов. Часовой пояс: {timezone}.",
+        "category": {
+          "task_assignment": { "title": "Назначения", "description": "Когда вас назначают исполнителем задачи." },
+          "mention": { "title": "Упоминания", "description": "Упоминания в описании задачи и комментариях." },
+          "comment": { "title": "Комментарии", "description": "Новые комментарии в отслеживаемых задачах." },
+          "state_change": { "title": "Изменение статуса", "description": "Изменения статуса задачи." },
+          "issue_completed": { "title": "Завершение задачи", "description": "Переход задачи в завершённый статус." },
+          "priority": { "title": "Приоритет", "description": "Изменения приоритета задачи." },
+          "due_date": { "title": "Даты", "description": "Изменения начальной даты и срока выполнения." },
+          "property_change": {
+            "title": "Другие свойства задачи",
+            "description": "Вложения, кастомные поля и другие изменения свойств."
+          },
+          "role_change": {
+            "title": "Роли и доступ",
+            "description": "Изменения роли или участия в рабочем пространстве и проекте."
+          },
+          "account_activity": {
+            "title": "Аккаунт и система",
+            "description": "Важные сообщения безопасности, аккаунта и квот."
+          }
+        },
+        "weekday": {
+          "monday": "Понедельник",
+          "tuesday": "Вторник",
+          "wednesday": "Среда",
+          "thursday": "Четверг",
+          "friday": "Пятница",
+          "saturday": "Суббота",
+          "sunday": "Воскресенье"
+        }
+      }
     },
     "security": {
       "heading": "Безопасность"

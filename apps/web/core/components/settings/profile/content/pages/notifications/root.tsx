@@ -15,6 +15,7 @@ import { EmailSettingsLoader } from "@/components/ui/loader/settings/email";
 import { UserService } from "@/services/user.service";
 // local imports
 import { NotificationsProfileSettingsForm } from "./email-notification-form";
+import { TelegramNotificationSettingsForm } from "./telegram-notification-form";
 
 const userService = new UserService();
 
@@ -24,8 +25,15 @@ export const NotificationsProfileSettings = observer(function NotificationsProfi
   const { data, isLoading } = useSWR("CURRENT_USER_EMAIL_NOTIFICATION_SETTINGS", () =>
     userService.currentUserEmailNotificationSettings()
   );
+  const {
+    data: telegramData,
+    isLoading: isTelegramLoading,
+    mutate: refreshTelegram,
+  } = useSWR("CURRENT_USER_TELEGRAM_NOTIFICATION_SETTINGS", () =>
+    userService.currentUserTelegramNotificationSettings()
+  );
 
-  if (!data || isLoading) {
+  if (!data || !telegramData || isLoading || isTelegramLoading) {
     return <EmailSettingsLoader />;
   }
 
@@ -35,8 +43,14 @@ export const NotificationsProfileSettings = observer(function NotificationsProfi
         title={t("account_settings.notifications.heading")}
         description={t("account_settings.notifications.description")}
       />
-      <div className="mt-7">
-        <NotificationsProfileSettingsForm data={data} />
+      <div className="mt-7 flex flex-col gap-8">
+        <section>
+          <h3 className="text-subheading mb-3 font-medium text-primary">
+            {t("account_settings.notifications.email_heading")}
+          </h3>
+          <NotificationsProfileSettingsForm data={data} />
+        </section>
+        <TelegramNotificationSettingsForm data={telegramData} refresh={refreshTelegram} />
       </div>
     </div>
   );

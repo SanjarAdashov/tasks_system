@@ -254,7 +254,7 @@ export function LabelDropdown(props: ILabelDropdownProps) {
         {isOpen && (
           <Combobox.Options className="fixed z-10" static>
             <div
-              className={`z-10 my-1 h-auto w-48 rounded-sm border border-strong bg-surface-1 px-2 py-2.5 text-caption-sm-regular whitespace-nowrap shadow-raised-200 focus:outline-none ${optionsClassName}`}
+              className={`gts-glass-popover-surface z-10 my-1 h-auto w-48 rounded-sm border border-strong bg-surface-1 px-2 py-2.5 text-caption-sm-regular whitespace-nowrap shadow-raised-200 focus:outline-none ${optionsClassName}`}
               ref={setPopperElement}
               style={styles.popper}
               {...attributes.popper}

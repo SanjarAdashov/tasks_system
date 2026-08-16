@@ -9,6 +9,7 @@ from django.utils.html import strip_tags
 
 # Module imports
 from plane.license.utils.instance_value import get_email_configuration
+from plane.utils.email import attach_inline_email_assets
 
 
 class Command(BaseCommand):
@@ -44,7 +45,7 @@ class Command(BaseCommand):
             timeout=30,
         )
         # Prepare email details
-        subject = "Test email from Plane"
+        subject = "Test email from GTS Tasks System"
 
         html_content = render_to_string("emails/test_email.html")
         text_content = strip_tags(html_content)
@@ -61,6 +62,7 @@ class Command(BaseCommand):
                 connection=connection,
             )
             msg.attach_alternative(html_content, "text/html")
+            attach_inline_email_assets(msg, html_content)
             msg.send()
             self.stdout.write(self.style.SUCCESS("Email successfully sent"))
         except Exception as e:

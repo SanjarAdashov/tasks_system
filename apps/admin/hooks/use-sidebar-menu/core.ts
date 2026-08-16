@@ -4,7 +4,7 @@
  * See the LICENSE file for details.
  */
 
-import { Image, BrainCog, Cog, Mail, UserRoundCog, Users } from "lucide-react";
+import { Image, BrainCog, Cog, Mail, Send, UserRoundCog, Users } from "lucide-react";
 // plane imports
 import { LockIcon, WorkspaceIcon } from "@plane/propel/icons";
 // types
@@ -13,6 +13,7 @@ import type { TSidebarMenuItem } from "./types";
 export type TCoreSidebarMenuKey =
   | "general"
   | "email"
+  | "telegram"
   | "workspace"
   | "users"
   | "user-groups"
@@ -32,6 +33,12 @@ export const coreSidebarMenuLinks: Record<TCoreSidebarMenuKey, TSidebarMenuItem>
     name: "Email",
     description: "Configure your SMTP controls.",
     href: `/email/`,
+  },
+  telegram: {
+    Icon: Send,
+    name: "Telegram",
+    description: "Configure personal bot notifications.",
+    href: `/telegram/`,
   },
   workspace: {
     Icon: WorkspaceIcon,

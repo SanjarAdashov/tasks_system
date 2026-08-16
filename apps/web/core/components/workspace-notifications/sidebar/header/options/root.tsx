@@ -5,19 +5,20 @@
  */
 
 import { observer } from "mobx-react";
-import { CheckCheck, RefreshCw } from "lucide-react";
+import { CheckCheck, RefreshCw, X } from "lucide-react";
 // plane imports
 import { ENotificationLoader, ENotificationQueryParamType } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
+import { IconButton } from "@plane/propel/icon-button";
 import { Tooltip } from "@plane/propel/tooltip";
 import { Spinner } from "@plane/ui";
 // hooks
 import { useWorkspaceNotifications } from "@/hooks/store/notifications";
+import { useAppRouter } from "@/hooks/use-app-router";
 import { usePlatformOS } from "@/hooks/use-platform-os";
 // local imports
 import { NotificationFilter } from "../../filters/menu";
 import { NotificationHeaderMenuOption } from "./menu-option";
-import { IconButton } from "@plane/propel/icon-button";
 
 type TNotificationSidebarHeaderOptions = {
   workspaceSlug: string;
@@ -27,6 +28,7 @@ export const NotificationSidebarHeaderOptions = observer(function NotificationSi
   props: TNotificationSidebarHeaderOptions
 ) {
   const { workspaceSlug } = props;
+  const router = useAppRouter();
   // hooks
   const { isMobile } = usePlatformOS();
   const { loader, getNotifications, markAllNotificationsAsRead } = useWorkspaceNotifications();
@@ -81,6 +83,17 @@ export const NotificationSidebarHeaderOptions = observer(function NotificationSi
 
       {/* notification menu options */}
       <NotificationHeaderMenuOption />
+
+      {/* close notifications and return to workspace work items */}
+      <Tooltip tooltipContent={t("common.back_to_workspace")} isMobile={isMobile} position="bottom">
+        <IconButton
+          size="base"
+          variant="ghost"
+          icon={X}
+          aria-label={t("common.back_to_workspace")}
+          onClick={() => router.push(`/${workspaceSlug}/workspace-views/all-issues/`)}
+        />
+      </Tooltip>
     </div>
   );
 });

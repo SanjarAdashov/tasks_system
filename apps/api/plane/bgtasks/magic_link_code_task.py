@@ -15,7 +15,7 @@ from django.template.loader import render_to_string
 
 # Module imports
 from plane.license.utils.instance_value import get_email_configuration
-from plane.utils.email import generate_plain_text_from_html
+from plane.utils.email import attach_inline_email_assets, generate_plain_text_from_html
 from plane.utils.exception_logger import log_exception
 
 
@@ -33,7 +33,7 @@ def magic_link(email, key, token):
         ) = get_email_configuration()
 
         # Send the mail
-        subject = f"Your unique Plane login code is {token}"
+        subject = f"Your GTS Tasks System login code is {token}"
         context = {"code": token, "email": email}
 
         html_content = render_to_string("emails/auth/magic_signin.html", context)
@@ -56,6 +56,7 @@ def magic_link(email, key, token):
             connection=connection,
         )
         msg.attach_alternative(html_content, "text/html")
+        attach_inline_email_assets(msg, html_content)
         msg.send()
         logging.getLogger("plane.worker").info("Email sent successfully.")
         return

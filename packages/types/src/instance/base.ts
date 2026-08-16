@@ -191,6 +191,47 @@ export interface IInstanceThemeApplyResponse {
   updated_count: number;
 }
 
+export interface IInstanceTelegramStatus {
+  configured: boolean;
+  enabled: boolean;
+  bot_id: string | null;
+  bot_username: string | null;
+  webhook_url: string | null;
+  connection_count: number;
+  connections_invalidated?: boolean;
+  webhook: {
+    url?: string;
+    pending_update_count?: number;
+    last_error_date?: number | null;
+    last_error_message?: string | null;
+    error?: string;
+  } | null;
+}
+
+export interface IInstanceTelegramConnection {
+  id: string;
+  user_id: string;
+  name: string;
+  email: string;
+  telegram_username: string;
+  telegram_first_name: string;
+  status: "connected" | "paused" | "error";
+  connected_at: string;
+  last_delivery_at: string | null;
+  account_active: boolean;
+}
+
+export interface IInstanceTelegramConnectionPagination {
+  count: number;
+  next_cursor: string;
+  next_page_results: boolean;
+  prev_cursor: string;
+  prev_page_results: boolean;
+  results: IInstanceTelegramConnection[];
+  total_pages: number;
+  total_results: number;
+}
+
 export interface IInstanceConfiguration {
   id: string;
   created_at: string;

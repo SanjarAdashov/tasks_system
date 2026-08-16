@@ -23,8 +23,31 @@ from plane.app.serializers import (
 from plane.app.views.base import BaseAPIView
 from plane.db.models import Project, ProjectMember, WorkspaceMember, DraftIssue
 from plane.utils.cache import invalidate_cache
+from plane.utils.telegram import application_url, enqueue_system_telegram_notification
 
 from .. import BaseViewSet
+
+
+WORKSPACE_ROLE_LABELS = {
+    5: {"en": "Guest", "ru": "Гость", "uz": "Mehmon"},
+    15: {"en": "Member", "ru": "Участник", "uz": "A’zo"},
+    20: {"en": "Workspace administrator", "ru": "Администратор пространства", "uz": "Ish maydoni administratori"},
+}
+
+
+def notify_workspace_access(workspace_member, actor, event, message):
+    workspace = workspace_member.workspace
+    enqueue_system_telegram_notification(
+        user=workspace_member.member,
+        category="role_change",
+        event=event,
+        actor=actor,
+        context={
+            "workspace_id": str(workspace.id),
+            "localized": message,
+            "url": application_url(f"{workspace.slug}/"),
+        },
+    )
 
 
 class WorkSpaceMemberViewSet(BaseViewSet):
@@ -84,6 +107,7 @@ class WorkSpaceMemberViewSet(BaseViewSet):
         workspace_member = WorkspaceMember.objects.get(
             pk=pk, workspace__slug=slug, member__is_bot=False, is_active=True
         )
+        previous_role = workspace_member.role
         if request.user.id == workspace_member.member_id:
             return Response(
                 {"error": "You cannot update your own role"},
@@ -98,6 +122,23 @@ class WorkSpaceMemberViewSet(BaseViewSet):
 
         if serializer.is_valid():
             serializer.save()
+            workspace_member.refresh_from_db()
+            if workspace_member.role != previous_role:
+                workspace_name = workspace_member.workspace.name
+                role = WORKSPACE_ROLE_LABELS.get(
+                    workspace_member.role,
+                    {key: str(workspace_member.role) for key in ("en", "ru", "uz")},
+                )
+                notify_workspace_access(
+                    workspace_member,
+                    request.user,
+                    "workspace_role_changed",
+                    {
+                        "en": f"Your role in workspace “{workspace_name}” was changed to {role['en']}.",
+                        "ru": f"Ваша роль в рабочем пространстве «{workspace_name}» изменена: {role['ru']}.",
+                        "uz": f"“{workspace_name}” ish maydonidagi rolingiz o‘zgardi: {role['uz']}.",
+                    },
+                )
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -153,6 +194,16 @@ class WorkSpaceMemberViewSet(BaseViewSet):
 
         workspace_member.is_active = False
         workspace_member.save()
+        notify_workspace_access(
+            workspace_member,
+            request.user,
+            "workspace_membership_removed",
+            {
+                "en": f"You were removed from workspace “{workspace_member.workspace.name}”.",
+                "ru": f"Вас удалили из рабочего пространства «{workspace_member.workspace.name}».",
+                "uz": f"Siz “{workspace_member.workspace.name}” ish maydonidan chiqarildingiz.",
+            },
+        )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     @invalidate_cache(
