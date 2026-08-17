@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { useMemo, useState } from "react";
-import { Bot, CircleCheck, Eye, EyeOff, Network, RotateCcw, Search, Send, Unplug, Webhook } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Bot, CircleCheck, Eye, EyeOff, Globe2, Network, RotateCcw, Search, Send, Unplug, Webhook } from "lucide-react";
 import useSWR from "swr";
 import { Button } from "@plane/propel/button";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
@@ -19,6 +19,8 @@ const InstanceTelegramPage = function InstanceTelegramPage(_props: Route.Compone
   const [proxyUrl, setProxyUrl] = useState("");
   const [showProxyUrl, setShowProxyUrl] = useState(false);
   const [removeProxy, setRemoveProxy] = useState(false);
+  const [apiEndpointMode, setApiEndpointMode] = useState<"standard" | "custom">("standard");
+  const [apiEndpoint, setApiEndpoint] = useState("");
   const [search, setSearch] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
@@ -27,9 +29,21 @@ const InstanceTelegramPage = function InstanceTelegramPage(_props: Route.Compone
     service.telegramConnections(search)
   );
 
+  useEffect(() => {
+    if (telegram?.api_endpoint_mode) setApiEndpointMode(telegram.api_endpoint_mode);
+  }, [telegram?.api_endpoint_mode]);
+
   const save = async () => {
     if (!token.trim() && !telegram?.configured) {
       setToast({ type: TOAST_TYPE.ERROR, title: "Bot token is required", message: "Paste a token from BotFather." });
+      return;
+    }
+    if (apiEndpointMode === "custom" && !apiEndpoint.trim() && !telegram?.custom_api_endpoint_configured) {
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: "Custom endpoint is required",
+        message: "Enter the HTTPS base URL of your Telegram Bot API proxy.",
+      });
       return;
     }
     setIsSaving(true);
@@ -38,9 +52,12 @@ const InstanceTelegramPage = function InstanceTelegramPage(_props: Route.Compone
         token: token.trim() || undefined,
         enabled: true,
         proxy_url: removeProxy ? "" : proxyUrl.trim() || undefined,
+        api_endpoint_mode: apiEndpointMode,
+        api_endpoint: apiEndpointMode === "custom" ? apiEndpoint.trim() || undefined : "",
       });
       setToken("");
       setProxyUrl("");
+      setApiEndpoint("");
       setRemoveProxy(false);
       await Promise.all([mutate(response), mutateConnections()]);
       setToast({
@@ -128,12 +145,15 @@ const InstanceTelegramPage = function InstanceTelegramPage(_props: Route.Compone
               )}
             </div>
             <div className="rounded-md border border-subtle bg-layer-1 p-4">
-              <Network className="size-5 text-accent-primary" />
-              <div className="mt-3 text-11 text-tertiary">Telegram route</div>
+              <Globe2 className="size-5 text-accent-primary" />
+              <div className="mt-3 text-11 text-tertiary">Telegram Bot API</div>
               <div className="mt-1 text-14 font-medium text-primary">
-                {telegram?.proxy_configured ? `${telegram.proxy_scheme?.toUpperCase()} proxy` : "Direct connection"}
+                {telegram?.api_endpoint_mode === "custom" ? telegram.api_endpoint_host : "api.telegram.org"}
               </div>
-              <div className="mt-1 text-11 text-tertiary">Only Telegram API traffic uses this route.</div>
+              <div className="mt-1 text-11 text-tertiary">
+                {telegram?.api_endpoint_mode === "custom" ? "Custom endpoint" : "Standard Telegram endpoint"}
+                {telegram?.proxy_configured ? ` · ${telegram.proxy_scheme?.toUpperCase()} transport proxy` : ""}
+              </div>
             </div>
             <div className="rounded-md border border-subtle bg-layer-1 p-4">
               <Send className="size-5 text-accent-primary" />
@@ -174,6 +194,74 @@ const InstanceTelegramPage = function InstanceTelegramPage(_props: Route.Compone
                     Disable
                   </Button>
                 )}
+              </div>
+            </div>
+
+            <div className="mt-5 border-t border-subtle pt-5">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 rounded-md bg-layer-2 p-2 text-accent-primary">
+                  <Globe2 className="size-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-13 font-medium text-primary">Telegram Bot API endpoint</h3>
+                  <p className="mt-1 text-11 text-tertiary">
+                    Choose the standard Telegram API or route every Bot API request through your own HTTPS reverse
+                    proxy.
+                  </p>
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    <button
+                      type="button"
+                      aria-pressed={apiEndpointMode === "standard"}
+                      onClick={() => setApiEndpointMode("standard")}
+                      className={`rounded-md border p-3 text-left transition-colors ${
+                        apiEndpointMode === "standard"
+                          ? "border-accent-primary bg-accent-subtle"
+                          : "border-subtle bg-layer-2 hover:border-strong"
+                      }`}
+                    >
+                      <div className="text-13 font-medium text-primary">Standard Telegram endpoint</div>
+                      <div className="mt-1 text-11 text-tertiary">https://api.telegram.org</div>
+                    </button>
+                    <button
+                      type="button"
+                      aria-pressed={apiEndpointMode === "custom"}
+                      onClick={() => setApiEndpointMode("custom")}
+                      className={`rounded-md border p-3 text-left transition-colors ${
+                        apiEndpointMode === "custom"
+                          ? "border-accent-primary bg-accent-subtle"
+                          : "border-subtle bg-layer-2 hover:border-strong"
+                      }`}
+                    >
+                      <div className="text-13 font-medium text-primary">Custom endpoint</div>
+                      <div className="mt-1 text-11 text-tertiary">
+                        {telegram?.custom_api_endpoint_configured
+                          ? telegram.api_endpoint_host
+                          : "Your Telegram Bot API reverse proxy"}
+                      </div>
+                    </button>
+                  </div>
+                  {apiEndpointMode === "custom" && (
+                    <div className="mt-3">
+                      <Input
+                        id="telegram-api-endpoint"
+                        name="telegram-api-endpoint"
+                        type="url"
+                        value={apiEndpoint}
+                        onChange={(event) => setApiEndpoint(event.target.value)}
+                        placeholder={
+                          telegram?.custom_api_endpoint_configured
+                            ? "Custom endpoint configured — leave empty to keep it"
+                            : "https://telegram-proxy.example.com"
+                        }
+                        className="w-full"
+                      />
+                      <p className="mt-2 text-11 text-tertiary">
+                        Enter the base URL before <code>/bot&lt;TOKEN&gt;/&lt;method&gt;</code>. HTTPS is required. The
+                        endpoint is encrypted and never returned to the browser.
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 

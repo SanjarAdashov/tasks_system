@@ -3,13 +3,16 @@
 
 import hashlib
 import html
+import re
 from datetime import datetime, time, timedelta
-from urllib.parse import urlsplit
+from pathlib import PurePosixPath
+from urllib.parse import unquote, urlsplit
 from zoneinfo import ZoneInfo
 
 import requests
 from django.conf import settings
 from django.utils import timezone
+from django.utils.html import strip_tags
 
 from plane.db.models import (
     ProjectMember,
@@ -17,6 +20,7 @@ from plane.db.models import (
     TelegramDelivery,
     TelegramNotificationPreference,
     TelegramUserConnection,
+    User,
 )
 from plane.license.models import InstanceConfiguration
 from plane.license.utils.encryption import decrypt_data, encrypt_data
@@ -26,6 +30,7 @@ TELEGRAM_SECRET_CONFIGURATION_KEYS = {
     "TELEGRAM_BOT_TOKEN",
     "TELEGRAM_WEBHOOK_SECRET",
     "TELEGRAM_PROXY_URL",
+    "TELEGRAM_API_ENDPOINT",
 }
 TELEGRAM_CONFIGURATION_KEYS = TELEGRAM_SECRET_CONFIGURATION_KEYS | {
     "TELEGRAM_BOT_ID",
@@ -33,6 +38,7 @@ TELEGRAM_CONFIGURATION_KEYS = TELEGRAM_SECRET_CONFIGURATION_KEYS | {
     "ENABLE_TELEGRAM",
 }
 TELEGRAM_PROXY_SCHEMES = {"http", "https", "socks5", "socks5h"}
+TELEGRAM_STANDARD_API_ENDPOINT = "https://api.telegram.org"
 
 PREFERENCE_FIELDS = {
     "task_assignment",
@@ -46,6 +52,20 @@ PREFERENCE_FIELDS = {
     "role_change",
     "account_activity",
 }
+
+TELEGRAM_COMMENT_CATEGORIES = {"mention", "comment"}
+TELEGRAM_COMMENT_LIMIT = 1200
+TELEGRAM_BLOCK_TAG_RE = re.compile(
+    r"<\s*(?:br\s*/?|/(?:p|div|li|blockquote|h[1-6]|pre))\s*>",
+    re.IGNORECASE,
+)
+TELEGRAM_HIDDEN_HTML_RE = re.compile(
+    r"<(script|style)\b[^>]*>.*?</\1\s*>",
+    re.IGNORECASE | re.DOTALL,
+)
+TELEGRAM_EMPTY_VALUES = {"", "none", "null", "undefined", "nil"}
+TELEGRAM_ATTACHMENT_FIELDS = {"attachment", "attachments"}
+TELEGRAM_STORED_FILENAME_RE = re.compile(r"^[0-9a-f]{32}-(.+)$", re.IGNORECASE)
 
 
 class TelegramAPIError(Exception):
@@ -70,6 +90,7 @@ def telegram_configuration():
         "bot_id": _config_value("TELEGRAM_BOT_ID"),
         "bot_username": _config_value("TELEGRAM_BOT_USERNAME"),
         "proxy_url": _config_value("TELEGRAM_PROXY_URL"),
+        "api_endpoint": _config_value("TELEGRAM_API_ENDPOINT"),
     }
 
 
@@ -91,7 +112,36 @@ def validate_telegram_proxy_url(proxy_url):
     return value
 
 
-def save_telegram_configuration(*, token, webhook_secret, bot_id, bot_username, enabled=True, proxy_url=""):
+def validate_telegram_api_endpoint(api_endpoint):
+    value = (api_endpoint or "").strip().rstrip("/")
+    if not value:
+        return ""
+    try:
+        parsed = urlsplit(value)
+        port = parsed.port
+    except ValueError as exc:
+        raise TelegramAPIError("Telegram API endpoint is invalid") from exc
+    if parsed.scheme.lower() != "https":
+        raise TelegramAPIError("Telegram API endpoint must use HTTPS")
+    if not parsed.hostname:
+        raise TelegramAPIError("Telegram API endpoint must include a host")
+    if parsed.query or parsed.fragment:
+        raise TelegramAPIError("Telegram API endpoint cannot include a query or fragment")
+    if port is not None and not 1 <= port <= 65535:
+        raise TelegramAPIError("Telegram API endpoint port is invalid")
+    return value
+
+
+def save_telegram_configuration(
+    *,
+    token,
+    webhook_secret,
+    bot_id,
+    bot_username,
+    enabled=True,
+    proxy_url="",
+    api_endpoint="",
+):
     values = {
         "TELEGRAM_BOT_TOKEN": (token, True),
         "TELEGRAM_WEBHOOK_SECRET": (webhook_secret, True),
@@ -104,6 +154,11 @@ def save_telegram_configuration(*, token, webhook_secret, bot_id, bot_username, 
         values["TELEGRAM_PROXY_URL"] = (proxy_url, True)
     else:
         InstanceConfiguration.objects.filter(key="TELEGRAM_PROXY_URL").delete()
+    api_endpoint = validate_telegram_api_endpoint(api_endpoint)
+    if api_endpoint:
+        values["TELEGRAM_API_ENDPOINT"] = (api_endpoint, True)
+    else:
+        InstanceConfiguration.objects.filter(key="TELEGRAM_API_ENDPOINT").delete()
     for key, (value, encrypted) in values.items():
         stored_value = encrypt_data(value) if encrypted else value
         InstanceConfiguration.objects.update_or_create(
@@ -116,23 +171,32 @@ def clear_telegram_configuration():
     InstanceConfiguration.objects.filter(key__in=TELEGRAM_CONFIGURATION_KEYS).delete()
 
 
-def telegram_api_call(method, payload=None, *, token=None, timeout=15, proxy_url=None):
+def telegram_api_call(method, payload=None, *, token=None, timeout=15, proxy_url=None, api_endpoint=None):
     configuration = telegram_configuration()
     bot_token = token or configuration["token"]
     if not bot_token:
         raise TelegramAPIError("Telegram bot is not configured")
     effective_proxy_url = configuration["proxy_url"] if proxy_url is None else validate_telegram_proxy_url(proxy_url)
+    effective_api_endpoint = (
+        configuration["api_endpoint"] if api_endpoint is None else validate_telegram_api_endpoint(api_endpoint)
+    )
+    api_base_url = effective_api_endpoint or TELEGRAM_STANDARD_API_ENDPOINT
     proxies = {"http": effective_proxy_url, "https": effective_proxy_url} if effective_proxy_url else None
     try:
         response = requests.post(
-            f"https://api.telegram.org/bot{bot_token}/{method}",
+            f"{api_base_url}/bot{bot_token}/{method}",
             json=payload or {},
             timeout=timeout,
             proxies=proxies,
         )
         data = response.json()
     except (requests.RequestException, ValueError) as exc:
-        message = "Telegram proxy is unavailable" if effective_proxy_url else "Telegram API is unavailable"
+        if effective_proxy_url:
+            message = "Telegram proxy is unavailable"
+        elif effective_api_endpoint:
+            message = "Telegram API endpoint is unavailable"
+        else:
+            message = "Telegram API is unavailable"
         raise TelegramAPIError(message) from exc
     if not response.ok or not data.get("ok"):
         parameters = data.get("parameters") or {}
@@ -212,6 +276,43 @@ def notification_category(notification):
     return "property_change"
 
 
+def telegram_plain_text(value, limit=TELEGRAM_COMMENT_LIMIT):
+    if value is None:
+        return ""
+    source = TELEGRAM_HIDDEN_HTML_RE.sub("", str(value))
+    source = TELEGRAM_BLOCK_TAG_RE.sub("\n", source)
+    text = html.unescape(strip_tags(source)).replace("\u200b", "")
+    lines = [" ".join(line.split()) for line in text.splitlines()]
+    text = "\n".join(line for line in lines if line).strip()
+    if len(text) <= limit:
+        return text
+    return f"{text[: limit - 1].rstrip()}…"
+
+
+def _resolved_activity_value(activity, prefix):
+    field = activity.get("field") or ""
+    value = activity.get(f"{prefix}_value")
+    identifier = activity.get(f"{prefix}_identifier")
+    if not identifier:
+        return value
+    if field == "state":
+        return State.objects.filter(pk=identifier).values_list("name", flat=True).first() or value
+    if field in {"assignee", "assignees"}:
+        user = User.objects.filter(pk=identifier).only("first_name", "last_name", "email").first()
+        return user_name(user) if user else value
+    return value
+
+
+def _attachment_filename(value):
+    value = telegram_plain_text(value, limit=500)
+    if not value or value.lower() in TELEGRAM_EMPTY_VALUES:
+        return ""
+    path = urlsplit(value).path if "://" in value else value
+    filename = unquote(PurePosixPath(path).name)
+    stored_match = TELEGRAM_STORED_FILENAME_RE.match(filename)
+    return stored_match.group(1) if stored_match else filename
+
+
 def _issue_payload(notification):
     data = notification.data or {}
     issue = data.get("issue") or {}
@@ -220,6 +321,11 @@ def _issue_payload(notification):
     sequence_id = issue.get("sequence_id")
     issue_key = f"{identifier}-{sequence_id}" if identifier and sequence_id is not None else ""
     workspace_slug = notification.workspace.slug
+    category = notification_category(notification)
+    field = activity.get("field") or ""
+    comment_source = activity.get("issue_comment")
+    if not comment_source and category in TELEGRAM_COMMENT_CATEGORIES:
+        comment_source = activity.get("new_value")
     return {
         "kind": "issue",
         "workspace_slug": workspace_slug,
@@ -228,10 +334,16 @@ def _issue_payload(notification):
         "issue_key": issue_key,
         "issue_name": issue.get("name") or notification.title or "",
         "actor_name": user_name(notification.triggered_by) if notification.triggered_by else "GTS Tasks System",
-        "field": activity.get("field") or "",
-        "old_value": activity.get("old_value") or "",
-        "new_value": activity.get("new_value") or "",
-        "comment": (activity.get("issue_comment") or "")[:300],
+        "field": field,
+        "old_value": _resolved_activity_value(activity, "old"),
+        "new_value": _resolved_activity_value(activity, "new"),
+        "comment": telegram_plain_text(comment_source),
+        "attachment_event": ("removed" if activity.get("verb") == "deleted" else "added")
+        if field in TELEGRAM_ATTACHMENT_FIELDS
+        else "",
+        "attachment_name": _attachment_filename(activity.get("new_value"))
+        if field in TELEGRAM_ATTACHMENT_FIELDS
+        else "",
         "url": application_url(f"{workspace_slug}/browse/{issue_key}/") if issue_key else application_url(""),
     }
 
@@ -346,14 +458,44 @@ TRANSLATIONS = {
         "priority": "Task priority changed",
         "due_date": "Task date changed",
         "property_change": "Task property changed",
+        "attachment_added": "File attached to a task",
+        "attachment_removed": "File removed from a task",
         "role_change": "Access changed",
         "account_activity": "Account notification",
         "open_task": "Open task",
         "open_settings": "Open settings",
+        "open_project": "Open project",
+        "open_workspace": "Open workspace",
+        "open_account": "Open account",
+        "open_home": "Open GTS Tasks",
         "field": "Field",
         "old": "Was",
         "new": "Now",
         "comment_excerpt": "Comment",
+        "changed_by": "Changed by",
+        "file": "File",
+        "not_set": "Not set",
+        "mention_without_text": "You were mentioned without an additional message.",
+        "yes": "Yes",
+        "no": "No",
+        "field_assignees": "Assignees",
+        "field_state": "Status",
+        "field_priority": "Priority",
+        "field_start_date": "Start date",
+        "field_target_date": "Due date",
+        "field_cycle": "Cycle",
+        "field_module": "Module",
+        "field_estimate": "Estimate",
+        "field_labels": "Labels",
+        "field_parent": "Parent task",
+        "field_name": "Title",
+        "field_description": "Description",
+        "field_link": "Link",
+        "field_attachment": "Attachment",
+        "priority_urgent": "Urgent",
+        "priority_high": "High",
+        "priority_medium": "Medium",
+        "priority_low": "Low",
     },
     "ru": {
         "task_assignment": "Вас назначили на задачу",
@@ -364,14 +506,44 @@ TRANSLATIONS = {
         "priority": "Приоритет задачи изменён",
         "due_date": "Дата задачи изменена",
         "property_change": "Свойство задачи изменено",
+        "attachment_added": "К задаче прикреплён файл",
+        "attachment_removed": "Из задачи удалён файл",
         "role_change": "Права доступа изменены",
         "account_activity": "Уведомление об аккаунте",
         "open_task": "Открыть задачу",
         "open_settings": "Открыть настройки",
+        "open_project": "Открыть проект",
+        "open_workspace": "Открыть рабочее пространство",
+        "open_account": "Открыть аккаунт",
+        "open_home": "Открыть GTS Tasks",
         "field": "Поле",
         "old": "Было",
         "new": "Стало",
         "comment_excerpt": "Комментарий",
+        "changed_by": "Изменил",
+        "file": "Файл",
+        "not_set": "Не указано",
+        "mention_without_text": "Вас упомянули без дополнительного сообщения.",
+        "yes": "Да",
+        "no": "Нет",
+        "field_assignees": "Исполнители",
+        "field_state": "Статус",
+        "field_priority": "Приоритет",
+        "field_start_date": "Начальная дата",
+        "field_target_date": "Срок выполнения",
+        "field_cycle": "Цикл",
+        "field_module": "Модуль",
+        "field_estimate": "Оценка",
+        "field_labels": "Метки",
+        "field_parent": "Родительская задача",
+        "field_name": "Название",
+        "field_description": "Описание",
+        "field_link": "Ссылка",
+        "field_attachment": "Вложение",
+        "priority_urgent": "Срочный",
+        "priority_high": "Высокий",
+        "priority_medium": "Средний",
+        "priority_low": "Низкий",
     },
     "uz": {
         "task_assignment": "Siz vazifaga tayinlandingiz",
@@ -382,30 +554,138 @@ TRANSLATIONS = {
         "priority": "Vazifa ustuvorligi o‘zgardi",
         "due_date": "Vazifa sanasi o‘zgardi",
         "property_change": "Vazifa xususiyati o‘zgardi",
+        "attachment_added": "Vazifaga fayl biriktirildi",
+        "attachment_removed": "Vazifadan fayl olib tashlandi",
         "role_change": "Kirish huquqlari o‘zgardi",
         "account_activity": "Hisob bildirishnomasi",
         "open_task": "Vazifani ochish",
         "open_settings": "Sozlamalarni ochish",
+        "open_project": "Loyihani ochish",
+        "open_workspace": "Ish maydonini ochish",
+        "open_account": "Hisobni ochish",
+        "open_home": "GTS Tasks-ni ochish",
         "field": "Maydon",
         "old": "Oldin",
         "new": "Hozir",
         "comment_excerpt": "Izoh",
+        "changed_by": "O‘zgartirgan",
+        "file": "Fayl",
+        "not_set": "Ko‘rsatilmagan",
+        "mention_without_text": "Siz qo‘shimcha xabarsiz eslatildingiz.",
+        "yes": "Ha",
+        "no": "Yo‘q",
+        "field_assignees": "Ijrochilar",
+        "field_state": "Holat",
+        "field_priority": "Ustuvorlik",
+        "field_start_date": "Boshlanish sanasi",
+        "field_target_date": "Tugash muddati",
+        "field_cycle": "Sikl",
+        "field_module": "Modul",
+        "field_estimate": "Baholash",
+        "field_labels": "Belgilar",
+        "field_parent": "Yuqori vazifa",
+        "field_name": "Nomi",
+        "field_description": "Tavsif",
+        "field_link": "Havola",
+        "field_attachment": "Ilova",
+        "priority_urgent": "Shoshilinch",
+        "priority_high": "Yuqori",
+        "priority_medium": "O‘rta",
+        "priority_low": "Past",
     },
 }
 
 
+TELEGRAM_FIELD_ALIASES = {
+    "assignee": "assignees",
+    "assignee_ids": "assignees",
+    "due_date": "target_date",
+    "estimate_point": "estimate",
+    "estimate_points": "estimate",
+    "label": "labels",
+    "module_id": "module",
+    "cycle_id": "cycle",
+    "parent_id": "parent",
+    "attachments": "attachment",
+}
+TELEGRAM_DATE_FIELDS = {"start_date", "target_date", "due_date"}
+TELEGRAM_PRIORITY_VALUES = {"urgent", "high", "medium", "low"}
+
+
+def _field_label(field, strings):
+    normalized = TELEGRAM_FIELD_ALIASES.get(field, field)
+    translated = strings.get(f"field_{normalized}")
+    if translated:
+        return translated
+    return str(field).replace("_", " ").strip().capitalize() or strings["field"]
+
+
+def _date_value(value, language):
+    try:
+        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+    if language == "en":
+        return parsed.strftime("%b %d, %Y")
+    return parsed.strftime("%d.%m.%Y")
+
+
+def _activity_value(value, field, language, strings):
+    if value is None or str(value).strip().lower() in TELEGRAM_EMPTY_VALUES:
+        return strings["not_set"]
+    normalized_field = TELEGRAM_FIELD_ALIASES.get(field, field)
+    normalized_value = str(value).strip()
+    if normalized_field in TELEGRAM_DATE_FIELDS:
+        formatted_date = _date_value(normalized_value, language)
+        if formatted_date:
+            return formatted_date
+    priority = normalized_value.lower().replace(" ", "_")
+    if normalized_field == "priority":
+        if priority in TELEGRAM_EMPTY_VALUES | {"no_priority"}:
+            return strings["not_set"]
+        if priority in TELEGRAM_PRIORITY_VALUES:
+            return strings[f"priority_{priority}"]
+    if normalized_value.lower() == "true":
+        return strings["yes"]
+    if normalized_value.lower() == "false":
+        return strings["no"]
+    return telegram_plain_text(normalized_value, limit=500) or strings["not_set"]
+
+
+def _system_button_key(payload):
+    if payload.get("button_key"):
+        return payload["button_key"]
+    event = payload.get("event") or ""
+    if event.startswith("project_"):
+        return "open_project"
+    if event.startswith("workspace_"):
+        return "open_workspace"
+    if event.startswith("account_"):
+        return "open_account"
+    if event == "creation_quota_changed":
+        return "open_home"
+    return "open_settings"
+
+
 def render_delivery(delivery):
-    language = getattr(delivery.receiver.profile, "language", "en") or "en"
+    profile = getattr(delivery.receiver, "profile", None)
+    language = getattr(profile, "language", "en") or "en"
     strings = TRANSLATIONS.get(language, TRANSLATIONS["en"])
     payload = delivery.payload or {}
-    title = strings.get(delivery.category, strings["account_activity"])
     if payload.get("kind") == "system":
+        title = strings.get(delivery.category, strings["account_activity"])
         localized = payload.get("localized") or {}
         body = localized.get(language) or localized.get("en") or payload.get("message") or payload.get("event", "")
-        text = f"<b>{html.escape(title)}</b>\n\n{html.escape(str(body))}"
+        lines = [f"<b>{html.escape(title)}</b>", "", html.escape(str(body))]
+        if payload.get("actor_name"):
+            lines.extend(["", f"{strings['changed_by']}: {html.escape(str(payload['actor_name']))}"])
+        text = "\n".join(lines)
         url = payload.get("url") or application_url("")
-        button = strings["open_settings"]
+        button = strings[_system_button_key(payload)]
     else:
+        attachment_event = payload.get("attachment_event")
+        title_key = f"attachment_{attachment_event}" if attachment_event else delivery.category
+        title = strings.get(title_key, strings.get(delivery.category, strings["account_activity"]))
         key = payload.get("issue_key") or ""
         name = payload.get("issue_name") or ""
         actor = payload.get("actor_name") or "GTS Tasks System"
@@ -415,14 +695,23 @@ def render_delivery(delivery):
             f"<b>{html.escape(key)}</b> — {html.escape(name)}",
             html.escape(actor),
         ]
-        if payload.get("field"):
-            lines.append(f"{strings['field']}: {html.escape(str(payload['field']))}")
-        if payload.get("old_value"):
-            lines.append(f"{strings['old']}: {html.escape(str(payload['old_value']))}")
-        if payload.get("new_value"):
-            lines.append(f"{strings['new']}: {html.escape(str(payload['new_value']))}")
-        if payload.get("comment"):
-            lines.append(f"{strings['comment_excerpt']}: {html.escape(str(payload['comment'])[:300])}")
+        if delivery.category in TELEGRAM_COMMENT_CATEGORIES:
+            comment = payload.get("comment") or (
+                strings["mention_without_text"] if delivery.category == "mention" else ""
+            )
+            if comment:
+                lines.extend(["", html.escape(str(comment)[:TELEGRAM_COMMENT_LIMIT])])
+        elif attachment_event:
+            if payload.get("attachment_name"):
+                lines.extend(["", f"{strings['file']}: {html.escape(str(payload['attachment_name']))}"])
+        else:
+            if payload.get("field"):
+                field = str(payload["field"])
+                lines.append(f"{strings['field']}: {html.escape(_field_label(field, strings))}")
+                old_value = _activity_value(payload.get("old_value"), field, language, strings)
+                new_value = _activity_value(payload.get("new_value"), field, language, strings)
+                lines.append(f"{strings['old']}: {html.escape(old_value)}")
+                lines.append(f"{strings['new']}: {html.escape(new_value)}")
         text = "\n".join(lines)
         url = payload.get("url") or application_url("")
         button = strings["open_task"]

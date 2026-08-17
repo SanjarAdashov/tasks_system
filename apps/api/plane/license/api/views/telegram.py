@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 import secrets
+from urllib.parse import urlsplit
 
 from django.db.models import Q
 from rest_framework import status
@@ -16,13 +17,17 @@ from plane.utils.telegram import (
     telegram_api_call,
     telegram_configuration,
     user_name,
+    validate_telegram_api_endpoint,
     validate_telegram_proxy_url,
 )
+from plane.app.views.telegram import _strings
 from .base import BaseAPIView
 
 
 def telegram_status_payload(fetch_webhook=True):
     configuration = telegram_configuration()
+    custom_api_endpoint = configuration["api_endpoint"]
+    parsed_api_endpoint = urlsplit(custom_api_endpoint) if custom_api_endpoint else None
     payload = {
         "configured": bool(configuration["token"]),
         "enabled": configuration["enabled"],
@@ -33,6 +38,15 @@ def telegram_status_payload(fetch_webhook=True):
         "connection_count": TelegramUserConnection.objects.count(),
         "proxy_configured": bool(configuration["proxy_url"]),
         "proxy_scheme": configuration["proxy_url"].split(":", 1)[0].lower() if configuration["proxy_url"] else None,
+        "api_endpoint_mode": "custom" if custom_api_endpoint else "standard",
+        "custom_api_endpoint_configured": bool(custom_api_endpoint),
+        "api_endpoint_host": (
+            f"{parsed_api_endpoint.hostname}:{parsed_api_endpoint.port}"
+            if parsed_api_endpoint and parsed_api_endpoint.port
+            else parsed_api_endpoint.hostname
+            if parsed_api_endpoint
+            else "api.telegram.org"
+        ),
     }
     if fetch_webhook and configuration["enabled"] and configuration["token"]:
         try:
@@ -61,10 +75,40 @@ class InstanceTelegramEndpoint(BaseAPIView):
                 proxy_url = validate_telegram_proxy_url(request.data.get("proxy_url"))
             except TelegramAPIError as exc:
                 return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        api_endpoint = old_configuration["api_endpoint"]
+        endpoint_mode = request.data.get("api_endpoint_mode")
+        if endpoint_mode is not None and endpoint_mode not in {"standard", "custom"}:
+            return Response(
+                {"error": "Telegram API endpoint mode must be standard or custom."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if endpoint_mode == "standard":
+            api_endpoint = ""
+        elif endpoint_mode == "custom":
+            if "api_endpoint" in request.data:
+                try:
+                    api_endpoint = validate_telegram_api_endpoint(request.data.get("api_endpoint"))
+                except TelegramAPIError as exc:
+                    return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+            if not api_endpoint:
+                return Response(
+                    {"error": "Custom Telegram API endpoint is required."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        elif "api_endpoint" in request.data:
+            try:
+                api_endpoint = validate_telegram_api_endpoint(request.data.get("api_endpoint"))
+            except TelegramAPIError as exc:
+                return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
         if not token:
             return Response({"error": "Bot token is required."}, status=status.HTTP_400_BAD_REQUEST)
         try:
-            bot = telegram_api_call("getMe", token=token, proxy_url=proxy_url)
+            bot = telegram_api_call(
+                "getMe",
+                token=token,
+                proxy_url=proxy_url,
+                api_endpoint=api_endpoint,
+            )
             if not bot.get("is_bot") or not bot.get("username"):
                 raise TelegramAPIError("The token does not belong to a valid Telegram bot")
             webhook_secret = secrets.token_urlsafe(32)
@@ -79,6 +123,7 @@ class InstanceTelegramEndpoint(BaseAPIView):
                 },
                 token=token,
                 proxy_url=proxy_url,
+                api_endpoint=api_endpoint,
             )
         except TelegramAPIError as exc:
             return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
@@ -94,6 +139,7 @@ class InstanceTelegramEndpoint(BaseAPIView):
             bot_username=bot["username"],
             enabled=request.data.get("enabled", True),
             proxy_url=proxy_url,
+            api_endpoint=api_endpoint,
         )
         return Response({**telegram_status_payload(fetch_webhook=False), "connections_invalidated": bot_changed})
 
@@ -127,7 +173,7 @@ class InstanceTelegramTestEndpoint(BaseAPIView):
                 "sendMessage",
                 {
                     "chat_id": connection.chat_id,
-                    "text": "GTS Tasks System: Telegram connection test completed successfully.",
+                    "text": _strings(request.user)["test"],
                 },
             )
         except TelegramAPIError as exc:

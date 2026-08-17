@@ -25,7 +25,60 @@ from plane.license.services import (
     unblock_user,
 )
 from .base import BaseAPIView
-from plane.utils.telegram import enqueue_system_telegram_notification
+from plane.utils.telegram import application_url, enqueue_system_telegram_notification
+
+
+QUOTA_UNLIMITED_LABELS = {
+    "en": "Unlimited",
+    "ru": "Без ограничений",
+    "uz": "Cheklanmagan",
+}
+
+
+def _quota_limit_label(value, language):
+    return QUOTA_UNLIMITED_LABELS[language] if value is None else str(value)
+
+
+def _project_quota(snapshot, workspace_id):
+    return next(
+        (quota for quota in snapshot.get("projects", []) if quota["workspace_id"] == str(workspace_id)),
+        {"limit": 0},
+    )
+
+
+def quota_change_message(before, after, *, workspace_changed, project_workspace=None):
+    messages = {language: [] for language in ("en", "ru", "uz")}
+    if workspace_changed:
+        old_limit = before["workspace"]["limit"]
+        new_limit = after["workspace"]["limit"]
+        for language, prefix in {
+            "en": "Workspace creation limit",
+            "ru": "Лимит создания рабочих пространств",
+            "uz": "Ish maydoni yaratish limiti",
+        }.items():
+            old_label = _quota_limit_label(old_limit, language)
+            new_label = _quota_limit_label(new_limit, language)
+            messages[language].append(f"{prefix}: {old_label} → {new_label}.")
+    if project_workspace is not None:
+        old_limit = _project_quota(before, project_workspace.id)["limit"]
+        new_limit = _project_quota(after, project_workspace.id)["limit"]
+        name = project_workspace.name
+        prefixes = {
+            "en": f"Project creation limit in “{name}”",
+            "ru": f"Лимит создания проектов в «{name}»",
+            "uz": f"“{name}” ish maydonida loyiha yaratish limiti",
+        }
+        for language, prefix in prefixes.items():
+            old_label = _quota_limit_label(old_limit, language)
+            new_label = _quota_limit_label(new_limit, language)
+            messages[language].append(f"{prefix}: {old_label} → {new_label}.")
+    if not any(messages.values()):
+        messages = {
+            "en": ["Your workspace or project creation quota was changed."],
+            "ru": ["Квота на создание рабочих пространств или проектов изменена."],
+            "uz": ["Ish maydoni yoki loyiha yaratish kvotangiz o‘zgardi."],
+        }
+    return {language: "\n".join(lines) for language, lines in messages.items()}
 
 
 def instance_user_queryset():
@@ -141,8 +194,10 @@ class InstanceUserCreationQuotaEndpoint(BaseAPIView):
         )
 
     def patch(self, request, user_id):
+        project_workspace = None
         try:
             user = self._user(user_id)
+            before_snapshot = creation_quota_snapshot(user, include_inactive_memberships=True)
             if "workspace_limit" in request.data:
                 update_workspace_limit(user=user, limit=request.data.get("workspace_limit"))
 
@@ -158,8 +213,8 @@ class InstanceUserCreationQuotaEndpoint(BaseAPIView):
                         "project_quota requires workspace_id and limit.",
                         400,
                     )
-                workspace = Workspace.objects.get(pk=project_quota["workspace_id"])
-                update_project_limit(user=user, workspace=workspace, limit=project_quota.get("limit"))
+                project_workspace = Workspace.objects.get(pk=project_quota["workspace_id"])
+                update_project_limit(user=user, workspace=project_workspace, limit=project_quota.get("limit"))
         except User.DoesNotExist:
             return Response({"error": "User does not exist"}, status=status.HTTP_404_NOT_FOUND)
         except Workspace.DoesNotExist:
@@ -174,12 +229,14 @@ class InstanceUserCreationQuotaEndpoint(BaseAPIView):
             event="creation_quota_changed",
             actor=request.user,
             context={
-                "localized": {
-                    "en": "Your workspace or project creation quota was changed.",
-                    "ru": "Квота на создание рабочих пространств или проектов изменена.",
-                    "uz": "Ish maydoni yoki loyiha yaratish kvotangiz o‘zgardi.",
-                },
-                "url": "",
+                "localized": quota_change_message(
+                    before_snapshot,
+                    snapshot,
+                    workspace_changed="workspace_limit" in request.data,
+                    project_workspace=project_workspace,
+                ),
+                "url": application_url(""),
+                "button_key": "open_home",
             },
         )
         return Response(

@@ -46,6 +46,7 @@ def notify_workspace_access(workspace_member, actor, event, message):
             "workspace_id": str(workspace.id),
             "localized": message,
             "url": application_url(f"{workspace.slug}/"),
+            "button_key": "open_workspace",
         },
     )
 

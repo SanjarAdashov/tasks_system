@@ -22,7 +22,6 @@ from plane.db.models import (
 from plane.utils.telegram import (
     application_url,
     preference_for,
-    telegram_api_call,
     telegram_configuration,
 )
 
@@ -39,6 +38,7 @@ COMMAND_TEXT = {
         "help": "Commands: /status, /pause, /resume, /settings, /disconnect",
         "settings": "Open notification settings in GTS Tasks System.",
         "open_settings": "Open settings",
+        "test": "GTS Tasks System: Telegram connection test completed successfully.",
     },
     "ru": {
         "welcome": "Telegram-уведомления подключены к GTS Tasks System.",
@@ -51,6 +51,7 @@ COMMAND_TEXT = {
         "help": "Команды: /status, /pause, /resume, /settings, /disconnect",
         "settings": "Откройте настройки уведомлений в GTS Tasks System.",
         "open_settings": "Открыть настройки",
+        "test": "GTS Tasks System: проверка подключения Telegram успешно завершена.",
     },
     "uz": {
         "welcome": "Telegram bildirishnomalari GTS Tasks System bilan ulandi.",
@@ -63,12 +64,14 @@ COMMAND_TEXT = {
         "help": "Buyruqlar: /status, /pause, /resume, /settings, /disconnect",
         "settings": "GTS Tasks System bildirishnoma sozlamalarini oching.",
         "open_settings": "Sozlamalarni ochish",
+        "test": "GTS Tasks System: Telegram ulanishi muvaffaqiyatli tekshirildi.",
     },
 }
 
 
-def _strings(user=None):
-    language = getattr(getattr(user, "profile", None), "language", "en") if user else "en"
+def _strings(user=None, telegram_language=None):
+    language = getattr(getattr(user, "profile", None), "language", "en") if user else telegram_language or "en"
+    language = str(language).lower().replace("_", "-").split("-", 1)[0]
     return COMMAND_TEXT.get(language, COMMAND_TEXT["en"])
 
 
@@ -76,7 +79,9 @@ def _send_command_message(chat_id, text, button=None):
     payload = {"chat_id": chat_id, "text": text}
     if button:
         payload["reply_markup"] = {"inline_keyboard": [[button]]}
-    telegram_api_call("sendMessage", payload)
+    from plane.bgtasks.telegram_notification_task import send_telegram_command_message
+
+    send_telegram_command_message.delay(payload)
 
 
 class TelegramNotificationPreferenceEndpoint(BaseAPIView):
@@ -168,6 +173,7 @@ class TelegramWebhookEndpoint(APIView):
             return Response({"ok": True})
         chat_id = chat.get("id")
         telegram_user_id = sender.get("id")
+        fallback_strings = _strings(telegram_language=sender.get("language_code"))
         command_parts = message.get("text", "").strip().split(maxsplit=1)
         command = command_parts[0].split("@", 1)[0].lower()
         argument = command_parts[1].strip() if len(command_parts) > 1 else ""
@@ -182,7 +188,7 @@ class TelegramWebhookEndpoint(APIView):
             .first()
         )
         if not connection:
-            _send_command_message(chat_id, COMMAND_TEXT["en"]["invalid"])
+            _send_command_message(chat_id, fallback_strings["invalid"])
             return Response({"ok": True})
         strings = _strings(connection.user)
         if not connection.user.is_active or connection.user.blocked_at is not None:
@@ -228,7 +234,10 @@ class TelegramWebhookEndpoint(APIView):
                 .first()
             )
             if not link:
-                _send_command_message(chat_id, COMMAND_TEXT["en"]["invalid"])
+                _send_command_message(
+                    chat_id,
+                    _strings(telegram_language=sender.get("language_code"))["invalid"],
+                )
                 return
             user = link.user
             strings = _strings(user)

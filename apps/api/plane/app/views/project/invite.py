@@ -28,13 +28,45 @@ from plane.db.models import (
     ProjectMember,
     Workspace,
     ProjectMemberInvite,
-    User,
     WorkspaceMember,
     Project,
     ProjectUserProperty,
 )
 from plane.db.models.project import ProjectNetwork
 from plane.utils.host import base_host
+from plane.utils.telegram import application_url, enqueue_system_telegram_notification
+
+
+PROJECT_INVITE_ROLE_LABELS = {
+    5: {"en": "Guest", "ru": "Гость", "uz": "Mehmon"},
+    15: {"en": "Member", "ru": "Участник", "uz": "A’zo"},
+    20: {"en": "Project administrator", "ru": "Администратор проекта", "uz": "Loyiha administratori"},
+}
+
+
+def notify_project_joined(invitation, user):
+    project = invitation.project
+    role = PROJECT_INVITE_ROLE_LABELS.get(
+        invitation.role,
+        {language: str(invitation.role) for language in ("en", "ru", "uz")},
+    )
+    enqueue_system_telegram_notification(
+        user=user,
+        category="role_change",
+        event="project_membership_added",
+        actor=invitation.created_by,
+        context={
+            "workspace_id": str(project.workspace_id),
+            "project_id": str(project.id),
+            "localized": {
+                "en": f"You joined project “{project.name}” with role {role['en']}.",
+                "ru": f"Вы присоединились к проекту «{project.name}». Роль: {role['ru']}.",
+                "uz": f"Siz “{project.name}” loyihasiga qo‘shildingiz. Rol: {role['uz']}.",
+            },
+            "url": application_url(f"{project.workspace.slug}/projects/{project.id}/issues/"),
+            "button_key": "open_project",
+        },
+    )
 
 
 class ProjectInvitationsViewset(BaseViewSet):
@@ -264,6 +296,8 @@ class ProjectJoinEndpoint(BaseAPIView):
                     project_member.is_active = True
                     project_member.role = project_member.role
                     project_member.save()
+
+                notify_project_joined(project_invite, user)
 
                 return Response(
                     {"message": "Project Invitation Accepted"},

@@ -34,6 +34,7 @@ ROLE_LABELS = {
 
 def notify_project_access(project_member, actor, event, message):
     project = project_member.project
+    removed = event == "project_membership_removed"
     enqueue_system_telegram_notification(
         user=project_member.member,
         category="role_change",
@@ -43,7 +44,10 @@ def notify_project_access(project_member, actor, event, message):
             "workspace_id": str(project.workspace_id),
             "project_id": str(project.id),
             "localized": message,
-            "url": application_url(f"{project.workspace.slug}/projects/{project.id}/issues/"),
+            "url": application_url(
+                f"{project.workspace.slug}/" if removed else f"{project.workspace.slug}/projects/{project.id}/issues/"
+            ),
+            "button_key": "open_workspace" if removed else "open_project",
         },
     )
 

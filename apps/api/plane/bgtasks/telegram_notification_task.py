@@ -11,6 +11,18 @@ from plane.db.models import TelegramDelivery, TelegramUserConnection
 from plane.utils.telegram import TelegramAPIError, may_deliver, render_delivery, telegram_api_call
 
 
+@shared_task(bind=True, max_retries=8)
+def send_telegram_command_message(self, payload):
+    try:
+        telegram_api_call("sendMessage", payload)
+    except TelegramAPIError as exc:
+        retryable = exc.error_code in {None, 429, 500, 502, 503, 504}
+        if retryable and self.request.retries < self.max_retries:
+            delay = exc.retry_after or min(300, 2 ** (self.request.retries + 1))
+            raise self.retry(exc=exc, countdown=delay)
+        raise
+
+
 @shared_task
 def deliver_telegram_delivery(delivery_id):
     with transaction.atomic():

@@ -20,6 +20,7 @@ from plane.db.models import (
     WorkspaceMember,
 )
 from plane.license.models import Instance, InstanceAdmin
+from plane.license.api.views.user_access import quota_change_message
 from plane.license.services import CreationQuotaError, assert_can_create_project, assert_can_create_workspace
 from plane.utils.project_user_groups import copy_project_user_groups_and_transition_rules
 from plane.utils.state_transition_rules import evaluate_state_transition
@@ -33,6 +34,26 @@ def tree(field=None, value=None):
 @pytest.mark.contract
 @pytest.mark.django_db
 class TestCreationQuotas:
+    def test_quota_change_message_contains_old_and_new_limits(self, workspace):
+        before = {
+            "workspace": {"limit": 1},
+            "projects": [{"workspace_id": str(workspace.id), "limit": 2}],
+        }
+        after = {
+            "workspace": {"limit": None},
+            "projects": [{"workspace_id": str(workspace.id), "limit": 5}],
+        }
+
+        message = quota_change_message(
+            before,
+            after,
+            workspace_changed=True,
+            project_workspace=workspace,
+        )
+
+        assert "1 → Без ограничений" in message["ru"]
+        assert f"Лимит создания проектов в «{workspace.name}»: 2 → 5" in message["ru"]
+
     def test_workspace_create_endpoint_enforces_and_consumes_quota(self, mocker, session_client, create_user):
         mocker.patch("plane.bgtasks.workspace_seed_task.workspace_seed.delay")
         payload = {"name": "Quota workspace", "slug": f"quota-{uuid.uuid4().hex[:8]}"}

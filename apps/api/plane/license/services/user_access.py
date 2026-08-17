@@ -9,7 +9,7 @@ from django.utils import timezone
 # Module imports
 from plane.db.models import APIToken, Session, User, UserAccessLog
 from plane.license.models import Instance, InstanceAdmin
-from plane.utils.telegram import enqueue_system_telegram_notification
+from plane.utils.telegram import application_url, enqueue_system_telegram_notification
 
 
 MAX_REASON_LENGTH = 2000
@@ -143,7 +143,8 @@ def block_user(*, user_id, actor, reason):
                     "ru": f"Ваш аккаунт заблокирован. Причина: {reason}",
                     "uz": f"Hisobingiz bloklandi. Sabab: {reason}",
                 },
-                "url": "",
+                "url": application_url(""),
+                "button_key": "open_home",
             },
         )
     )
@@ -194,7 +195,8 @@ def unblock_user(*, user_id, actor, reason=""):
                     "ru": "Доступ к вашему аккаунту восстановлен.",
                     "uz": "Hisobingizga kirish tiklandi.",
                 },
-                "url": "",
+                "url": application_url("settings/profile/"),
+                "button_key": "open_account",
             },
         )
     )

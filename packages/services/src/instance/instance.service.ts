@@ -286,6 +286,8 @@ export class InstanceService extends APIService {
     token?: string;
     enabled?: boolean;
     proxy_url?: string;
+    api_endpoint_mode?: "standard" | "custom";
+    api_endpoint?: string;
   }): Promise<IInstanceTelegramStatus> {
     return this.post("/api/instances/telegram/", data)
       .then((response) => response.data)

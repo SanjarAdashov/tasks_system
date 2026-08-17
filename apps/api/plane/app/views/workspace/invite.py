@@ -32,7 +32,39 @@ from plane.db.models import User, Workspace, WorkspaceMember, WorkspaceMemberInv
 from plane.utils.cache import invalidate_cache, invalidate_cache_directly
 from plane.utils.host import base_host
 from plane.utils.analytics_events import USER_JOINED_WORKSPACE, USER_INVITED_TO_WORKSPACE
+from plane.utils.telegram import application_url, enqueue_system_telegram_notification
 from .. import BaseViewSet
+
+
+WORKSPACE_INVITE_ROLE_LABELS = {
+    5: {"en": "Guest", "ru": "Гость", "uz": "Mehmon"},
+    15: {"en": "Member", "ru": "Участник", "uz": "A’zo"},
+    20: {"en": "Workspace administrator", "ru": "Администратор пространства", "uz": "Ish maydoni administratori"},
+}
+
+
+def notify_workspace_joined(invitation, user):
+    workspace = invitation.workspace
+    role = WORKSPACE_INVITE_ROLE_LABELS.get(
+        invitation.role,
+        {language: str(invitation.role) for language in ("en", "ru", "uz")},
+    )
+    enqueue_system_telegram_notification(
+        user=user,
+        category="role_change",
+        event="workspace_membership_added",
+        actor=invitation.created_by,
+        context={
+            "workspace_id": str(workspace.id),
+            "localized": {
+                "en": f"You joined workspace “{workspace.name}” with role {role['en']}.",
+                "ru": f"Вы присоединились к рабочему пространству «{workspace.name}». Роль: {role['ru']}.",
+                "uz": f"Siz “{workspace.name}” ish maydoniga qo‘shildingiz. Rol: {role['uz']}.",
+            },
+            "url": application_url(f"{workspace.slug}/"),
+            "button_key": "open_workspace",
+        },
+    )
 
 
 class WorkspaceInvitationsViewset(BaseViewSet):
@@ -219,6 +251,7 @@ class WorkspaceJoinEndpoint(BaseAPIView):
                     # Set the user last_workspace_id to the accepted workspace
                     user.last_workspace_id = workspace_invite.workspace.id
                     user.save()
+                    notify_workspace_joined(workspace_invite, user)
                     track_event.delay(
                         user_id=user.id,
                         event_name=USER_JOINED_WORKSPACE,
@@ -317,6 +350,9 @@ class UserWorkspaceInvitationsViewSet(BaseViewSet):
             ],
             ignore_conflicts=True,
         )
+
+        for invitation in workspace_invitations:
+            notify_workspace_joined(invitation, request.user)
 
         # Delete joined workspace invites
         workspace_invitations.delete()
