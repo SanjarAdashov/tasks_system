@@ -199,6 +199,8 @@ export interface IInstanceTelegramStatus {
   webhook_url: string | null;
   connection_count: number;
   connections_invalidated?: boolean;
+  proxy_configured: boolean;
+  proxy_scheme: "http" | "https" | "socks5" | "socks5h" | null;
   webhook: {
     url?: string;
     pending_update_count?: number;

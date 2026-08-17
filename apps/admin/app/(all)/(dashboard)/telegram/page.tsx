@@ -4,7 +4,7 @@
  */
 
 import { useMemo, useState } from "react";
-import { Bot, CircleCheck, Search, Send, Unplug, Webhook } from "lucide-react";
+import { Bot, CircleCheck, Eye, EyeOff, Network, RotateCcw, Search, Send, Unplug, Webhook } from "lucide-react";
 import useSWR from "swr";
 import { Button } from "@plane/propel/button";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
@@ -16,6 +16,9 @@ import type { Route } from "./+types/page";
 const InstanceTelegramPage = function InstanceTelegramPage(_props: Route.ComponentProps) {
   const service = useMemo(() => new InstanceService(), []);
   const [token, setToken] = useState("");
+  const [proxyUrl, setProxyUrl] = useState("");
+  const [showProxyUrl, setShowProxyUrl] = useState(false);
+  const [removeProxy, setRemoveProxy] = useState(false);
   const [search, setSearch] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isTesting, setIsTesting] = useState(false);
@@ -31,8 +34,14 @@ const InstanceTelegramPage = function InstanceTelegramPage(_props: Route.Compone
     }
     setIsSaving(true);
     try {
-      const response = await service.configureTelegram({ token: token.trim() || undefined, enabled: true });
+      const response = await service.configureTelegram({
+        token: token.trim() || undefined,
+        enabled: true,
+        proxy_url: removeProxy ? "" : proxyUrl.trim() || undefined,
+      });
       setToken("");
+      setProxyUrl("");
+      setRemoveProxy(false);
       await Promise.all([mutate(response), mutateConnections()]);
       setToast({
         type: TOAST_TYPE.SUCCESS,
@@ -94,7 +103,7 @@ const InstanceTelegramPage = function InstanceTelegramPage(_props: Route.Compone
         </Loader>
       ) : (
         <div className="space-y-6">
-          <div className="grid gap-3 md:grid-cols-3">
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-md border border-subtle bg-layer-1 p-4">
               <Bot className="size-5 text-accent-primary" />
               <div className="mt-3 text-11 text-tertiary">Bot</div>
@@ -119,6 +128,14 @@ const InstanceTelegramPage = function InstanceTelegramPage(_props: Route.Compone
               )}
             </div>
             <div className="rounded-md border border-subtle bg-layer-1 p-4">
+              <Network className="size-5 text-accent-primary" />
+              <div className="mt-3 text-11 text-tertiary">Telegram route</div>
+              <div className="mt-1 text-14 font-medium text-primary">
+                {telegram?.proxy_configured ? `${telegram.proxy_scheme?.toUpperCase()} proxy` : "Direct connection"}
+              </div>
+              <div className="mt-1 text-11 text-tertiary">Only Telegram API traffic uses this route.</div>
+            </div>
+            <div className="rounded-md border border-subtle bg-layer-1 p-4">
               <Send className="size-5 text-accent-primary" />
               <div className="mt-3 text-11 text-tertiary">Connected users</div>
               <div className="mt-1 text-20 font-semibold text-primary">{telegram?.connection_count ?? 0}</div>
@@ -131,7 +148,7 @@ const InstanceTelegramPage = function InstanceTelegramPage(_props: Route.Compone
               The token is encrypted and is never returned to the browser. Saving registers the public webhook
               automatically.
             </p>
-            <div className="mt-4 flex flex-col gap-3 md:flex-row">
+            <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
               <Input
                 id="telegram-bot-token"
                 name="telegram-bot-token"
@@ -141,21 +158,80 @@ const InstanceTelegramPage = function InstanceTelegramPage(_props: Route.Compone
                 placeholder={
                   telegram?.configured ? "Leave empty to re-register the current bot" : "Paste BotFather token"
                 }
-                className="flex-1"
+                className="w-full"
               />
-              <Button variant="primary" loading={isSaving} onClick={save}>
-                {telegram?.configured ? "Save / register webhook" : "Connect bot"}
-              </Button>
-              {telegram?.configured && (
-                <Button variant="secondary" loading={isTesting} prependIcon={<Send />} onClick={test}>
-                  Send test
+              <div className="flex flex-wrap gap-2">
+                <Button variant="primary" loading={isSaving} onClick={save}>
+                  {telegram?.configured ? "Save / register webhook" : "Connect bot"}
                 </Button>
-              )}
-              {telegram?.configured && (
-                <Button variant="error-outline" prependIcon={<Unplug />} onClick={disable}>
-                  Disable
-                </Button>
-              )}
+                {telegram?.configured && (
+                  <Button variant="secondary" loading={isTesting} prependIcon={<Send />} onClick={test}>
+                    Send test
+                  </Button>
+                )}
+                {telegram?.configured && (
+                  <Button variant="error-outline" prependIcon={<Unplug />} onClick={disable}>
+                    Disable
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            <div className="mt-5 border-t border-subtle pt-5">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 rounded-md bg-layer-2 p-2 text-accent-primary">
+                  <Network className="size-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-13 font-medium text-primary">Telegram network route</h3>
+                  <p className="mt-1 text-11 text-tertiary">
+                    Optional HTTP, HTTPS, SOCKS5, or SOCKS5H proxy. Credentials are encrypted and this address is never
+                    returned to the browser.
+                  </p>
+                  <div className="mt-3 flex flex-col gap-2 lg:flex-row">
+                    <Input
+                      id="telegram-proxy-url"
+                      name="telegram-proxy-url"
+                      type={showProxyUrl ? "text" : "password"}
+                      value={proxyUrl}
+                      onChange={(event) => {
+                        setProxyUrl(event.target.value);
+                        setRemoveProxy(false);
+                      }}
+                      disabled={removeProxy}
+                      placeholder={
+                        telegram?.proxy_configured
+                          ? "Proxy configured — leave empty to keep it"
+                          : "socks5h://user:password@proxy.example.com:1080"
+                      }
+                      className="min-w-0 flex-1"
+                    />
+                    <Button
+                      variant="secondary"
+                      prependIcon={showProxyUrl ? <EyeOff /> : <Eye />}
+                      onClick={() => setShowProxyUrl((value) => !value)}
+                    >
+                      {showProxyUrl ? "Hide" : "Show"}
+                    </Button>
+                    {telegram?.proxy_configured && (
+                      <Button variant="secondary" prependIcon={<RotateCcw />} onClick={() => setRemoveProxy(true)}>
+                        Use direct connection
+                      </Button>
+                    )}
+                  </div>
+                  {removeProxy && (
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-11 text-warning-primary">
+                      The proxy will be removed only after Telegram accepts the direct connection.
+                      <button type="button" className="font-medium underline" onClick={() => setRemoveProxy(false)}>
+                        Keep proxy
+                      </button>
+                    </div>
+                  )}
+                  <p className="mt-2 text-11 text-tertiary">
+                    Include the port. Encode special characters in the username or password as URL characters.
+                  </p>
+                </div>
+              </div>
             </div>
             {telegram?.webhook_url && (
               <div className="mt-3 text-11 break-all text-tertiary">Webhook URL: {telegram.webhook_url}</div>

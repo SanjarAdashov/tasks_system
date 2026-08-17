@@ -16,6 +16,7 @@ from plane.utils.telegram import (
     telegram_api_call,
     telegram_configuration,
     user_name,
+    validate_telegram_proxy_url,
 )
 from .base import BaseAPIView
 
@@ -30,6 +31,8 @@ def telegram_status_payload(fetch_webhook=True):
         "webhook_url": api_url("api/telegram/webhook/") if configuration["token"] else None,
         "webhook": None,
         "connection_count": TelegramUserConnection.objects.count(),
+        "proxy_configured": bool(configuration["proxy_url"]),
+        "proxy_scheme": configuration["proxy_url"].split(":", 1)[0].lower() if configuration["proxy_url"] else None,
     }
     if fetch_webhook and configuration["enabled"] and configuration["token"]:
         try:
@@ -52,10 +55,16 @@ class InstanceTelegramEndpoint(BaseAPIView):
     def post(self, request):
         old_configuration = telegram_configuration()
         token = (request.data.get("token") or old_configuration["token"] or "").strip()
+        proxy_url = old_configuration["proxy_url"]
+        if "proxy_url" in request.data:
+            try:
+                proxy_url = validate_telegram_proxy_url(request.data.get("proxy_url"))
+            except TelegramAPIError as exc:
+                return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
         if not token:
             return Response({"error": "Bot token is required."}, status=status.HTTP_400_BAD_REQUEST)
         try:
-            bot = telegram_api_call("getMe", token=token)
+            bot = telegram_api_call("getMe", token=token, proxy_url=proxy_url)
             if not bot.get("is_bot") or not bot.get("username"):
                 raise TelegramAPIError("The token does not belong to a valid Telegram bot")
             webhook_secret = secrets.token_urlsafe(32)
@@ -69,6 +78,7 @@ class InstanceTelegramEndpoint(BaseAPIView):
                     "drop_pending_updates": True,
                 },
                 token=token,
+                proxy_url=proxy_url,
             )
         except TelegramAPIError as exc:
             return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
@@ -83,6 +93,7 @@ class InstanceTelegramEndpoint(BaseAPIView):
             bot_id=bot["id"],
             bot_username=bot["username"],
             enabled=request.data.get("enabled", True),
+            proxy_url=proxy_url,
         )
         return Response({**telegram_status_payload(fetch_webhook=False), "connections_invalidated": bot_changed})
 

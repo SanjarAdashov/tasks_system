@@ -20,12 +20,15 @@ from plane.db.models import (
     User,
     Workspace,
 )
-from plane.license.models import Instance, InstanceAdmin
+from plane.license.models import Instance, InstanceAdmin, InstanceConfiguration
 from plane.utils.telegram import (
     enqueue_telegram_notifications,
     preference_for,
     quiet_hours_available_at,
     save_telegram_configuration,
+    telegram_api_call,
+    telegram_configuration,
+    validate_telegram_proxy_url,
 )
 
 
@@ -39,12 +42,13 @@ def create_user(label):
     )
 
 
-def configure_bot():
+def configure_bot(proxy_url=""):
     save_telegram_configuration(
         token="test-token",
         webhook_secret="test-secret",
         bot_id=12345,
         bot_username="gts_test_bot",
+        proxy_url=proxy_url,
     )
 
 
@@ -182,7 +186,7 @@ class TestTelegramNotifications:
             last_checked_at=timezone.now(),
         )
         InstanceAdmin.objects.create(instance=instance, user=admin)
-        configure_bot()
+        configure_bot(proxy_url="socks5h://proxy-user:proxy-password@proxy.example.com:1080")
         client = APIClient()
         client.force_authenticate(user=admin)
 
@@ -191,3 +195,76 @@ class TestTelegramNotifications:
         keys = {item["key"] for item in response.data}
         assert "TELEGRAM_BOT_TOKEN" not in keys
         assert "TELEGRAM_WEBHOOK_SECRET" not in keys
+        assert "TELEGRAM_PROXY_URL" not in keys
+
+    def test_proxy_url_validation(self):
+        assert (
+            validate_telegram_proxy_url("socks5h://user:password@proxy.example.com:1080")
+            == "socks5h://user:password@proxy.example.com:1080"
+        )
+        with pytest.raises(Exception, match="must use http, https, socks5, or socks5h"):
+            validate_telegram_proxy_url("ftp://proxy.example.com:21")
+        with pytest.raises(Exception, match="must include a host and port"):
+            validate_telegram_proxy_url("https://proxy.example.com")
+
+    def test_telegram_api_call_uses_only_the_dedicated_proxy(self, monkeypatch):
+        captured = {}
+
+        class Response:
+            ok = True
+            status_code = 200
+
+            @staticmethod
+            def json():
+                return {"ok": True, "result": {"id": 12345}}
+
+        def fake_post(url, **kwargs):
+            captured["url"] = url
+            captured.update(kwargs)
+            return Response()
+
+        monkeypatch.setattr("plane.utils.telegram.requests.post", fake_post)
+        proxy_url = "socks5h://proxy-user:proxy-password@proxy.example.com:1080"
+        result = telegram_api_call("getMe", token="test-token", proxy_url=proxy_url)
+
+        assert result == {"id": 12345}
+        assert captured["proxies"] == {"http": proxy_url, "https": proxy_url}
+        assert captured["url"].startswith("https://api.telegram.org/bot")
+
+    def test_instance_admin_configures_encrypted_proxy_without_returning_it(self, monkeypatch):
+        admin = create_user("proxy-admin")
+        instance = Instance.objects.create(
+            instance_name="Telegram proxy test",
+            instance_id=uuid.uuid4().hex,
+            current_version="1.4.0",
+            last_checked_at=timezone.now(),
+        )
+        InstanceAdmin.objects.create(instance=instance, user=admin)
+        calls = []
+
+        def fake_telegram_call(method, payload=None, **kwargs):
+            calls.append((method, kwargs.get("proxy_url")))
+            if method == "getMe":
+                return {"id": 54321, "is_bot": True, "username": "proxy_bot"}
+            return True
+
+        monkeypatch.setattr("plane.license.api.views.telegram.telegram_api_call", fake_telegram_call)
+        client = APIClient()
+        client.force_authenticate(user=admin)
+        proxy_url = "https://proxy-user:proxy-password@proxy.example.com:8443"
+
+        response = client.post(
+            "/api/instances/telegram/",
+            {"token": "proxy-test-token", "proxy_url": proxy_url, "enabled": True},
+            format="json",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["proxy_configured"] is True
+        assert response.data["proxy_scheme"] == "https"
+        assert "proxy_url" not in response.data
+        assert calls == [("getMe", proxy_url), ("setWebhook", proxy_url)]
+        stored = InstanceConfiguration.objects.get(key="TELEGRAM_PROXY_URL")
+        assert stored.is_encrypted is True
+        assert stored.value != proxy_url
+        assert telegram_configuration()["proxy_url"] == proxy_url

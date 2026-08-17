@@ -4,6 +4,7 @@
 import hashlib
 import html
 from datetime import datetime, time, timedelta
+from urllib.parse import urlsplit
 from zoneinfo import ZoneInfo
 
 import requests
@@ -24,12 +25,14 @@ from plane.license.utils.encryption import decrypt_data, encrypt_data
 TELEGRAM_SECRET_CONFIGURATION_KEYS = {
     "TELEGRAM_BOT_TOKEN",
     "TELEGRAM_WEBHOOK_SECRET",
+    "TELEGRAM_PROXY_URL",
 }
 TELEGRAM_CONFIGURATION_KEYS = TELEGRAM_SECRET_CONFIGURATION_KEYS | {
     "TELEGRAM_BOT_ID",
     "TELEGRAM_BOT_USERNAME",
     "ENABLE_TELEGRAM",
 }
+TELEGRAM_PROXY_SCHEMES = {"http", "https", "socks5", "socks5h"}
 
 PREFERENCE_FIELDS = {
     "task_assignment",
@@ -66,10 +69,29 @@ def telegram_configuration():
         "webhook_secret": _config_value("TELEGRAM_WEBHOOK_SECRET"),
         "bot_id": _config_value("TELEGRAM_BOT_ID"),
         "bot_username": _config_value("TELEGRAM_BOT_USERNAME"),
+        "proxy_url": _config_value("TELEGRAM_PROXY_URL"),
     }
 
 
-def save_telegram_configuration(*, token, webhook_secret, bot_id, bot_username, enabled=True):
+def validate_telegram_proxy_url(proxy_url):
+    value = (proxy_url or "").strip()
+    if not value:
+        return ""
+    try:
+        parsed = urlsplit(value)
+        port = parsed.port
+    except ValueError as exc:
+        raise TelegramAPIError("Proxy URL is invalid") from exc
+    if parsed.scheme.lower() not in TELEGRAM_PROXY_SCHEMES:
+        raise TelegramAPIError("Proxy URL must use http, https, socks5, or socks5h")
+    if not parsed.hostname or port is None:
+        raise TelegramAPIError("Proxy URL must include a host and port")
+    if parsed.query or parsed.fragment or parsed.path not in {"", "/"}:
+        raise TelegramAPIError("Proxy URL cannot include a path, query, or fragment")
+    return value
+
+
+def save_telegram_configuration(*, token, webhook_secret, bot_id, bot_username, enabled=True, proxy_url=""):
     values = {
         "TELEGRAM_BOT_TOKEN": (token, True),
         "TELEGRAM_WEBHOOK_SECRET": (webhook_secret, True),
@@ -77,6 +99,11 @@ def save_telegram_configuration(*, token, webhook_secret, bot_id, bot_username, 
         "TELEGRAM_BOT_USERNAME": (bot_username, False),
         "ENABLE_TELEGRAM": ("1" if enabled else "0", False),
     }
+    proxy_url = validate_telegram_proxy_url(proxy_url)
+    if proxy_url:
+        values["TELEGRAM_PROXY_URL"] = (proxy_url, True)
+    else:
+        InstanceConfiguration.objects.filter(key="TELEGRAM_PROXY_URL").delete()
     for key, (value, encrypted) in values.items():
         stored_value = encrypt_data(value) if encrypted else value
         InstanceConfiguration.objects.update_or_create(
@@ -89,19 +116,24 @@ def clear_telegram_configuration():
     InstanceConfiguration.objects.filter(key__in=TELEGRAM_CONFIGURATION_KEYS).delete()
 
 
-def telegram_api_call(method, payload=None, *, token=None, timeout=15):
-    bot_token = token or telegram_configuration()["token"]
+def telegram_api_call(method, payload=None, *, token=None, timeout=15, proxy_url=None):
+    configuration = telegram_configuration()
+    bot_token = token or configuration["token"]
     if not bot_token:
         raise TelegramAPIError("Telegram bot is not configured")
+    effective_proxy_url = configuration["proxy_url"] if proxy_url is None else validate_telegram_proxy_url(proxy_url)
+    proxies = {"http": effective_proxy_url, "https": effective_proxy_url} if effective_proxy_url else None
     try:
         response = requests.post(
             f"https://api.telegram.org/bot{bot_token}/{method}",
             json=payload or {},
             timeout=timeout,
+            proxies=proxies,
         )
         data = response.json()
     except (requests.RequestException, ValueError) as exc:
-        raise TelegramAPIError("Telegram API is unavailable") from exc
+        message = "Telegram proxy is unavailable" if effective_proxy_url else "Telegram API is unavailable"
+        raise TelegramAPIError(message) from exc
     if not response.ok or not data.get("ok"):
         parameters = data.get("parameters") or {}
         raise TelegramAPIError(

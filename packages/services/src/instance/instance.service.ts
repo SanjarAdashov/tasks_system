@@ -282,7 +282,11 @@ export class InstanceService extends APIService {
       });
   }
 
-  async configureTelegram(data: { token?: string; enabled?: boolean }): Promise<IInstanceTelegramStatus> {
+  async configureTelegram(data: {
+    token?: string;
+    enabled?: boolean;
+    proxy_url?: string;
+  }): Promise<IInstanceTelegramStatus> {
     return this.post("/api/instances/telegram/", data)
       .then((response) => response.data)
       .catch((error) => {
