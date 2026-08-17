@@ -162,6 +162,58 @@ class TestTelegramNotifications:
         assert delivery.payload["issue_key"] == "TGN-1"
         assert queued == [str(delivery.id)]
 
+    def test_bulk_created_mention_with_string_receiver_id_creates_delivery(self, monkeypatch):
+        actor = create_user("mention-actor")
+        receiver = create_user("mention-receiver")
+        configure_bot()
+        connection = TelegramUserConnection.objects.create(
+            user=receiver,
+            telegram_user_id=333,
+            chat_id=444,
+            bot_id=12345,
+        )
+        workspace = Workspace.objects.create(
+            name="Telegram mention",
+            slug=f"telegram-mention-{uuid.uuid4().hex[:8]}",
+            owner=actor,
+        )
+        project = Project.objects.create(
+            name="Telegram mention project",
+            identifier="TMN",
+            workspace=workspace,
+            created_by=actor,
+        )
+        notification = Notification(
+            workspace=workspace,
+            project=project,
+            sender="in_app:issue_activities:mentioned",
+            triggered_by=actor,
+            receiver_id=str(receiver.id),
+            entity_identifier=uuid.uuid4(),
+            entity_name="issue",
+            title="Mentioned in a comment",
+            data={
+                "issue": {"name": "Mention task", "identifier": "TMN", "sequence_id": 1},
+                "issue_activity": {"field": "comment", "issue_comment": "Please review"},
+            },
+        )
+        Notification.objects.bulk_create([notification])
+        assert isinstance(notification.receiver_id, str)
+
+        queued = []
+        monkeypatch.setattr(
+            "plane.bgtasks.telegram_notification_task.deliver_telegram_delivery.delay",
+            lambda delivery_id: queued.append(delivery_id),
+        )
+
+        deliveries = enqueue_telegram_notifications([notification])
+
+        assert len(deliveries) == 1
+        delivery = TelegramDelivery.objects.get(connection=connection)
+        assert delivery.receiver_id == receiver.id
+        assert delivery.category == "mention"
+        assert queued == [str(delivery.id)]
+
     def test_quiet_hours_handles_cross_midnight_in_user_timezone(self):
         user = create_user("quiet")
         user.user_timezone = "Asia/Tashkent"

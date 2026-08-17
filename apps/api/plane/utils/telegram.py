@@ -240,9 +240,9 @@ def enqueue_telegram_notifications(notifications):
     notifications = list(notifications)
     if not notifications or not telegram_configuration()["enabled"]:
         return []
-    receiver_ids = {notification.receiver_id for notification in notifications}
+    receiver_ids = {str(notification.receiver_id) for notification in notifications}
     connections = {
-        connection.user_id: connection
+        str(connection.user_id): connection
         for connection in TelegramUserConnection.objects.filter(
             user_id__in=receiver_ids,
             status=TelegramUserConnection.Status.CONNECTED,
@@ -251,15 +251,16 @@ def enqueue_telegram_notifications(notifications):
         ).select_related("user")
     }
     preferences = {
-        preference.user_id: preference
+        str(preference.user_id): preference
         for preference in TelegramNotificationPreference.objects.filter(user_id__in=receiver_ids)
     }
     deliveries = []
     for notification in notifications:
-        connection = connections.get(notification.receiver_id)
-        if not connection or notification.triggered_by_id == notification.receiver_id:
+        receiver_id = str(notification.receiver_id)
+        connection = connections.get(receiver_id)
+        if not connection or str(notification.triggered_by_id or "") == receiver_id:
             continue
-        preference = preferences.get(notification.receiver_id) or preference_for(connection.user)
+        preference = preferences.get(receiver_id) or preference_for(connection.user)
         category = notification_category(notification)
         if not preference.enabled or not getattr(preference, category, False):
             continue
@@ -267,7 +268,7 @@ def enqueue_telegram_notifications(notifications):
         deliveries.append(
             TelegramDelivery(
                 connection=connection,
-                receiver_id=notification.receiver_id,
+                receiver_id=connection.user_id,
                 notification=notification if notification.pk else None,
                 workspace_id=notification.workspace_id,
                 project_id=notification.project_id,
