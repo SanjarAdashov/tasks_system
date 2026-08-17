@@ -60,7 +60,7 @@ export function IssueCustomProperties(props: Props) {
             icon={ListChecks}
             label={`${property.name}${property.is_required ? " *" : ""}`}
           >
-            <div className="w-full px-2">
+            <div className="w-full">
               <WorkItemPropertyFieldInput
                 property={property}
                 value={value}

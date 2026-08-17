@@ -96,14 +96,15 @@ export const CommentCreate = observer(function CommentCreate(props: TCommentCrea
       onKeyDown={(e) => {
         if (
           e.key === "Enter" &&
-          !e.shiftKey &&
-          !e.ctrlKey &&
-          !e.metaKey &&
+          (e.ctrlKey || e.metaKey) &&
           !isEmpty &&
           !isSubmitting &&
           editorRef.current?.isEditorReadyToDiscard()
-        )
+        ) {
+          e.preventDefault();
+          e.stopPropagation();
           handleSubmit(onSubmit)(e);
+        }
       }}
     >
       <Controller
@@ -126,6 +127,7 @@ export const CommentCreate = observer(function CommentCreate(props: TCommentCrea
                     handleSubmit(onSubmit)(e);
                   }
                 }}
+                disabledExtensions={["enter-key"]}
                 ref={editorRef}
                 initialValue={value ?? "<p></p>"}
                 containerClassName="min-h-min"

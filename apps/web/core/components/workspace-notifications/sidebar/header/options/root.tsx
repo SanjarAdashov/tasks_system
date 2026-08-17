@@ -84,14 +84,14 @@ export const NotificationSidebarHeaderOptions = observer(function NotificationSi
       {/* notification menu options */}
       <NotificationHeaderMenuOption />
 
-      {/* close notifications and return to workspace work items */}
-      <Tooltip tooltipContent={t("common.back_to_workspace")} isMobile={isMobile} position="bottom">
+      {/* close notifications and return to the previous page */}
+      <Tooltip tooltipContent={t("common.go_back")} isMobile={isMobile} position="bottom">
         <IconButton
           size="base"
           variant="ghost"
           icon={X}
-          aria-label={t("common.back_to_workspace")}
-          onClick={() => router.push(`/${workspaceSlug}/workspace-views/all-issues/`)}
+          aria-label={t("common.go_back")}
+          onClick={() => router.back()}
         />
       </Tooltip>
     </div>

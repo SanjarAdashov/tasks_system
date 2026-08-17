@@ -69,7 +69,7 @@ export function BubbleMenuLinkSelector(props: Props) {
       }
       options={options}
     >
-      <div className="mt-1 w-60 rounded-md bg-surface-1 shadow-raised-200">
+      <div className="gts-glass-popover-surface mt-1 w-60 rounded-md bg-surface-1 shadow-raised-200">
         <div
           className={cn("flex rounded-sm border-[0.5px] border-strong transition-colors", {
             "border-danger-strong": error,

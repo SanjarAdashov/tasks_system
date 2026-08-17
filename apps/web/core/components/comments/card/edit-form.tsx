@@ -77,7 +77,11 @@ export const CommentCardEditForm = observer(function CommentCardEditForm(props: 
     <form className="flex flex-col gap-2">
       <div
         onKeyDown={(e) => {
-          if (e.key === "Enter" && !e.shiftKey && !e.ctrlKey && !e.metaKey && !isEmpty) handleSubmit(onEnter)(e);
+          if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && !isEmpty && !isSubmitting) {
+            e.preventDefault();
+            e.stopPropagation();
+            handleSubmit(onEnter)(e);
+          }
         }}
       >
         <LiteTextEditor
@@ -94,6 +98,7 @@ export const CommentCardEditForm = observer(function CommentCardEditForm(props: 
               handleSubmit(onEnter)(e);
             }
           }}
+          disabledExtensions={["enter-key"]}
           showSubmitButton={false}
           uploadFile={async (blockId, file) => {
             const { asset_id } = await activityOperations.uploadCommentAsset(blockId, file, comment.id);

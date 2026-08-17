@@ -6,6 +6,8 @@
 
 import type { TProjectWorkItemProperty, TProjectWorkItemPropertyValue } from "@plane/types";
 import { Input, TextArea, ToggleSwitch } from "@plane/ui";
+import { renderFormattedPayloadDate } from "@plane/utils";
+import { DateDropdown } from "@/components/dropdowns/date";
 import { WorkItemMultiSelectInput, WorkItemSingleSelectInput } from "./multi-select-input";
 
 type Props = {
@@ -25,7 +27,7 @@ export function WorkItemPropertyFieldInput(props: Props) {
 
   if (property.property_type === "CHECKBOX") {
     return (
-      <div className="flex min-h-7 items-center gap-2">
+      <div className="flex h-7.5 items-center gap-2 px-2">
         <ToggleSwitch value={Boolean(value)} onChange={onChange} disabled={disabled} />
         <span className="text-12 text-secondary">{value ? "Yes" : "No"}</span>
       </div>
@@ -75,20 +77,42 @@ export function WorkItemPropertyFieldInput(props: Props) {
   if (property.property_type === "LONG_TEXT") {
     return (
       <TextArea
+        className={compact ? "min-h-7.5 resize-none px-2 py-1 text-body-xs-regular hover:bg-layer-1" : undefined}
         value={typeof value === "string" ? value : ""}
         onChange={(event) => onChange(event.target.value || null)}
         onBlur={onBlur}
         disabled={disabled}
         hasError={hasError}
+        mode={compact ? "transparent" : "primary"}
+        rows={compact ? 1 : undefined}
         textAreaSize={compact ? "xs" : "sm"}
         placeholder="Enter a value"
       />
     );
   }
 
+  if (property.property_type === "DATE" && compact) {
+    return (
+      <DateDropdown
+        value={typeof value === "string" ? value : null}
+        onChange={(nextValue) => onChange(nextValue ? (renderFormattedPayloadDate(nextValue) ?? null) : null)}
+        onClose={onBlur}
+        disabled={disabled}
+        placeholder="Enter a value"
+        buttonVariant="transparent-with-text"
+        className="group h-7.5 w-full grow"
+        buttonContainerClassName="h-7.5 w-full text-left"
+        buttonClassName="text-body-xs-regular"
+        labelClassName={value ? "text-primary" : "text-placeholder"}
+        hideIcon
+        clearIconClassName="hidden size-3 group-hover:inline"
+      />
+    );
+  }
+
   return (
     <Input
-      className="w-full"
+      className={compact ? "h-7.5 w-full px-2 py-0.5 text-body-xs-regular hover:bg-layer-1" : "w-full"}
       type={property.property_type === "NUMBER" ? "number" : property.property_type === "DATE" ? "date" : "text"}
       value={typeof value === "string" || typeof value === "number" ? value : ""}
       onChange={(event) => {
@@ -101,6 +125,7 @@ export function WorkItemPropertyFieldInput(props: Props) {
       onBlur={onBlur}
       disabled={disabled}
       hasError={hasError}
+      mode={compact ? "transparent" : "primary"}
       inputSize={compact ? "xs" : "sm"}
       placeholder="Enter a value"
     />

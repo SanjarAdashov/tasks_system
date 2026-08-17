@@ -11,6 +11,7 @@ import { CheckIcon, ChevronDownIcon } from "@plane/propel/icons";
 import type { TWorkItemSelectSource } from "@plane/types";
 import { Avatar, Dropdown as SingleSelectDropdown, MultiSelectDropdown } from "@plane/ui";
 import { cn, getDuplicateUserNames, getFileURL, getUserNameWithEmail, getUserSearchText } from "@plane/utils";
+import { ButtonAvatars } from "@/components/dropdowns/member/avatar";
 import { useMember } from "@/hooks/store/use-member";
 
 export type TWorkItemSelectChoice = {
@@ -109,16 +110,64 @@ const selectButtonContent = ({
 }) => (
   <div
     className={cn(
-      "flex w-full items-center justify-between gap-2 rounded-md border-[0.5px] bg-layer-2 text-13",
-      hasError ? "border-danger-strong" : "border-subtle-1",
-      compact ? "min-h-7 px-2 py-1" : "min-h-9 px-3 py-2",
+      "group flex w-full items-center justify-between gap-2",
+      compact
+        ? "h-7.5 rounded-sm px-2 py-0.5 text-body-xs-regular"
+        : "min-h-9 rounded-md border-[0.5px] bg-layer-2 px-3 py-2 text-13",
+      hasError && (compact ? "outline outline-1 outline-danger-strong" : "border-danger-strong"),
+      !compact && !hasError && "border-subtle-1",
       disabled && "cursor-not-allowed opacity-60"
     )}
   >
     <span className={cn("truncate", label ? "text-primary" : "text-placeholder")}>{label || placeholder}</span>
-    <ChevronDownIcon className={cn("size-3 shrink-0 text-tertiary transition-transform", isOpen && "rotate-180")} />
+    <ChevronDownIcon
+      className={cn(
+        "size-3 shrink-0 text-tertiary transition-all",
+        compact && "opacity-0 group-hover:opacity-100",
+        isOpen && "rotate-180 opacity-100"
+      )}
+    />
   </div>
 );
+
+const memberSelectButtonContent = ({
+  isOpen,
+  userIds,
+  label,
+  placeholder,
+  hasError,
+  disabled,
+}: {
+  isOpen: boolean;
+  userIds: string | string[] | null;
+  label?: string;
+  placeholder: string;
+  hasError: boolean;
+  disabled: boolean;
+}) => {
+  const hasSelection = Array.isArray(userIds) ? userIds.length > 0 : Boolean(userIds);
+
+  return (
+    <div
+      className={cn(
+        "group flex min-h-7 w-full items-center gap-2 rounded-md px-2 py-0.5 text-body-xs-regular",
+        hasError && "outline outline-1 outline-danger-strong",
+        disabled && "cursor-not-allowed opacity-60"
+      )}
+    >
+      <ButtonAvatars showTooltip={false} userIds={userIds} size="sm" />
+      <span className={cn("min-w-0 flex-1 truncate text-left", hasSelection ? "text-primary" : "text-placeholder")}>
+        {label || (!hasSelection ? placeholder : "")}
+      </span>
+      <ChevronDownIcon
+        className={cn(
+          "size-3 shrink-0 text-tertiary opacity-0 transition-all group-hover:opacity-100",
+          isOpen && "rotate-180 opacity-100"
+        )}
+      />
+    </div>
+  );
+};
 
 export const WorkItemSingleSelectInput = observer(function WorkItemSingleSelectInput(props: TSingleProps) {
   const {
@@ -170,14 +219,23 @@ export const WorkItemSingleSelectInput = observer(function WorkItemSingleSelectI
       optionsContainerClassName="w-72"
       disableSorting
       buttonContent={(isOpen) =>
-        selectButtonContent({
-          isOpen,
-          label: selectedChoice?.label,
-          placeholder,
-          hasError,
-          compact,
-          disabled,
-        })
+        source === "MEMBERS" && compact
+          ? memberSelectButtonContent({
+              isOpen,
+              userIds: value,
+              label: selectedChoice?.label,
+              placeholder,
+              hasError,
+              disabled,
+            })
+          : selectButtonContent({
+              isOpen,
+              label: selectedChoice?.label,
+              placeholder,
+              hasError,
+              compact,
+              disabled,
+            })
       }
       renderItem={({ value: choiceId, selected }) => {
         const choice = choiceMap.get(choiceId);
@@ -239,14 +297,23 @@ export const WorkItemMultiSelectInput = observer(function WorkItemMultiSelectInp
       buttonContainerClassName="w-full"
       optionsContainerClassName="w-72"
       buttonContent={(isOpen) =>
-        selectButtonContent({
-          isOpen,
-          label: selectionSummary,
-          placeholder,
-          hasError,
-          compact,
-          disabled,
-        })
+        source === "MEMBERS" && compact
+          ? memberSelectButtonContent({
+              isOpen,
+              userIds: value,
+              label: value.length === 1 ? selectionSummary : undefined,
+              placeholder,
+              hasError,
+              disabled,
+            })
+          : selectButtonContent({
+              isOpen,
+              label: selectionSummary,
+              placeholder,
+              hasError,
+              compact,
+              disabled,
+            })
       }
       renderItem={({ value: choiceId, selected }) => {
         const choice = choiceMap.get(choiceId);
