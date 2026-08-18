@@ -30,6 +30,7 @@ import { MemberDropdown } from "@/components/dropdowns/member/dropdown";
 import { PriorityDropdown } from "@/components/dropdowns/priority";
 import { StateDropdown } from "@/components/dropdowns/state/dropdown";
 import { SidebarPropertyListItem } from "@/components/common/layout/sidebar/property-list-item";
+import { IssueAccessControl } from "@/components/issues/issue-access-control";
 import { IssueCustomProperties } from "@/components/issues/work-item-properties";
 // helpers
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
@@ -66,6 +67,7 @@ export const PeekOverviewProperties = observer(function PeekOverviewProperties(p
   // derived values
   const issue = getIssueById(issueId);
   if (!issue) return <></>;
+  const parentIssue = issue.parent_id ? getIssueById(issue.parent_id) : undefined;
   const createdByDetails = getUserDetails(issue?.created_by);
   const projectDetails = getProjectById(issue.project_id);
   const isEstimateEnabled = projectDetails?.estimate;
@@ -80,6 +82,34 @@ export const PeekOverviewProperties = observer(function PeekOverviewProperties(p
   return (
     <div>
       <h6 className="text-body-xs-medium">{t("common.properties")}</h6>
+      <div className="mt-3">
+        <IssueAccessControl
+          workspaceSlug={workspaceSlug}
+          projectId={projectId}
+          visibility={issue.visibility ?? "PROJECT"}
+          accessGroupIds={issue.access_group_ids ?? []}
+          accessSummary={issue.access_summary}
+          canManage={Boolean(issue.can_manage_access) && !disabled}
+          parentRestricted={parentIssue?.visibility === "RESTRICTED"}
+          inheritParentAccess={issue.inherit_parent_access ?? true}
+          compact
+          onVisibilityChange={async (visibility) => {
+            await issueOperations.update(workspaceSlug, projectId, issueId, {
+              visibility,
+              ...(visibility === "PROJECT" ? { access_group_ids: [] } : {}),
+            });
+            await issueOperations.fetch(workspaceSlug, projectId, issueId, false);
+          }}
+          onGroupsChange={async (access_group_ids) => {
+            await issueOperations.update(workspaceSlug, projectId, issueId, { access_group_ids });
+            await issueOperations.fetch(workspaceSlug, projectId, issueId, false);
+          }}
+          onInheritChange={async (inherit_parent_access) => {
+            await issueOperations.update(workspaceSlug, projectId, issueId, { inherit_parent_access });
+            await issueOperations.fetch(workspaceSlug, projectId, issueId, false);
+          }}
+        />
+      </div>
       <div className={`mt-3 w-full space-y-3 ${disabled ? "opacity-60" : ""}`}>
         <SidebarPropertyListItem icon={StatePropertyIcon} label={t("common.state")}>
           <StateDropdown

@@ -7,6 +7,7 @@ import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { addDays, format, startOfDay } from "date-fns";
 import {
+  AlertCircle,
   BriefcaseBusiness,
   CalendarClock,
   CalendarDays,
@@ -42,6 +43,7 @@ import { EModalPosition, EModalWidth, ModalCore } from "@plane/ui";
 import { DateDropdown } from "@/components/dropdowns/date";
 import calendarService from "@/services/calendar.service";
 import projectMemberService from "@/services/project/project-member.service";
+import { getCalendarErrorMessage } from "./calendar-error";
 import { CalendarSelect } from "./calendar-select";
 
 type Props = {
@@ -171,6 +173,7 @@ export function MeetingFormModal(props: Props) {
   const [isCustomDuration, setIsCustomDuration] = useState(
     () => !isPresetDuration(initialForm(initialDate, meeting, prefill).durationMinutes)
   );
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -190,6 +193,7 @@ export function MeetingFormModal(props: Props) {
     setSuggestedSlots([]);
     setPendingFiles([]);
     setParticipantQuery("");
+    setSubmitError(null);
   }, [initialDate, isOpen, meeting, prefill]);
 
   useEffect(() => {
@@ -286,8 +290,10 @@ export function MeetingFormModal(props: Props) {
     return () => window.clearTimeout(timer);
   }, [form.endsAt, form.startsAt, isOpen, meeting?.id, participants, workspaceSlug]);
 
-  const update = <K extends keyof FormState>(key: K, value: FormState[K]) =>
+  const update = <K extends keyof FormState>(key: K, value: FormState[K]) => {
+    setSubmitError(null);
     setForm((current) => ({ ...current, [key]: value }));
+  };
 
   const updateStart = (date: Date | string, time: string) => {
     const dateValue = typeof date === "string" ? date.slice(0, 10) : format(date, "yyyy-MM-dd");
@@ -382,6 +388,7 @@ export function MeetingFormModal(props: Props) {
   };
 
   const submit = async () => {
+    setSubmitError(null);
     const startsAt = new Date(form.startsAt);
     if (
       !form.title.trim() ||
@@ -391,7 +398,9 @@ export function MeetingFormModal(props: Props) {
       new Date(form.endsAt) <= startsAt ||
       (!meeting && !form.allDay && startsAt < new Date())
     ) {
-      setToast({ type: TOAST_TYPE.ERROR, title: t("toast.error"), message: t("calendar.saving_error") });
+      const message = t("calendar.saving_error");
+      setSubmitError(message);
+      setToast({ type: TOAST_TYPE.ERROR, title: t("toast.error"), message });
       return;
     }
     setIsSaving(true);
@@ -414,13 +423,12 @@ export function MeetingFormModal(props: Props) {
       onSaved();
       onClose();
     } catch (error) {
+      const message = getCalendarErrorMessage(error, t, t("calendar.saving_error"));
+      setSubmitError(message);
       setToast({
         type: TOAST_TYPE.ERROR,
         title: t("toast.error"),
-        message:
-          typeof error === "object" && error && "detail" in error
-            ? String((error as { detail: unknown }).detail)
-            : t("calendar.saving_error"),
+        message,
       });
     } finally {
       setIsSaving(false);
@@ -435,7 +443,7 @@ export function MeetingFormModal(props: Props) {
       position={EModalPosition.TOP}
       className="!max-w-[920px] overflow-hidden !bg-surface-1"
     >
-      <div className="flex max-h-[88vh] flex-col bg-surface-1">
+      <div data-prevent-outside-click className="flex max-h-[88vh] flex-col bg-surface-1">
         <div className="flex items-center justify-between border-b border-subtle px-5 py-4">
           <div>
             <h2 className="text-18 font-semibold text-primary">
@@ -452,6 +460,20 @@ export function MeetingFormModal(props: Props) {
             <X className="size-4" />
           </button>
         </div>
+
+        {submitError && (
+          <div
+            role="alert"
+            aria-live="assertive"
+            className="mx-5 mt-4 flex items-start gap-3 rounded-lg border border-danger-subtle bg-danger-subtle/10 px-4 py-3"
+          >
+            <AlertCircle className="mt-0.5 size-4 flex-shrink-0 text-danger-primary" />
+            <div className="min-w-0">
+              <p className="text-12 font-semibold text-danger-primary">{t("calendar.save_failed_title")}</p>
+              <p className="mt-0.5 text-11 whitespace-pre-line text-danger-primary">{submitError}</p>
+            </div>
+          </div>
+        )}
 
         <div className="grid min-h-0 flex-1 overflow-y-auto lg:grid-cols-[1fr_300px]">
           <div className="space-y-5 p-5">

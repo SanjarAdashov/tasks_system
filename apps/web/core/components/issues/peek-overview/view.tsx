@@ -12,6 +12,7 @@ import type { EditorRefApi } from "@plane/editor";
 import type { TNameDescriptionLoader } from "@plane/types";
 import { EIssueServiceType } from "@plane/types";
 import { cn } from "@plane/utils";
+import { TaskMeetings } from "@/components/calendar/task-meetings";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import useKeypress from "@/hooks/use-keypress";
@@ -60,6 +61,7 @@ export const IssueView = observer(function IssueView(props: IIssueView) {
   const [isArchiveIssueModalOpen, setIsArchiveIssueModalOpen] = useState(false);
   const [isDuplicateIssueModalOpen, setIsDuplicateIssueModalOpen] = useState(false);
   const [isEditIssueModalOpen, setIsEditIssueModalOpen] = useState(false);
+  const [isMeetingModalOpen, setIsMeetingModalOpen] = useState(false);
   // ref
   const issuePeekOverviewRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<EditorRefApi>(null);
@@ -83,7 +85,11 @@ export const IssueView = observer(function IssueView(props: IIssueView) {
   const toggleEditIssueModal = (value: boolean) => setIsEditIssueModalOpen(value);
 
   const isAnyLocalModalOpen =
-    isDeleteIssueModalOpen || isArchiveIssueModalOpen || isDuplicateIssueModalOpen || isEditIssueModalOpen;
+    isDeleteIssueModalOpen ||
+    isArchiveIssueModalOpen ||
+    isDuplicateIssueModalOpen ||
+    isEditIssueModalOpen ||
+    isMeetingModalOpen;
 
   usePeekOverviewOutsideClickDetector(
     issuePeekOverviewRef,
@@ -103,7 +109,13 @@ export const IssueView = observer(function IssueView(props: IIssueView) {
     const editorImageFullScreenModalElement = document.querySelector(".editor-image-full-screen-modal");
     const dropdownElement = document.activeElement?.tagName === "INPUT";
     const isAnyDropbarOpen = editorRef.current?.isAnyDropbarOpen();
-    if (!isAnyModalOpen && !dropdownElement && !isAnyDropbarOpen && !editorImageFullScreenModalElement) {
+    if (
+      !isAnyModalOpen &&
+      !isMeetingModalOpen &&
+      !dropdownElement &&
+      !isAnyDropbarOpen &&
+      !editorImageFullScreenModalElement
+    ) {
       removeRoutePeekId();
       const issueElement = document.getElementById(`issue-${issueId}`);
       if (issueElement) issueElement?.focus();
@@ -197,6 +209,14 @@ export const IssueView = observer(function IssueView(props: IIssueView) {
                       />
                     </div>
 
+                    <TaskMeetings
+                      workspaceSlug={workspaceSlug}
+                      projectId={projectId}
+                      issueId={issueId}
+                      disabled={disabled || is_archived}
+                      onModalOpenChange={setIsMeetingModalOpen}
+                    />
+
                     <PeekOverviewProperties
                       workspaceSlug={workspaceSlug}
                       projectId={projectId}
@@ -237,6 +257,14 @@ export const IssueView = observer(function IssueView(props: IIssueView) {
                             issueServiceType={EIssueServiceType.ISSUES}
                           />
                         </div>
+
+                        <TaskMeetings
+                          workspaceSlug={workspaceSlug}
+                          projectId={projectId}
+                          issueId={issueId}
+                          disabled={disabled || is_archived}
+                          onModalOpenChange={setIsMeetingModalOpen}
+                        />
 
                         <IssueActivity
                           workspaceSlug={workspaceSlug}

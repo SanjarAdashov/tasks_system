@@ -6,7 +6,7 @@
 import { useState } from "react";
 import useSWR from "swr";
 import { format } from "date-fns";
-import { CalendarPlus, Clock3, RefreshCw, Users } from "lucide-react";
+import { AlertCircle, CalendarPlus, Clock3, RefreshCw, Users } from "lucide-react";
 import { useTranslation } from "@plane/i18n";
 import { Button } from "@plane/propel/button";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
@@ -14,6 +14,7 @@ import type { IWorkspaceMember, TMeetingParticipant, TPartialProject } from "@pl
 import calendarService from "@/services/calendar.service";
 import { ProjectService } from "@/services/project/project.service";
 import { WorkspaceService } from "@/services/workspace.service";
+import { getCalendarErrorMessage } from "./calendar-error";
 import { MeetingFormModal } from "./meeting-form-modal";
 
 type Props = {
@@ -21,6 +22,7 @@ type Props = {
   projectId: string;
   issueId: string;
   disabled?: boolean;
+  onModalOpenChange?: (isOpen: boolean) => void;
 };
 
 type TaskMeetingPrefill = {
@@ -34,12 +36,16 @@ type TaskMeetingPrefill = {
 const projectService = new ProjectService();
 const workspaceService = new WorkspaceService();
 
-export function TaskMeetings({ workspaceSlug, projectId, issueId, disabled = false }: Props) {
+export function TaskMeetings({ workspaceSlug, projectId, issueId, disabled = false, onModalOpenChange }: Props) {
   const { t } = useTranslation();
   const [isOpen, setIsOpen] = useState(false);
   const [prefill, setPrefill] = useState<TaskMeetingPrefill | null>(null);
   const [isPreparing, setIsPreparing] = useState(false);
-  const { data: meetings = [], mutate } = useSWR(
+  const {
+    data: meetings = [],
+    error: meetingsError,
+    mutate,
+  } = useSWR(
     workspaceSlug && issueId ? `TASK_MEETINGS_${workspaceSlug}_${issueId}` : null,
     () => calendarService.getIssueMeetings(workspaceSlug, issueId),
     { revalidateOnFocus: false }
@@ -67,8 +73,13 @@ export function TaskMeetings({ workspaceSlug, projectId, issueId, disabled = fal
         participants: defaults.participants,
       });
       setIsOpen(true);
-    } catch {
-      setToast({ type: TOAST_TYPE.ERROR, title: t("toast.error"), message: t("calendar.saving_error") });
+      onModalOpenChange?.(true);
+    } catch (error) {
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: t("toast.error"),
+        message: getCalendarErrorMessage(error, t, t("calendar.prepare_error")),
+      });
     } finally {
       setIsPreparing(false);
     }
@@ -97,7 +108,21 @@ export function TaskMeetings({ workspaceSlug, projectId, issueId, disabled = fal
           </Button>
         )}
       </div>
-      {meetings.length > 0 ? (
+      {meetingsError ? (
+        <div className="flex flex-wrap items-center gap-2 px-4 py-4 text-11 text-danger-primary">
+          <AlertCircle className="size-4 flex-shrink-0" />
+          <span className="min-w-0 flex-1">
+            {getCalendarErrorMessage(meetingsError, t, t("calendar.task_meetings_load_error"))}
+          </span>
+          <button
+            type="button"
+            onClick={() => void mutate()}
+            className="rounded-md border border-danger-subtle px-2.5 py-1.5 font-medium hover:bg-danger-subtle/10"
+          >
+            {t("calendar.retry")}
+          </button>
+        </div>
+      ) : meetings.length > 0 ? (
         <div className="divide-y divide-subtle">
           {meetings.map((meeting) => (
             <div key={meeting.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
@@ -135,7 +160,10 @@ export function TaskMeetings({ workspaceSlug, projectId, issueId, disabled = fal
         projects={projects}
         workspaceMembers={workspaceMembers}
         prefill={prefill}
-        onClose={() => setIsOpen(false)}
+        onClose={() => {
+          setIsOpen(false);
+          onModalOpenChange?.(false);
+        }}
         onSaved={() => void mutate()}
       />
     </section>

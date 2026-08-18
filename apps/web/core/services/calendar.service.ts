@@ -37,11 +37,19 @@ export class CalendarService extends APIService {
 
   async getIssueMeetings(workspaceSlug: string, issueId: string): Promise<TMeeting[]> {
     const now = new Date();
-    const start = new Date(now.getFullYear() - 1, 0, 1).toISOString();
-    const end = new Date(now.getFullYear() + 3, 11, 31).toISOString();
+    const dayInMilliseconds = 24 * 60 * 60 * 1000;
+    // The calendar API accepts a maximum range of two years. Keep an even
+    // one-year window around today so task history and upcoming meetings are
+    // available without making the request invalid as the current year changes.
+    const start = new Date(now.getTime() - 365 * dayInMilliseconds).toISOString();
+    const end = new Date(now.getTime() + 365 * dayInMilliseconds).toISOString();
     return this.get(`/api/workspaces/${workspaceSlug}/calendar/meetings/`, {
       params: { start, end, issue_id: issueId, show_cancelled: true },
-    }).then((response) => response.data.meetings);
+    })
+      .then((response) => response.data.meetings)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
   }
 
   async getMeeting(workspaceSlug: string, meetingId: string): Promise<TMeeting> {
@@ -53,16 +61,20 @@ export class CalendarService extends APIService {
   }
 
   async getIssueMeetingDefaults(workspaceSlug: string, projectId: string, issueId: string) {
-    return this.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/issues/${issueId}/meeting-defaults/`).then(
-      (response) =>
-        response.data as {
-          title: string;
-          project_id: string;
-          issue_id: string;
-          meeting_type_id: string | null;
-          participants: TMeetingParticipant[];
-        }
-    );
+    return this.get(`/api/workspaces/${workspaceSlug}/projects/${projectId}/issues/${issueId}/meeting-defaults/`)
+      .then(
+        (response) =>
+          response.data as {
+            title: string;
+            project_id: string;
+            issue_id: string;
+            meeting_type_id: string | null;
+            participants: TMeetingParticipant[];
+          }
+      )
+      .catch((error) => {
+        throw error?.response?.data;
+      });
   }
 
   async createMeeting(workspaceSlug: string, payload: TMeetingPayload): Promise<TMeeting> {
