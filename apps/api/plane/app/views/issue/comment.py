@@ -79,7 +79,10 @@ class IssueCommentViewSet(BaseViewSet):
                 {"error": "You are not allowed to comment on the issue"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        serializer = IssueCommentSerializer(data=request.data)
+        serializer = IssueCommentSerializer(
+            data=request.data,
+            context={"request": request, "issue": issue},
+        )
         if serializer.is_valid():
             serializer.save(project_id=project_id, issue_id=issue_id, actor=request.user)
             issue_activity.delay(
@@ -111,7 +114,12 @@ class IssueCommentViewSet(BaseViewSet):
         issue_comment = IssueComment.objects.get(workspace__slug=slug, project_id=project_id, issue_id=issue_id, pk=pk)
         requested_data = json.dumps(self.request.data, cls=DjangoJSONEncoder)
         current_instance = json.dumps(IssueCommentSerializer(issue_comment).data, cls=DjangoJSONEncoder)
-        serializer = IssueCommentSerializer(issue_comment, data=request.data, partial=True)
+        serializer = IssueCommentSerializer(
+            issue_comment,
+            data=request.data,
+            partial=True,
+            context={"request": request, "issue": issue_comment.issue},
+        )
         if serializer.is_valid():
             if "comment_html" in request.data and request.data["comment_html"] != issue_comment.comment_html:
                 serializer.save(edited_at=timezone.now())
@@ -171,6 +179,7 @@ class CommentReactionViewSet(BaseViewSet):
             .filter(workspace__slug=self.kwargs.get("slug"))
             .filter(project_id=self.kwargs.get("project_id"))
             .filter(comment_id=self.kwargs.get("comment_id"))
+            .filter(comment__issue_id__in=Issue.objects.values("id"))
             .filter(
                 project__project_projectmember__member=self.request.user,
                 project__project_projectmember__is_active=True,
@@ -183,6 +192,14 @@ class CommentReactionViewSet(BaseViewSet):
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
     def create(self, request, slug, project_id, comment_id):
         try:
+            if not IssueComment.objects.filter(
+                id=comment_id,
+                issue_id__in=Issue.objects.values("id"),
+            ).exists():
+                return Response(
+                    {"error": "The required object does not exist."},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
             serializer = CommentReactionSerializer(data=request.data)
             if serializer.is_valid():
                 serializer.save(
@@ -211,6 +228,14 @@ class CommentReactionViewSet(BaseViewSet):
 
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
     def destroy(self, request, slug, project_id, comment_id, reaction_code):
+        if not IssueComment.objects.filter(
+            id=comment_id,
+            issue_id__in=Issue.objects.values("id"),
+        ).exists():
+            return Response(
+                {"error": "The required object does not exist."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
         comment_reaction = CommentReaction.objects.get(
             workspace__slug=slug,
             project_id=project_id,

@@ -16,8 +16,13 @@ from plane.db.models import (
     ProjectStateTransitionRule,
     ProjectUserGroup,
     ProjectUserGroupMember,
+    IssueAccessAuditAction,
+    IssueAccessGroup,
+    IssueAccessSourceType,
+    IssueVisibility,
 )
 from plane.license.models import InstanceAdmin
+from plane.utils.issue_access import record_issue_access_event
 
 
 class ProjectUserGroupAdminPermission(BasePermission):
@@ -45,6 +50,8 @@ def _condition_tree_references_group(node, group_id):
 
 
 def group_is_referenced(group):
+    if IssueAccessGroup.objects.filter(group=group).exists():
+        return True
     for rule in ProjectStateTransitionRule.all_objects.filter(
         project=group.project,
         deleted_at__isnull=True,
@@ -120,8 +127,24 @@ class ProjectUserGroupViewSet(BaseViewSet):
                 )
             group.delete(soft=False)
         else:
+            linked_issues = [
+                link.issue
+                for link in IssueAccessGroup.objects.filter(
+                    group=group,
+                    issue__visibility=IssueVisibility.RESTRICTED,
+                ).select_related("issue")
+            ]
             group.archived_at = timezone.now()
             group.save(update_fields=["archived_at", "updated_at"])
+            for issue in linked_issues:
+                record_issue_access_event(
+                    issue=issue,
+                    actor=request.user,
+                    action=IssueAccessAuditAction.GROUPS_CHANGED,
+                    source_type=IssueAccessSourceType.USER_GROUP,
+                    source_id=group.id,
+                    details={"archived": True, "group_name": group.name},
+                )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     def restore(self, request, slug, project_id, pk):
@@ -139,6 +162,18 @@ class ProjectUserGroupViewSet(BaseViewSet):
             return Response(
                 {"name": "An active group with this name already exists."},
                 status=status.HTTP_409_CONFLICT,
+            )
+        for link in IssueAccessGroup.objects.filter(
+            group=group,
+            issue__visibility=IssueVisibility.RESTRICTED,
+        ).select_related("issue"):
+            record_issue_access_event(
+                issue=link.issue,
+                actor=request.user,
+                action=IssueAccessAuditAction.GROUPS_CHANGED,
+                source_type=IssueAccessSourceType.USER_GROUP,
+                source_id=group.id,
+                details={"archived": False, "group_name": group.name},
             )
         return Response(self.get_serializer(group).data, status=status.HTTP_200_OK)
 
@@ -175,5 +210,21 @@ class ProjectUserGroupViewSet(BaseViewSet):
                         member_id=member_id,
                     )
             ProjectUserGroupMember.objects.filter(group=group, member_id__in=remove_ids).delete()
+            for link in IssueAccessGroup.objects.filter(
+                group=group,
+                issue__visibility=IssueVisibility.RESTRICTED,
+            ).select_related("issue"):
+                record_issue_access_event(
+                    issue=link.issue,
+                    actor=request.user,
+                    action=IssueAccessAuditAction.GROUP_MEMBERS_CHANGED,
+                    source_type=IssueAccessSourceType.GROUP_MEMBERSHIP,
+                    source_id=group.id,
+                    details={
+                        "group_name": group.name,
+                        "added_user_ids": [str(value) for value in add_ids],
+                        "removed_user_ids": [str(value) for value in remove_ids],
+                    },
+                )
         group = self.get_queryset().get(pk=group.pk)
         return Response(self.get_serializer(group).data, status=status.HTTP_200_OK)

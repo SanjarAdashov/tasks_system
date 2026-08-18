@@ -47,6 +47,24 @@
     "create": {
       "success": "Ish elementi yaratildi"
     },
+    "access": {
+      "project": "Loyiha uchun ochiq",
+      "project_description": "Loyihaning barcha aʼzolari bu vazifani topishi va ochishi mumkin.",
+      "restricted": "Yopiq vazifa",
+      "restricted_description": "Faqat yaratuvchi, administratorlar, ijrochilar, tanlangan xodimlar va ruxsat berilgan guruhlar kira oladi.",
+      "inherit_parent": "Asosiy vazifadan kirishni meros olish",
+      "inherit_parent_description": "Asosiy vazifadagi kirish o‘zgarishlari avtomatik qo‘llanadi.",
+      "inherited_notice": "Kirish asosiy vazifadan meros olingan.",
+      "allowed_groups": "Qo‘shimcha foydalanuvchi guruhlari",
+      "no_groups": "Bu loyihada faol guruhlar yaratilmagan.",
+      "people_with_access": "Kirish huquqiga ega: {count}",
+      "mention_blocked_title": "Qayd etilgan foydalanuvchida kirish huquqi yo‘q",
+      "mention_blocked_description": "Foydalanuvchini qayd etishdan oldin vazifa yaratuvchisi yoki loyiha administratoridan kirish berishini so‘rang.",
+      "grant_before_mention_title": "Yuborishdan oldin kirish bering",
+      "grant_before_mention_description": "Qayd etilgan foydalanuvchilar ({count}) ijrochilar sifatida qo‘shiladi va vazifaga kirish oladi.",
+      "grant_and_send": "Kirish berish va yuborish",
+      "grant_failed": "Kirish berish va izohni yuborib bo‘lmadi."
+    },
     "priority": {
       "urgent": "Shoshilinch",
       "high": "Yuqori",

@@ -59,6 +59,13 @@ from .issue import (
     IssueVote,
     IssueVersion,
     IssueDescriptionVersion,
+    IssueVisibility,
+)
+from .issue_access import (
+    IssueAccessAuditAction,
+    IssueAccessAuditLog,
+    IssueAccessGroup,
+    IssueAccessSourceType,
 )
 from .module import Module, ModuleIssue, ModuleLink, ModuleMember, ModuleUserProperties
 from .notification import (

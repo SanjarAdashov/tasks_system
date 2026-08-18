@@ -25,6 +25,7 @@ import { MultipleSelectEntityAction } from "@/components/core/multiple-select";
 import RenderIfVisible from "@/components/core/render-if-visible-HOC";
 import { IssueIdentifier } from "@/components/issues/issue-detail/issue-identifier";
 import { IssuePropertyBadges } from "@/components/issues/work-item-properties";
+import { IssueRestrictedBadge } from "@/components/issues/issue-access-control";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useIssues } from "@/hooks/store/use-issues";
@@ -379,6 +380,7 @@ const IssueRowDetails = observer(function IssueRowDetails(props: IssueRowDetails
 
               <div className="my-auto flex h-full w-full items-center justify-between gap-2 truncate">
                 <div className="flex min-w-0 flex-1 items-center gap-2 text-14 text-primary">
+                  <IssueRestrictedBadge issueVisibility={issueDetail.visibility} />
                   <div className="min-w-0 flex-1 overflow-hidden">
                     <Tooltip tooltipContent={issueDetail.name} isMobile={isMobile}>
                       <div

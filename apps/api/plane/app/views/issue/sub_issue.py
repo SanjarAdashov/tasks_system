@@ -7,7 +7,8 @@ import json
 
 # Django imports
 from django.utils import timezone
-from django.db.models import OuterRef, Func, F, Q, Value, UUIDField, Subquery, Count, IntegerField
+from django.db import transaction
+from django.db.models import OuterRef, F, Value, UUIDField, Subquery, Count, IntegerField
 from django.utils.decorators import method_decorator
 from django.views.decorators.gzip import gzip_page
 from django.contrib.postgres.aggregates import ArrayAgg
@@ -20,7 +21,7 @@ from rest_framework import status
 
 # Module imports
 from .. import BaseAPIView
-from plane.app.serializers import IssueSerializer
+from plane.app.serializers import IssueCreateSerializer, IssueSerializer
 from plane.app.permissions import ProjectEntityPermission
 from plane.db.models import Issue, IssueLink, FileAsset, CycleIssue, IssueLabel, IssueAssignee, ModuleIssue
 from plane.bgtasks.issue_activities_task import issue_activity
@@ -201,6 +202,7 @@ class SubIssuesEndpoint(BaseAPIView):
         )
 
     # Assign multiple sub issues
+    @transaction.atomic
     def post(self, request, slug, project_id, issue_id):
         parent_issue = Issue.issue_objects.get(pk=issue_id)
         sub_issue_ids = request.data.get("sub_issue_ids", [])
@@ -214,10 +216,25 @@ class SubIssuesEndpoint(BaseAPIView):
         # Scope to workspace to prevent cross-tenant IDOR
         sub_issues = Issue.issue_objects.filter(id__in=sub_issue_ids, workspace__slug=slug)
 
-        for sub_issue in sub_issues:
-            sub_issue.parent = parent_issue
-
-        _ = Issue.objects.bulk_update(sub_issues, ["parent"], batch_size=10)
+        if parent_issue.visibility == "RESTRICTED" or sub_issues.filter(visibility="RESTRICTED").exists():
+            for sub_issue in sub_issues:
+                serializer = IssueCreateSerializer(
+                    sub_issue,
+                    data={"parent_id": str(parent_issue.id)},
+                    partial=True,
+                    context={
+                        "project_id": project_id,
+                        "workspace_id": parent_issue.workspace_id,
+                        "default_assignee_id": parent_issue.project.default_assignee_id,
+                        "request": request,
+                    },
+                )
+                serializer.is_valid(raise_exception=True)
+                serializer.save()
+        else:
+            for sub_issue in sub_issues:
+                sub_issue.parent = parent_issue
+            Issue.objects.bulk_update(sub_issues, ["parent"], batch_size=10)
 
         updated_sub_issues = Issue.issue_objects.filter(id__in=sub_issue_ids).annotate(state_group=F("state__group"))
 

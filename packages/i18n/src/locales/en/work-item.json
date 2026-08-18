@@ -47,6 +47,24 @@
     "create": {
       "success": "Work item created successfully"
     },
+    "access": {
+      "project": "Available to the project",
+      "project_description": "All project members can find and open this task.",
+      "restricted": "Restricted task",
+      "restricted_description": "Only the creator, administrators, assignees, selected employees, and allowed groups can access it.",
+      "inherit_parent": "Inherit access from the parent task",
+      "inherit_parent_description": "Changes to the parent access are applied here automatically.",
+      "inherited_notice": "Access is inherited from the parent task.",
+      "allowed_groups": "Additional user groups",
+      "no_groups": "No active groups have been created for this project.",
+      "people_with_access": "{count, plural, one {# person has access} other {# people have access}}",
+      "mention_blocked_title": "The mentioned user has no access",
+      "mention_blocked_description": "Ask the task creator or a project administrator to grant access before mentioning this user.",
+      "grant_before_mention_title": "Grant access before sending",
+      "grant_before_mention_description": "{count, plural, one {The mentioned user} other {The # mentioned users}} will be added as assignees and will receive access to this task.",
+      "grant_and_send": "Grant access and send",
+      "grant_failed": "Could not grant access and publish the comment."
+    },
     "priority": {
       "urgent": "Urgent",
       "high": "High",

@@ -45,6 +45,6 @@ function HomePage() {
 export default observer(HomePage);
 
 export const meta: Route.MetaFunction = () => [
-  { title: "Admin – Instance Setup & Sign-In" },
-  { name: "description", content: "Configure your Plane instance or sign in to the admin portal." },
+  { title: "GTS Task System – Instance Setup & Sign-In" },
+  { name: "description", content: "Configure GTS Task System or sign in to the administration portal." },
 ];

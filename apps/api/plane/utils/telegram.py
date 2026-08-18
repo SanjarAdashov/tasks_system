@@ -15,6 +15,8 @@ from django.utils import timezone
 from django.utils.html import strip_tags
 
 from plane.db.models import (
+    Issue,
+    IssueVisibility,
     ProjectMember,
     State,
     TelegramDelivery,
@@ -24,6 +26,7 @@ from plane.db.models import (
 )
 from plane.license.models import InstanceConfiguration
 from plane.license.utils.encryption import decrypt_data, encrypt_data
+from plane.utils.issue_access import can_view_issue
 
 
 TELEGRAM_SECRET_CONFIGURATION_KEYS = {
@@ -729,6 +732,14 @@ def may_deliver(delivery):
     if (not user.is_active or user.blocked_at is not None) and not (delivery.payload or {}).get("allow_inactive"):
         return False
     if delivery.project_id and delivery.issue_id:
+        issue = Issue.unscoped_objects.filter(
+            id=delivery.issue_id,
+            project_id=delivery.project_id,
+        ).first()
+        if not issue:
+            return False
+        if issue.visibility == IssueVisibility.RESTRICTED:
+            return can_view_issue(user, issue)
         return ProjectMember.objects.filter(
             project_id=delivery.project_id,
             member=user,

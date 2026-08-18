@@ -1128,8 +1128,11 @@ class IssueLinkListCreateAPIEndpoint(BaseAPIView):
             .filter(project_id=self.kwargs.get("project_id"))
             .filter(issue_id=self.kwargs.get("issue_id"))
             .filter(
-                project__project_projectmember__member=self.request.user,
-                project__project_projectmember__is_active=True,
+                issue__in=Issue.objects.filter(
+                    id=self.kwargs.get("issue_id"),
+                    project_id=self.kwargs.get("project_id"),
+                    workspace__slug=self.kwargs.get("slug"),
+                )
             )
             .filter(project__archived_at__isnull=True)
             .order_by(self.kwargs.get("order_by", "-created_at"))
@@ -1233,8 +1236,11 @@ class IssueLinkDetailAPIEndpoint(BaseAPIView):
             .filter(project_id=self.kwargs.get("project_id"))
             .filter(issue_id=self.kwargs.get("issue_id"))
             .filter(
-                project__project_projectmember__member=self.request.user,
-                project__project_projectmember__is_active=True,
+                issue__in=Issue.objects.filter(
+                    id=self.kwargs.get("issue_id"),
+                    project_id=self.kwargs.get("project_id"),
+                    workspace__slug=self.kwargs.get("slug"),
+                )
             )
             .filter(project__archived_at__isnull=True)
             .order_by(self.kwargs.get("order_by", "-created_at"))
@@ -1375,10 +1381,6 @@ class IssueCommentListCreateAPIEndpoint(BaseAPIView):
             IssueComment.objects.filter(workspace__slug=self.kwargs.get("slug"))
             .filter(project_id=self.kwargs.get("project_id"))
             .filter(issue_id=self.kwargs.get("issue_id"))
-            .filter(
-                project__project_projectmember__member=self.request.user,
-                project__project_projectmember__is_active=True,
-            )
             .filter(project__archived_at__isnull=True)
             .select_related("workspace", "project", "issue", "actor")
             .annotate(
@@ -1481,7 +1483,11 @@ class IssueCommentListCreateAPIEndpoint(BaseAPIView):
                 status=status.HTTP_409_CONFLICT,
             )
 
-        serializer = IssueCommentCreateSerializer(data=request.data)
+        issue = Issue.objects.get(pk=issue_id, workspace__slug=slug, project_id=project_id)
+        serializer = IssueCommentCreateSerializer(
+            data=request.data,
+            context={"request": request, "issue": issue},
+        )
         if serializer.is_valid():
             serializer.save(project_id=project_id, issue_id=issue_id, actor=request.user)
             issue_comment = IssueComment.objects.get(pk=serializer.instance.id)
@@ -1531,10 +1537,6 @@ class IssueCommentDetailAPIEndpoint(BaseAPIView):
             IssueComment.objects.filter(workspace__slug=self.kwargs.get("slug"))
             .filter(project_id=self.kwargs.get("project_id"))
             .filter(issue_id=self.kwargs.get("issue_id"))
-            .filter(
-                project__project_projectmember__member=self.request.user,
-                project__project_projectmember__is_active=True,
-            )
             .filter(project__archived_at__isnull=True)
             .select_related("workspace", "project", "issue", "actor")
             .annotate(
@@ -1628,7 +1630,12 @@ class IssueCommentDetailAPIEndpoint(BaseAPIView):
                 status=status.HTTP_409_CONFLICT,
             )
 
-        serializer = IssueCommentCreateSerializer(issue_comment, data=request.data, partial=True)
+        serializer = IssueCommentCreateSerializer(
+            issue_comment,
+            data=request.data,
+            partial=True,
+            context={"request": request, "issue": issue_comment.issue},
+        )
         if serializer.is_valid():
             serializer.save()
             issue_activity.delay(
@@ -2394,9 +2401,12 @@ class IssueRelationListCreateAPIEndpoint(BaseAPIView):
         Retrieve all relationships for a work item organized by relation type.
         Returns a structured response with relations grouped by type.
         """
+        visible_issue_ids = Issue.objects.filter(workspace__slug=slug).values("id")
         relations = IssueRelation.objects.filter(
             Q(issue_id=issue_id) | Q(related_issue_id=issue_id),
             workspace__slug=slug,
+            issue_id__in=visible_issue_ids,
+            related_issue_id__in=visible_issue_ids,
         ).values(
             "relation_type",
             "issue_id",

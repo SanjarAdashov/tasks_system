@@ -26,6 +26,7 @@ import RenderIfVisible from "@/components/core/render-if-visible-HOC";
 import { HIGHLIGHT_CLASS, getIssueBlockId } from "@/components/issues/issue-layouts/utils";
 import { IssueIdentifier } from "@/components/issues/issue-detail/issue-identifier";
 import { IssuePropertyBadges } from "@/components/issues/work-item-properties";
+import { IssueRestrictedBadge } from "@/components/issues/issue-access-control";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useKanbanView } from "@/hooks/store/use-kanban-view";
@@ -122,7 +123,8 @@ const KanbanIssueDetailsBlock = observer(function KanbanIssueDetailsBlock(props:
       </div>
 
       <Tooltip tooltipContent={issue.name} isMobile={isMobile} renderByDefault={false}>
-        <div className="line-clamp-1 w-full text-body-sm-medium text-primary">
+        <div className="flex w-full items-center gap-1.5 text-body-sm-medium text-primary">
+          <IssueRestrictedBadge issueVisibility={issue.visibility} />
           <span>{issue.name}</span>
         </div>
       </Tooltip>

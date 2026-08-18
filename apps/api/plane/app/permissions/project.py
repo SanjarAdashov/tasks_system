@@ -4,10 +4,12 @@
 
 # Third Party imports
 from rest_framework.permissions import SAFE_METHODS, BasePermission
+from rest_framework.exceptions import NotFound
 
 # Module import
-from plane.db.models import ProjectMember, WorkspaceMember
+from plane.db.models import Issue, ProjectMember, WorkspaceMember
 from plane.db.models.project import ROLE
+from plane.utils.issue_access import is_instance_admin
 
 
 class ProjectBasePermission(BasePermission):
@@ -89,6 +91,24 @@ class ProjectEntityPermission(BasePermission):
     def has_permission(self, request, view):
         if request.user.is_anonymous:
             return False
+        if is_instance_admin(request.user):
+            return True
+
+        issue_id = view.kwargs.get("issue_id")
+        if issue_id and not Issue.objects.filter(
+            id=issue_id,
+            project_id=view.project_id,
+            workspace__slug=view.workspace_slug,
+        ).exists():
+            raise NotFound("The required object does not exist.")
+
+        if WorkspaceMember.objects.filter(
+            workspace__slug=view.workspace_slug,
+            member=request.user,
+            role=ROLE.ADMIN.value,
+            is_active=True,
+        ).exists():
+            return True
 
         # Handle requests based on project__identifier
         if hasattr(view, "project_identifier") and view.project_identifier:
@@ -137,6 +157,25 @@ class ProjectLitePermission(BasePermission):
     def has_permission(self, request, view):
         if request.user.is_anonymous:
             return False
+
+        if is_instance_admin(request.user):
+            return True
+
+        issue_id = view.kwargs.get("issue_id")
+        if issue_id and not Issue.objects.filter(
+            id=issue_id,
+            project_id=view.project_id,
+            workspace__slug=view.workspace_slug,
+        ).exists():
+            raise NotFound("The required object does not exist.")
+
+        if WorkspaceMember.objects.filter(
+            workspace__slug=view.workspace_slug,
+            member=request.user,
+            role=ROLE.ADMIN.value,
+            is_active=True,
+        ).exists():
+            return True
 
         return ProjectMember.objects.filter(
             workspace__slug=view.workspace_slug,

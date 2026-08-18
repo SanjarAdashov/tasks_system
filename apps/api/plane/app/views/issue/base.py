@@ -62,6 +62,8 @@ from plane.db.models import (
     ProjectWorkItemProperty,
     WorkItemPropertyType,
     UserRecentVisit,
+    IssueAccessAuditLog,
+    IssueVisibility,
 )
 from plane.utils.filters import ComplexFilterBackend, IssueFilterSet
 from plane.utils.global_paginator import paginate
@@ -83,6 +85,7 @@ from plane.utils.work_item_fields import (
     serialize_work_item_property_values_for_issues,
 )
 from plane.utils.timezone_converter import user_timezone_converter
+from plane.utils.issue_access import can_manage_issue_access, issue_access_summary
 
 from .. import BaseAPIView, BaseViewSet
 
@@ -210,6 +213,9 @@ class IssueListEndpoint(BaseAPIView):
                     "is_draft",
                     "archived_at",
                     "deleted_at",
+                    "visibility",
+                    "inherit_parent_access",
+                    "access_source_id",
                 )
             )
             values_by_issue = serialize_work_item_property_values_for_issues([issue["id"] for issue in issues])
@@ -436,6 +442,7 @@ class IssueViewSet(BaseViewSet):
                 "project_id": project_id,
                 "workspace_id": project.workspace_id,
                 "default_assignee_id": project.default_assignee_id,
+                "request": request,
             },
         )
 
@@ -489,6 +496,9 @@ class IssueViewSet(BaseViewSet):
                     "is_draft",
                     "archived_at",
                     "deleted_at",
+                    "visibility",
+                    "inherit_parent_access",
+                    "access_source_id",
                 )
                 .first()
             )
@@ -647,7 +657,7 @@ class IssueViewSet(BaseViewSet):
             project_id=project_id,
         )
 
-        serializer = IssueDetailSerializer(issue, expand=self.expand)
+        serializer = IssueDetailSerializer(issue, expand=self.expand, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @allow_permission(allowed_roles=[ROLE.ADMIN, ROLE.MEMBER], creator=True, model=Issue)
@@ -703,7 +713,17 @@ class IssueViewSet(BaseViewSet):
         current_instance = json.dumps(IssueDetailSerializer(issue).data, cls=DjangoJSONEncoder)
 
         requested_data = json.dumps(self.request.data, cls=DjangoJSONEncoder)
-        serializer = IssueCreateSerializer(issue, data=request.data, partial=True, context={"project_id": project_id})
+        serializer = IssueCreateSerializer(
+            issue,
+            data=request.data,
+            partial=True,
+            context={
+                "project_id": project_id,
+                "workspace_id": issue.workspace_id,
+                "default_assignee_id": issue.project.default_assignee_id,
+                "request": request,
+            },
+        )
         if serializer.is_valid():
             serializer.save()
             # Check if the update is a migration description update
@@ -764,6 +784,53 @@ class IssueViewSet(BaseViewSet):
             subscriber=False,
         )
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class IssueAccessEndpoint(BaseAPIView):
+    @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
+    def get(self, request, slug, project_id, issue_id):
+        issue = Issue.objects.filter(
+            workspace__slug=slug,
+            project_id=project_id,
+            id=issue_id,
+        ).first()
+        if not issue:
+            return Response(
+                {"error": "The required object does not exist."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        can_manage = can_manage_issue_access(request.user, issue)
+        payload = {
+            "visibility": issue.visibility,
+            "inherit_parent_access": issue.inherit_parent_access,
+            "access_source_id": issue.access_source_id,
+            "can_manage_access": can_manage,
+            "access": issue_access_summary(issue)
+            if issue.visibility == IssueVisibility.RESTRICTED
+            else None,
+        }
+        if can_manage:
+            logs = IssueAccessAuditLog.objects.filter(issue=issue).select_related("actor")[:250]
+            payload["audit_log"] = [
+                {
+                    "id": log.id,
+                    "action": log.action,
+                    "source_type": log.source_type,
+                    "source_id": log.source_id,
+                    "details": log.details,
+                    "actor": {
+                        "id": log.actor_id,
+                        "first_name": log.actor.first_name if log.actor else "",
+                        "last_name": log.actor.last_name if log.actor else "",
+                    }
+                    if log.actor_id
+                    else None,
+                    "created_at": log.created_at,
+                }
+                for log in logs
+            ]
+        return Response(payload, status=status.HTTP_200_OK)
 
 
 class ProjectUserDisplayPropertyEndpoint(BaseAPIView):
@@ -1081,14 +1148,18 @@ class IssueDetailEndpoint(BaseAPIView):
                 issue = issue.prefetch_related(
                     Prefetch(
                         "issue_relation",
-                        queryset=IssueRelation.objects.select_related("related_issue"),
+                        queryset=IssueRelation.objects.filter(
+                            related_issue_id__in=Issue.objects.values("id")
+                        ).select_related("related_issue"),
                     )
                 )
             if "issue_related" in self.expand:
                 issue = issue.prefetch_related(
                     Prefetch(
                         "issue_related",
-                        queryset=IssueRelation.objects.select_related("issue"),
+                        queryset=IssueRelation.objects.filter(
+                            issue_id__in=Issue.objects.values("id")
+                        ).select_related("issue"),
                     )
                 )
 

@@ -155,6 +155,7 @@ from .issue.base import (
     IssueBulkUpdateDateEndpoint,
     IssueMetaEndpoint,
     IssueDetailIdentifierEndpoint,
+    IssueAccessEndpoint,
 )
 
 from .issue.activity import IssueActivityEndpoint

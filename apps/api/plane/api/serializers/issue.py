@@ -26,10 +26,17 @@ from plane.db.models import (
     IssueRelation,
     Label,
     ProjectMember,
+    ProjectUserGroupMember,
     State,
     User,
     EstimatePoint,
     Project,
+    ProjectWorkItemProperty,
+    WorkItemSelectSource,
+    IssueVisibility,
+    IssueAccessAuditAction,
+    IssueAccessGroup,
+    IssueAccessSourceType,
 )
 from plane.utils.content_validator import (
     validate_html_content,
@@ -43,6 +50,14 @@ from plane.utils.work_item_fields import (
     validate_and_prepare_work_item_fields,
 )
 from plane.utils.state_transition_rules import enforce_state_transition
+from plane.utils.issue_access import (
+    can_manage_issue_access,
+    issue_effective_user_ids,
+    normalize_uuid_set,
+    propagate_inherited_access,
+    record_issue_access_event,
+    unauthorized_mention_user_ids,
+)
 
 from .base import BaseSerializer
 from .cycle import CycleLiteSerializer, CycleSerializer
@@ -90,8 +105,64 @@ class IssueSerializer(BaseSerializer):
 
     class Meta:
         model = Issue
-        read_only_fields = ["id", "workspace", "project", "updated_by", "updated_at", "completed_at"]
+        read_only_fields = [
+            "id",
+            "workspace",
+            "project",
+            "updated_by",
+            "updated_at",
+            "completed_at",
+            "visibility",
+            "inherit_parent_access",
+            "access_source",
+        ]
         exclude = ["description_json", "description_stripped"]
+
+    def _member_property_values(self, property_values):
+        member_property_ids = {
+            str(property_id)
+            for property_id in ProjectWorkItemProperty.objects.filter(
+                project_id=self.context["project_id"],
+                select_source=WorkItemSelectSource.MEMBERS,
+                archived_at__isnull=True,
+            ).values_list("id", flat=True)
+        }
+        return {
+            property_id: property_values.get(property_id)
+            for property_id in member_property_ids
+            if property_id in property_values
+        }
+
+    def _candidate_access_user_ids(self, data):
+        actor = self.context.get("request").user if self.context.get("request") else get_current_user()
+        user_ids = {self.instance.created_by_id if self.instance else actor.id}
+        assignees = data.get("assignees")
+        if assignees is None and self.instance:
+            assignees = self.instance.issue_assignee.values_list("assignee_id", flat=True)
+        elif assignees is None and self.context.get("default_assignee_id"):
+            assignees = [self.context["default_assignee_id"]]
+        user_ids.update(normalize_uuid_set(assignees or []))
+        for value in self._member_property_values(data["property_values"]).values():
+            user_ids.update(normalize_uuid_set(value if isinstance(value, list) else [value]))
+        group_ids = (
+            IssueAccessGroup.objects.filter(issue=self.instance).values_list("group_id", flat=True)
+            if self.instance
+            else []
+        )
+        group_member_ids = ProjectUserGroupMember.objects.filter(
+            group_id__in=group_ids,
+            project_id=self.context["project_id"],
+            member__is_active=True,
+        ).values_list("member_id", flat=True)
+        user_ids.update(
+            ProjectMember.objects.filter(
+                project_id=self.context["project_id"],
+                member_id__in=group_member_ids,
+                member__is_active=True,
+                is_active=True,
+            ).values_list("member_id", flat=True)
+        )
+        return {user_id for user_id in user_ids if user_id}
 
     def validate(self, data):
         if (
@@ -168,6 +239,7 @@ class IssueSerializer(BaseSerializer):
         ):
             raise serializers.ValidationError("Estimate point is not valid please pass a valid estimate_point_id")
 
+        property_values_were_provided = "property_values" in self.initial_data
         property_values = data.pop("property_values", MISSING)
         data["property_values"] = validate_and_prepare_work_item_fields(
             project_id=self.context["project_id"],
@@ -175,6 +247,46 @@ class IssueSerializer(BaseSerializer):
             instance=self.instance,
             property_values=property_values,
         )
+        actor = self.context.get("request").user if self.context.get("request") else get_current_user()
+        parent = data.get("parent", self.instance.parent if self.instance else None)
+        parent_changes_access = bool(
+            self.instance
+            and "parent" in self.initial_data
+            and (
+                self.instance.visibility == IssueVisibility.RESTRICTED
+                or (parent and parent.visibility == IssueVisibility.RESTRICTED)
+            )
+        )
+        if self.instance and not can_manage_issue_access(actor, self.instance):
+            current_assignees = {
+                str(value) for value in self.instance.issue_assignee.values_list("assignee_id", flat=True)
+            }
+            next_assignees = {str(getattr(value, "id", value)) for value in data.get("assignees", current_assignees)}
+            assignees_changed = "assignees" in self.initial_data and next_assignees != current_assignees
+            member_properties_changed = False
+            if property_values_were_provided:
+                current_properties = self._member_property_values(serialize_work_item_property_values(self.instance))
+                next_properties = self._member_property_values(data["property_values"])
+                member_properties_changed = current_properties != next_properties
+            if parent_changes_access or (
+                self.instance.visibility == IssueVisibility.RESTRICTED
+                and (assignees_changed or member_properties_changed)
+            ):
+                raise serializers.ValidationError(
+                    {"access": "Only the task creator or a Project Admin can change restricted-task access."}
+                )
+        inherit_parent_access = self.instance.inherit_parent_access if self.instance else True
+        if parent and parent.visibility == IssueVisibility.RESTRICTED:
+            data["visibility"] = IssueVisibility.RESTRICTED
+            data["access_source"] = (
+                (parent.access_source if parent.access_source_id else parent) if inherit_parent_access else None
+            )
+            if not self._candidate_access_user_ids(data).issubset(issue_effective_user_ids(parent)):
+                raise serializers.ValidationError(
+                    {"access": "A child task cannot grant access beyond its restricted parent."}
+                )
+        elif self.instance and "parent" in self.initial_data:
+            data["access_source"] = None
         request = self.context.get("request")
         enforce_state_transition(
             project=Project.objects.get(id=self.context["project_id"]),
@@ -280,10 +392,33 @@ class IssueSerializer(BaseSerializer):
             issue=issue,
             property_values=property_values,
         )
+        actor = self.context.get("request").user if self.context.get("request") else get_current_user()
+        if issue.visibility == IssueVisibility.RESTRICTED:
+            record_issue_access_event(
+                issue=issue,
+                actor=actor,
+                action=IssueAccessAuditAction.VISIBILITY_CHANGED,
+                source_type=IssueAccessSourceType.VISIBILITY,
+                details={"from": IssueVisibility.PROJECT, "to": IssueVisibility.RESTRICTED},
+            )
+        if issue.access_source_id:
+            record_issue_access_event(
+                issue=issue,
+                actor=actor,
+                action=IssueAccessAuditAction.PARENT_ACCESS_APPLIED,
+                source_type=IssueAccessSourceType.PARENT,
+                source_id=issue.parent_id,
+                details={"access_source_id": str(issue.access_source_id)},
+            )
         return issue
 
     @transaction.atomic
     def update(self, instance, validated_data):
+        previous_visibility = instance.visibility
+        previous_parent_id = instance.parent_id
+        previous_access_source_id = instance.access_source_id
+        previous_assignees = set(instance.issue_assignee.values_list("assignee_id", flat=True))
+        previous_member_properties = self._member_property_values(serialize_work_item_property_values(instance))
         assignees = validated_data.pop("assignees", None)
         labels = validated_data.pop("labels", None)
         cycle_id = validated_data.pop("cycle_id", MISSING)
@@ -350,6 +485,54 @@ class IssueSerializer(BaseSerializer):
             issue=instance,
             property_values=property_values,
         )
+        actor = self.context.get("request").user if self.context.get("request") else get_current_user()
+        if instance.visibility == IssueVisibility.RESTRICTED:
+            current_assignees = set(instance.issue_assignee.values_list("assignee_id", flat=True))
+            if previous_assignees != current_assignees:
+                record_issue_access_event(
+                    issue=instance,
+                    actor=actor,
+                    action=IssueAccessAuditAction.ASSIGNEES_CHANGED,
+                    source_type=IssueAccessSourceType.ASSIGNEE,
+                    details={
+                        "added_user_ids": sorted(str(value) for value in current_assignees - previous_assignees),
+                        "removed_user_ids": sorted(str(value) for value in previous_assignees - current_assignees),
+                    },
+                )
+            current_member_properties = self._member_property_values(serialize_work_item_property_values(instance))
+            if previous_member_properties != current_member_properties:
+                record_issue_access_event(
+                    issue=instance,
+                    actor=actor,
+                    action=IssueAccessAuditAction.MEMBER_PROPERTIES_CHANGED,
+                    source_type=IssueAccessSourceType.MEMBER_PROPERTY,
+                    details={"property_ids": sorted(set(previous_member_properties) | set(current_member_properties))},
+                )
+            propagate_inherited_access(instance)
+        if previous_visibility != instance.visibility:
+            record_issue_access_event(
+                issue=instance,
+                actor=actor,
+                action=IssueAccessAuditAction.VISIBILITY_CHANGED,
+                source_type=IssueAccessSourceType.VISIBILITY,
+                details={"from": previous_visibility, "to": instance.visibility},
+            )
+        if previous_parent_id != instance.parent_id or previous_access_source_id != instance.access_source_id:
+            record_issue_access_event(
+                issue=instance,
+                actor=actor,
+                action=IssueAccessAuditAction.PARENT_ACCESS_APPLIED,
+                source_type=IssueAccessSourceType.PARENT,
+                source_id=instance.parent_id,
+                details={
+                    "previous_parent_id": str(previous_parent_id) if previous_parent_id else None,
+                    "parent_id": str(instance.parent_id) if instance.parent_id else None,
+                    "previous_access_source_id": (
+                        str(previous_access_source_id) if previous_access_source_id else None
+                    ),
+                    "access_source_id": str(instance.access_source_id) if instance.access_source_id else None,
+                },
+            )
         return instance
 
     def to_representation(self, instance):
@@ -787,6 +970,23 @@ class IssueCommentCreateSerializer(BaseSerializer):
             "edited_at",
         ]
 
+    def validate(self, data):
+        issue = self.instance.issue if self.instance else self.context.get("issue")
+        actor = self.context.get("request").user if self.context.get("request") else get_current_user()
+        if issue and issue.visibility == IssueVisibility.RESTRICTED and data.get("comment_html"):
+            unauthorized_ids = unauthorized_mention_user_ids(issue, data["comment_html"])
+            if unauthorized_ids:
+                raise serializers.ValidationError(
+                    {
+                        "mentions": {
+                            "code": "restricted_task_access_required",
+                            "user_ids": sorted(str(value) for value in unauthorized_ids),
+                            "can_grant": "true" if can_manage_issue_access(actor, issue) else "false",
+                        }
+                    }
+                )
+        return data
+
 
 class IssueCommentSerializer(BaseSerializer):
     """
@@ -819,6 +1019,20 @@ class IssueCommentSerializer(BaseSerializer):
                 raise serializers.ValidationError({"comment_html": "HTML content is not valid"})
             if sanitized_html is not None:
                 data["comment_html"] = sanitized_html
+        issue = self.instance.issue if self.instance else self.context.get("issue")
+        actor = self.context.get("request").user if self.context.get("request") else get_current_user()
+        if issue and issue.visibility == IssueVisibility.RESTRICTED and data.get("comment_html"):
+            unauthorized_ids = unauthorized_mention_user_ids(issue, data["comment_html"])
+            if unauthorized_ids:
+                raise serializers.ValidationError(
+                    {
+                        "mentions": {
+                            "code": "restricted_task_access_required",
+                            "user_ids": sorted(str(value) for value in unauthorized_ids),
+                            "can_grant": "true" if can_manage_issue_access(actor, issue) else "false",
+                        }
+                    }
+                )
         return data
 
 

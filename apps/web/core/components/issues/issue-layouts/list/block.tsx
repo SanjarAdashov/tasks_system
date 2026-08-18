@@ -24,6 +24,7 @@ import { MultipleSelectEntityAction } from "@/components/core/multiple-select";
 import { IssueProperties } from "@/components/issues/issue-layouts/properties";
 import { IssueIdentifier } from "@/components/issues/issue-detail/issue-identifier";
 import { IssuePropertyBadges } from "@/components/issues/work-item-properties";
+import { IssueRestrictedBadge } from "@/components/issues/issue-access-control";
 // hooks
 import { useAppTheme } from "@/hooks/store/use-app-theme";
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
@@ -278,7 +279,10 @@ export const IssueBlock = observer(function IssueBlock(props: IssueBlockProps) {
               disabled={isCurrentBlockDragging}
               renderByDefault={false}
             >
-              <p className="cursor-pointer truncate text-body-xs-medium text-primary">{issue.name}</p>
+              <div className="flex min-w-0 items-center gap-1.5">
+                <IssueRestrictedBadge issueVisibility={issue.visibility} />
+                <p className="cursor-pointer truncate text-body-xs-medium text-primary">{issue.name}</p>
+              </div>
             </Tooltip>
           </div>
           {!issue?.tempId && (

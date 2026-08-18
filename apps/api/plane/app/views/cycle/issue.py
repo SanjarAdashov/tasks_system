@@ -66,6 +66,7 @@ class CycleIssueViewSet(BaseViewSet):
             )
             .filter(project__archived_at__isnull=True)
             .filter(cycle_id=self.kwargs.get("cycle_id"))
+            .filter(issue_id__in=Issue.objects.values("id"))
             .select_related("project")
             .select_related("workspace")
             .select_related("cycle")
@@ -222,10 +223,19 @@ class CycleIssueViewSet(BaseViewSet):
 
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER])
     def create(self, request, slug, project_id, cycle_id):
-        issues = request.data.get("issues", [])
+        requested_issues = request.data.get("issues", [])
 
-        if not issues:
+        if not requested_issues:
             return Response({"error": "Issues are required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        issues = list(
+            str(issue_id)
+            for issue_id in Issue.issue_objects.filter(
+                workspace__slug=slug,
+                project_id=project_id,
+                id__in=requested_issues,
+            ).values_list("id", flat=True)
+        )
 
         cycle = Cycle.objects.get(workspace__slug=slug, project_id=project_id, pk=cycle_id)
 

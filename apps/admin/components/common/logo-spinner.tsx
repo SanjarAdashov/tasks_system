@@ -4,18 +4,23 @@
  * See the LICENSE file for details.
  */
 
-import { useTheme } from "next-themes";
-import LogoSpinnerDark from "@/app/assets/images/logo-spinner-dark.gif?url";
-import LogoSpinnerLight from "@/app/assets/images/logo-spinner-light.gif?url";
+import GtsSystemLoader from "@/app/assets/images/gts-system-loader.webm?url";
 
 export function LogoSpinner() {
-  const { resolvedTheme } = useTheme();
-
-  const logoSrc = resolvedTheme === "dark" ? LogoSpinnerLight : LogoSpinnerDark;
-
   return (
-    <div className="flex items-center justify-center">
-      <img src={logoSrc} alt="logo" className="h-6 w-auto sm:h-11" />
+    <div role="status" aria-label="GTS Task System is loading" className="flex items-center justify-center">
+      <video
+        aria-hidden="true"
+        autoPlay
+        disablePictureInPicture
+        loop
+        muted
+        playsInline
+        preload="auto"
+        src={GtsSystemLoader}
+        className="pointer-events-none size-24 rounded-xl object-cover sm:size-28"
+      />
+      <span className="sr-only">GTS Task System is loading</span>
     </div>
   );
 }

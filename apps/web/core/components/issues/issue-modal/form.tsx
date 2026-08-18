@@ -43,6 +43,7 @@ import {
   IssueProjectSelect,
   IssueTitleInput,
 } from "@/components/issues/issue-modal/components";
+import { IssueAccessControl } from "@/components/issues/issue-access-control";
 import {
   buildDefaultPropertyValues,
   getProjectWorkItemPropertiesSWRKey,
@@ -180,6 +181,12 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
 
   const projectId = watch("project_id");
   const stateId = watch("state_id");
+  const visibility = watch("visibility") ?? "PROJECT";
+  const accessGroupIds = watch("access_group_ids") ?? [];
+  const inheritParentAccess = watch("inherit_parent_access") ?? true;
+  const parentIssueId = watch("parent_id");
+  const parentIssue = parentIssueId ? getIssueById(parentIssueId) : undefined;
+  const parentRestricted = parentIssue?.visibility === "RESTRICTED";
   const previousAttachmentProjectIdRef = useRef(projectId);
   const workspaceSlugString = workspaceSlug?.toString();
   const { data: fieldConfiguration, isLoading: isFieldConfigurationLoading } = useSWR(
@@ -265,6 +272,16 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
       isActive = false;
     };
   }, [data?.id, fetchProjectStates, getProjectDefaultStateId, getValues, projectId, setValue, stateId, workspaceSlug]);
+
+  useEffect(() => {
+    if (!parentRestricted) return;
+    if (getValues("visibility") !== "RESTRICTED") {
+      setValue("visibility", "RESTRICTED", { shouldDirty: true, shouldValidate: true });
+    }
+    if (getValues("inherit_parent_access") === undefined) {
+      setValue("inherit_parent_access", true, { shouldDirty: true });
+    }
+  }, [getValues, parentRestricted, setValue]);
 
   useEffect(() => {
     const sourceValues = data?.project_id === projectId ? data.property_values : {};
@@ -577,6 +594,35 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
                     projectId={projectId}
                     onFilesAdd={onPendingAttachmentsAdd}
                     onFileRemove={onPendingAttachmentRemove}
+                  />
+                </div>
+              )}
+              {!isDraft && workspaceSlugString && projectId && (
+                <div className="px-5">
+                  <IssueAccessControl
+                    workspaceSlug={workspaceSlugString}
+                    projectId={projectId}
+                    visibility={visibility}
+                    accessGroupIds={accessGroupIds}
+                    accessSummary={data?.access_summary}
+                    canManage={data?.can_manage_access ?? true}
+                    parentRestricted={parentRestricted}
+                    inheritParentAccess={inheritParentAccess}
+                    onVisibilityChange={(nextVisibility) => {
+                      setValue("visibility", nextVisibility, { shouldDirty: true, shouldValidate: true });
+                      if (nextVisibility === "PROJECT") {
+                        setValue("access_group_ids", [], { shouldDirty: true });
+                      }
+                      handleFormChange();
+                    }}
+                    onGroupsChange={(groupIds) => {
+                      setValue("access_group_ids", groupIds, { shouldDirty: true, shouldValidate: true });
+                      handleFormChange();
+                    }}
+                    onInheritChange={(inherit) => {
+                      setValue("inherit_parent_access", inherit, { shouldDirty: true, shouldValidate: true });
+                      handleFormChange();
+                    }}
                   />
                 </div>
               )}

@@ -81,12 +81,16 @@ export const useWorkItemCommentOperations = (
             message: t("issue.comments.create.success"),
           });
           return comment;
-        } catch {
+        } catch (error) {
+          if ((error as { mentions?: { code?: string } })?.mentions?.code === "restricted_task_access_required") {
+            throw error;
+          }
           setToast({
             title: t("common.error.label"),
             type: TOAST_TYPE.ERROR,
             message: t("issue.comments.create.error"),
           });
+          throw error;
         }
       },
       updateComment: async (commentId, data) => {

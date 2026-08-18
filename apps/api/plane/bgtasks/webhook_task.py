@@ -48,6 +48,7 @@ from plane.db.models import (
     IntakeIssue,
     IssueLabel,
     IssueAssignee,
+    IssueVisibility,
 )
 from plane.license.utils.instance_value import get_email_configuration
 from plane.utils.email import attach_inline_email_assets, generate_plain_text_from_html
@@ -81,6 +82,30 @@ MODEL_MAPPER = {
 
 
 logger = logging.getLogger("plane.worker")
+
+
+def _event_belongs_to_restricted_issue(event, event_id):
+    if event == "issue":
+        return Issue.unscoped_objects.filter(
+            id=event_id,
+            visibility=IssueVisibility.RESTRICTED,
+        ).exists()
+    if event == "issue_comment":
+        return IssueComment.all_objects.filter(
+            id=event_id,
+            issue__visibility=IssueVisibility.RESTRICTED,
+        ).exists()
+    if event == "cycle_issue":
+        return CycleIssue.all_objects.filter(
+            id=event_id,
+            issue__visibility=IssueVisibility.RESTRICTED,
+        ).exists()
+    if event == "module_issue":
+        return ModuleIssue.all_objects.filter(
+            id=event_id,
+            issue__visibility=IssueVisibility.RESTRICTED,
+        ).exists()
+    return False
 
 
 def get_issue_prefetches():
@@ -431,6 +456,10 @@ def webhook_activity(
         race conditions where objects might have been deleted.
     """
     try:
+        # Restricted tasks and their child events never leave Plane through
+        # webhooks or integrations, regardless of webhook configuration.
+        if _event_belongs_to_restricted_issue(event, event_id):
+            return
         webhooks = Webhook.objects.filter(workspace__slug=slug, is_active=True)
 
         if event == "project":

@@ -1,6 +1,7 @@
 {
-  "name": "Plane",
-  "short_name": "Plane",
+  "name": "GTS Task System",
+  "short_name": "GTS Task System",
+  "description": "Manage tasks, projects, workflows, and collaboration in GTS Task System.",
   "icons": [
     {
       "src": "/icons/icon-192x192.png",

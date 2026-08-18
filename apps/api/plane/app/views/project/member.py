@@ -23,6 +23,7 @@ from plane.bgtasks.project_add_user_email_task import project_add_user_email
 from plane.utils.host import base_host
 from plane.app.permissions.base import allow_permission, ROLE
 from plane.utils.telegram import application_url, enqueue_system_telegram_notification
+from plane.utils.issue_access import record_project_membership_access_events
 
 
 ROLE_LABELS = {
@@ -168,6 +169,14 @@ class ProjectMemberViewSet(BaseViewSet):
         project_members = ProjectMember.objects.bulk_create(bulk_project_members, batch_size=10, ignore_conflicts=True)
 
         _ = ProjectUserProperty.objects.bulk_create(bulk_issue_props, batch_size=10, ignore_conflicts=True)
+
+        for member_id in member_roles:
+            record_project_membership_access_events(
+                project=project,
+                user_id=member_id,
+                actor=request.user,
+                is_active=True,
+            )
 
         project_members = ProjectMember.objects.filter(
             project_id=project_id,
@@ -348,6 +357,12 @@ class ProjectMemberViewSet(BaseViewSet):
                     },
                 )
             elif project_member.is_active != previous_active:
+                record_project_membership_access_events(
+                    project=project_member.project,
+                    user_id=project_member.member_id,
+                    actor=request.user,
+                    is_active=project_member.is_active,
+                )
                 notify_project_access(
                     project_member,
                     request.user,
@@ -392,6 +407,12 @@ class ProjectMemberViewSet(BaseViewSet):
 
         project_member.is_active = False
         project_member.save()
+        record_project_membership_access_events(
+            project=project_member.project,
+            user_id=project_member.member_id,
+            actor=request.user,
+            is_active=False,
+        )
         notify_project_access(
             project_member,
             request.user,
@@ -430,6 +451,12 @@ class ProjectMemberViewSet(BaseViewSet):
         # Deactivate the user
         project_member.is_active = False
         project_member.save()
+        record_project_membership_access_events(
+            project=project_member.project,
+            user_id=project_member.member_id,
+            actor=request.user,
+            is_active=False,
+        )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

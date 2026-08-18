@@ -32,6 +32,7 @@ import { StateDropdown } from "@/components/dropdowns/state/dropdown";
 // hooks
 import { useProjectEstimates } from "@/hooks/store/estimates";
 import { IssueCustomProperties } from "@/components/issues/work-item-properties";
+import { IssueAccessControl } from "@/components/issues/issue-access-control";
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useMember } from "@/hooks/store/use-member";
 import { useProject } from "@/hooks/store/use-project";
@@ -67,6 +68,7 @@ export const IssueDetailsSidebar = observer(function IssueDetailsSidebar(props: 
   const { isFieldVisible } = useProjectWorkItemFieldVisibility(workspaceSlug, projectId);
   const issue = getIssueById(issueId);
   if (!issue) return <></>;
+  const parentIssue = issue.parent_id ? getIssueById(issue.parent_id) : undefined;
 
   const createdByDetails = getUserDetails(issue.created_by);
 
@@ -85,6 +87,34 @@ export const IssueDetailsSidebar = observer(function IssueDetailsSidebar(props: 
       <div className="flex h-full w-full flex-col items-center divide-y-2 divide-subtle-1 overflow-hidden">
         <div className="h-full w-full overflow-y-auto px-6">
           <h5 className="mt-5 text-body-xs-medium">{t("common.properties")}</h5>
+          <div className="mt-4">
+            <IssueAccessControl
+              workspaceSlug={workspaceSlug}
+              projectId={projectId}
+              visibility={issue.visibility ?? "PROJECT"}
+              accessGroupIds={issue.access_group_ids ?? []}
+              accessSummary={issue.access_summary}
+              canManage={Boolean(issue.can_manage_access) && isEditable}
+              parentRestricted={parentIssue?.visibility === "RESTRICTED"}
+              inheritParentAccess={issue.inherit_parent_access ?? true}
+              compact
+              onVisibilityChange={async (visibility) => {
+                await issueOperations.update(workspaceSlug, projectId, issueId, {
+                  visibility,
+                  ...(visibility === "PROJECT" ? { access_group_ids: [] } : {}),
+                });
+                await issueOperations.fetch(workspaceSlug, projectId, issueId, false);
+              }}
+              onGroupsChange={async (access_group_ids) => {
+                await issueOperations.update(workspaceSlug, projectId, issueId, { access_group_ids });
+                await issueOperations.fetch(workspaceSlug, projectId, issueId, false);
+              }}
+              onInheritChange={async (inherit_parent_access) => {
+                await issueOperations.update(workspaceSlug, projectId, issueId, { inherit_parent_access });
+                await issueOperations.fetch(workspaceSlug, projectId, issueId, false);
+              }}
+            />
+          </div>
           <div className={`mt-4 mb-2 space-y-2.5 truncate ${!isEditable ? "opacity-60" : ""}`}>
             <SidebarPropertyListItem icon={StatePropertyIcon} label={t("common.state")}>
               <StateDropdown

@@ -146,7 +146,7 @@ def issue_export_task(
 
         # Build base queryset for issues
         workspace_issues = (
-            Issue.objects.filter(
+            Issue.objects.visible_to(exporter_instance.initiated_by).filter(
                 workspace__id=workspace_id,
                 project_id__in=project_ids,
                 project__project_projectmember__member=exporter_instance.initiated_by_id,
@@ -177,15 +177,25 @@ def issue_export_task(
                 ),
                 Prefetch(
                     "issue_relation",
-                    queryset=IssueRelation.objects.select_related("related_issue", "related_issue__project"),
+                    queryset=IssueRelation.objects.filter(
+                        related_issue_id__in=Issue.objects.visible_to(
+                            exporter_instance.initiated_by
+                        ).values("id")
+                    ).select_related("related_issue", "related_issue__project"),
                 ),
                 Prefetch(
                     "issue_related",
-                    queryset=IssueRelation.objects.select_related("issue", "issue__project"),
+                    queryset=IssueRelation.objects.filter(
+                        issue_id__in=Issue.objects.visible_to(
+                            exporter_instance.initiated_by
+                        ).values("id")
+                    ).select_related("issue", "issue__project"),
                 ),
                 Prefetch(
                     "parent",
-                    queryset=Issue.objects.select_related("type", "project"),
+                    queryset=Issue.objects.visible_to(exporter_instance.initiated_by).select_related(
+                        "type", "project"
+                    ),
                 ),
             )
         )

@@ -17,11 +17,12 @@ from django.template.loader import render_to_string
 from django.utils import timezone
 
 # Module imports
-from plane.db.models import EmailNotificationLog, Issue, User
+from plane.db.models import EmailNotificationLog, Issue, IssueVisibility, User
 from plane.license.utils.instance_value import get_email_configuration
 from plane.settings.redis import redis_instance
 from plane.utils.email import attach_inline_email_assets, generate_plain_text_from_html
 from plane.utils.exception_logger import log_exception
+from plane.utils.issue_access import can_view_issue
 
 
 def remove_unwanted_characters(input_text):
@@ -181,7 +182,9 @@ def send_email_notification(issue_id, notification_data, receiver_id, email_noti
             ) = get_email_configuration()
 
             receiver = User.objects.get(pk=receiver_id)
-            issue = Issue.objects.get(pk=issue_id)
+            issue = Issue.unscoped_objects.get(pk=issue_id)
+            if issue.visibility == IssueVisibility.RESTRICTED and not can_view_issue(receiver, issue):
+                return
             template_data = []
             total_changes = 0
             comments = []

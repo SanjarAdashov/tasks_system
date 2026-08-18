@@ -18,7 +18,7 @@ from django.db import models
 from django.db.models.functions import Cast, Concat
 
 # Module imports
-from plane.db.models import Issue
+from plane.db.models import Issue, User
 from plane.license.utils.instance_value import get_email_configuration
 from plane.utils.analytics_plot import build_graph_plot
 from plane.utils.email import attach_inline_email_assets, generate_plain_text_from_html
@@ -90,10 +90,10 @@ def send_export_email(email, slug, csv_buffer, rows):
     return
 
 
-def get_assignee_details(slug, filters):
+def get_assignee_details(slug, filters, user):
     """Fetch assignee details if required."""
     return (
-        Issue.issue_objects.filter(
+        Issue.issue_objects.visible_to(user).filter(
             Q(Q(assignees__avatar__isnull=False) | Q(assignees__avatar_asset__isnull=False)),
             workspace__slug=slug,
             **filters,
@@ -127,10 +127,10 @@ def get_assignee_details(slug, filters):
     )
 
 
-def get_label_details(slug, filters):
+def get_label_details(slug, filters, user):
     """Fetch label details if required"""
     return (
-        Issue.objects.filter(
+        Issue.objects.visible_to(user).filter(
             workspace__slug=slug,
             **filters,
             labels__id__isnull=False,
@@ -142,18 +142,18 @@ def get_label_details(slug, filters):
     )
 
 
-def get_state_details(slug, filters):
+def get_state_details(slug, filters, user):
     return (
-        Issue.issue_objects.filter(workspace__slug=slug, **filters)
+        Issue.issue_objects.visible_to(user).filter(workspace__slug=slug, **filters)
         .distinct("state_id")
         .order_by("state_id")
         .values("state_id", "state__name", "state__color")
     )
 
 
-def get_module_details(slug, filters):
+def get_module_details(slug, filters, user):
     return (
-        Issue.issue_objects.filter(
+        Issue.issue_objects.visible_to(user).filter(
             workspace__slug=slug,
             **filters,
             issue_module__module_id__isnull=False,
@@ -165,9 +165,9 @@ def get_module_details(slug, filters):
     )
 
 
-def get_cycle_details(slug, filters):
+def get_cycle_details(slug, filters, user):
     return (
-        Issue.issue_objects.filter(
+        Issue.issue_objects.visible_to(user).filter(
             workspace__slug=slug,
             **filters,
             issue_cycle__cycle_id__isnull=False,
@@ -351,8 +351,9 @@ def generate_non_segmented_rows(
 @shared_task
 def analytic_export_task(email, data, slug):
     try:
+        user = User.objects.get(email=email)
         filters = issue_filters(data, "POST")
-        queryset = Issue.issue_objects.filter(**filters, workspace__slug=slug)
+        queryset = Issue.issue_objects.visible_to(user).filter(**filters, workspace__slug=slug)
 
         x_axis = data.get("x_axis", False)
         y_axis = data.get("y_axis", False)
@@ -362,16 +363,18 @@ def analytic_export_task(email, data, slug):
         key = "count" if y_axis == "issue_count" else "estimate"
 
         assignee_details = (
-            get_assignee_details(slug, filters) if x_axis == ASSIGNEE_ID or segment == ASSIGNEE_ID else {}
+            get_assignee_details(slug, filters, user)
+            if x_axis == ASSIGNEE_ID or segment == ASSIGNEE_ID
+            else {}
         )
 
-        label_details = get_label_details(slug, filters) if x_axis == LABEL_ID or segment == LABEL_ID else {}
+        label_details = get_label_details(slug, filters, user) if x_axis == LABEL_ID or segment == LABEL_ID else {}
 
-        state_details = get_state_details(slug, filters) if x_axis == STATE_ID or segment == STATE_ID else {}
+        state_details = get_state_details(slug, filters, user) if x_axis == STATE_ID or segment == STATE_ID else {}
 
-        cycle_details = get_cycle_details(slug, filters) if x_axis == CYCLE_ID or segment == CYCLE_ID else {}
+        cycle_details = get_cycle_details(slug, filters, user) if x_axis == CYCLE_ID or segment == CYCLE_ID else {}
 
-        module_details = get_module_details(slug, filters) if x_axis == MODULE_ID or segment == MODULE_ID else {}
+        module_details = get_module_details(slug, filters, user) if x_axis == MODULE_ID or segment == MODULE_ID else {}
 
         if segment:
             rows = generate_segmented_rows(

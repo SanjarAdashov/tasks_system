@@ -14,11 +14,12 @@ from django.db import models, transaction, connection
 from django.utils import timezone
 from django.db.models import Q
 from django import apps
+from crum import get_current_user
 
 # Module imports
 from plane.utils.html_processor import strip_tags
 from plane.utils.path_validator import sanitize_filename
-from plane.db.mixins import SoftDeletionManager, ChangeTrackerMixin
+from plane.db.mixins import SoftDeletionManager, SoftDeletionQuerySet, ChangeTrackerMixin
 from plane.utils.exception_logger import log_exception
 from .project import ProjectBaseModel
 from plane.utils.uuid import convert_uuid_to_integer
@@ -89,7 +90,32 @@ def get_default_display_properties():
 
 
 # TODO: Handle identifiers for Bulk Inserts - nk
-class IssueManager(SoftDeletionManager):
+class IssueVisibility(models.TextChoices):
+    PROJECT = "PROJECT", "Project"
+    RESTRICTED = "RESTRICTED", "Restricted"
+
+
+class IssueQuerySet(SoftDeletionQuerySet):
+    def visible_to(self, user):
+        from plane.utils.issue_access import filter_issues_visible_to
+
+        return filter_issues_visible_to(self, user)
+
+
+class IssueAccessManager(SoftDeletionManager):
+    def get_queryset(self):
+        return IssueQuerySet(self.model, using=self._db).filter(deleted_at__isnull=True).visible_to(get_current_user())
+
+    def visible_to(self, user):
+        return self.get_queryset().visible_to(user)
+
+
+class IssueAllObjectsManager(models.Manager):
+    def get_queryset(self):
+        return IssueQuerySet(self.model, using=self._db).visible_to(get_current_user())
+
+
+class IssueManager(IssueAccessManager):
     def get_queryset(self):
         return (
             super()
@@ -118,6 +144,18 @@ class Issue(ChangeTrackerMixin, ProjectBaseModel):
         blank=True,
         related_name="parent_issue",
     )
+    # When set, this issue inherits the complete restricted-access source set
+    # from another issue (normally its restricted parent). Keeping a direct
+    # pointer makes inherited ACL checks efficient for lists and analytics,
+    # regardless of sub-task nesting depth.
+    access_source = models.ForeignKey(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="access_inheritors",
+    )
+    inherit_parent_access = models.BooleanField(default=True)
     state = models.ForeignKey(
         "db.State",
         on_delete=models.CASCADE,
@@ -169,6 +207,16 @@ class Issue(ChangeTrackerMixin, ProjectBaseModel):
         blank=True,
     )
 
+    visibility = models.CharField(
+        max_length=16,
+        choices=IssueVisibility.choices,
+        default=IssueVisibility.PROJECT,
+        db_index=True,
+    )
+
+    objects = IssueAccessManager()
+    all_objects = IssueAllObjectsManager()
+    unscoped_objects = models.Manager()
     issue_objects = IssueManager()
 
     class Meta:

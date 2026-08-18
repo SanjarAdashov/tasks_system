@@ -270,6 +270,11 @@ class IssueRelationViewSet(BaseViewSet):
 
     def remove_relation(self, request, slug, project_id, issue_id):
         related_issue = request.data.get("related_issue", None)
+        if not Issue.objects.filter(id=related_issue, workspace__slug=slug).exists():
+            return Response(
+                {"error": "The required object does not exist."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         issue_relations = IssueRelation.objects.filter(
             workspace__slug=slug,

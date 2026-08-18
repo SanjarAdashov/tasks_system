@@ -28,6 +28,30 @@ export enum EIssueServiceType {
   WORK_ITEMS = "work-items",
 }
 
+export type TIssueVisibility = "PROJECT" | "RESTRICTED";
+
+export type TIssueAccessSource = {
+  type: "CREATOR" | "ASSIGNEE" | "MEMBER_PROPERTY" | "USER_GROUP";
+  label: string;
+};
+
+export type TIssueAccessSummary = {
+  users: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    avatar_url: string | null;
+    sources: TIssueAccessSource[];
+  }[];
+  groups: {
+    id: string;
+    name: string;
+    member_ids: string[];
+  }[];
+  inherited: boolean;
+  source_issue_id: string;
+};
+
 export enum EIssuesStoreType {
   GLOBAL = "GLOBAL",
   PROFILE = "PROFILE",
@@ -79,6 +103,9 @@ export type TBaseIssue = {
   is_draft: boolean;
   is_epic?: boolean;
   is_intake?: boolean;
+  visibility?: TIssueVisibility;
+  inherit_parent_access?: boolean;
+  access_source_id?: string | null;
 };
 
 type IssueRelation = {
@@ -104,6 +131,9 @@ export type TIssue = TBaseIssue & {
   // sourceIssueId is used to store the original issue id when creating a copy of an issue. Used in cloning property values. It is not a part of the API response.
   sourceIssueId?: string;
   state__group?: TStateGroups | null;
+  access_group_ids?: string[];
+  access_summary?: TIssueAccessSummary | null;
+  can_manage_access?: boolean;
 };
 
 export type TIssueMap = {

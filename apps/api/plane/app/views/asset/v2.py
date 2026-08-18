@@ -19,7 +19,17 @@ from rest_framework.permissions import AllowAny
 
 # Module imports
 from ..base import BaseAPIView
-from plane.db.models import FileAsset, Workspace, Project, User, WorkspaceMember, ProjectMember
+from plane.db.models import (
+    FileAsset,
+    Issue,
+    IssueComment,
+    IssueVisibility,
+    Workspace,
+    Project,
+    User,
+    WorkspaceMember,
+    ProjectMember,
+)
 from plane.settings.storage import S3Storage
 from plane.app.permissions import allow_permission, ROLE
 from plane.utils.cache import invalidate_cache_directly
@@ -31,6 +41,39 @@ from plane.utils.attachments import (
     validate_attachment_size,
     validate_project_attachment_size,
 )
+
+
+def _asset_issue_id(asset):
+    if asset.issue_id:
+        return asset.issue_id
+    if asset.comment_id:
+        return asset.comment.issue_id
+    return None
+
+
+def _can_access_asset_issue(asset):
+    issue_id = _asset_issue_id(asset)
+    if not issue_id:
+        return True
+    return Issue.objects.filter(
+        id=issue_id,
+        workspace_id=asset.workspace_id,
+        project_id=asset.project_id,
+    ).exists()
+
+
+def _asset_signed_url_expiration(asset):
+    issue_id = _asset_issue_id(asset)
+    if not issue_id:
+        return None
+    return (
+        300
+        if Issue.unscoped_objects.filter(
+            id=issue_id,
+            visibility=IssueVisibility.RESTRICTED,
+        ).exists()
+        else None
+    )
 
 
 class UserAssetsV2Endpoint(BaseAPIView):
@@ -325,6 +368,8 @@ class WorkspaceFileAssetEndpoint(BaseAPIView):
         (WORKSPACE_LOGO, USER_AVATAR, USER_COVER) have project_id=None and are
         always allowed.
         """
+        if not _can_access_asset_issue(asset):
+            return False
         if asset.project_id is None:
             return True
         # Scope the membership lookup to the asset's workspace as well as its
@@ -384,6 +429,33 @@ class WorkspaceFileAssetEndpoint(BaseAPIView):
 
         # Get the workspace
         workspace = Workspace.objects.get(slug=slug)
+        entity_fields = self.get_entity_id_field(
+            entity_type=entity_type,
+            entity_id=entity_identifier,
+        )
+        if (
+            "issue_id" in entity_fields
+            and not Issue.objects.filter(
+                id=entity_fields["issue_id"],
+                workspace=workspace,
+            ).exists()
+        ):
+            return Response(
+                {"error": "The required object does not exist."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        if (
+            "comment_id" in entity_fields
+            and not IssueComment.objects.filter(
+                id=entity_fields["comment_id"],
+                workspace=workspace,
+                issue_id__in=Issue.objects.filter(workspace=workspace).values("id"),
+            ).exists()
+        ):
+            return Response(
+                {"error": "The required object does not exist."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         # asset key
         asset_key = f"{workspace.id}/{uuid.uuid4().hex}-{name}"
@@ -396,7 +468,7 @@ class WorkspaceFileAssetEndpoint(BaseAPIView):
             workspace=workspace,
             created_by=request.user,
             entity_type=entity_type,
-            **self.get_entity_id_field(entity_type=entity_type, entity_id=entity_identifier),
+            **entity_fields,
         )
 
         # Get the presigned URL
@@ -417,6 +489,11 @@ class WorkspaceFileAssetEndpoint(BaseAPIView):
     def patch(self, request, slug, asset_id):
         # get the asset id
         asset = FileAsset.objects.get(id=asset_id, workspace__slug=slug)
+        if _asset_issue_id(asset) and not _can_access_asset_issue(asset):
+            return Response(
+                {"error": "The required object does not exist."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
         # enforce project-level access for project-bound assets
         if not self.has_project_asset_access(request, asset):
             return Response(
@@ -444,6 +521,11 @@ class WorkspaceFileAssetEndpoint(BaseAPIView):
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST], level="WORKSPACE")
     def delete(self, request, slug, asset_id):
         asset = FileAsset.objects.get(id=asset_id, workspace__slug=slug)
+        if _asset_issue_id(asset) and not _can_access_asset_issue(asset):
+            return Response(
+                {"error": "The required object does not exist."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
         # enforce project-level access for project-bound assets
         if not self.has_project_asset_access(request, asset):
             return Response(
@@ -461,6 +543,11 @@ class WorkspaceFileAssetEndpoint(BaseAPIView):
     def get(self, request, slug, asset_id):
         # get the asset id
         asset = FileAsset.objects.get(id=asset_id, workspace__slug=slug)
+        if _asset_issue_id(asset) and not _can_access_asset_issue(asset):
+            return Response(
+                {"error": "The required object does not exist."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
         # enforce project-level access for project-bound assets
         if not self.has_project_asset_access(request, asset):
             return Response(
@@ -482,6 +569,7 @@ class WorkspaceFileAssetEndpoint(BaseAPIView):
             object_name=asset.asset.name,
             disposition="attachment",
             filename=asset.attributes.get("name"),
+            expiration=_asset_signed_url_expiration(asset),
         )
         # Redirect to the signed URL
         return HttpResponseRedirect(signed_url)
@@ -521,9 +609,7 @@ class StaticFileAssetEndpoint(BaseAPIView):
         # same-origin XSS when assets are served on the application's origin.
         storage = S3Storage(request=request)
         asset_mime_type = (asset.attributes.get("type") or "").split(";")[0].strip().lower()
-        disposition = (
-            "attachment" if asset_mime_type in settings.SCRIPT_CAPABLE_MIME_TYPES else "inline"
-        )
+        disposition = "attachment" if asset_mime_type in settings.SCRIPT_CAPABLE_MIME_TYPES else "inline"
         # Generate a presigned URL to share an S3 object
         signed_url = storage.generate_presigned_url(
             object_name=asset.asset.name,
@@ -653,6 +739,11 @@ class ProjectAssetEndpoint(BaseAPIView):
     def delete(self, request, slug, project_id, pk):
         # Get the asset
         asset = FileAsset.objects.get(id=pk, workspace__slug=slug, project_id=project_id)
+        if not _can_access_asset_issue(asset):
+            return Response(
+                {"error": "The requested asset could not be found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
         # Check deleted assets
         asset.is_deleted = True
         asset.deleted_at = timezone.now()
@@ -664,6 +755,11 @@ class ProjectAssetEndpoint(BaseAPIView):
     def get(self, request, slug, project_id, pk):
         # get the asset id
         asset = FileAsset.objects.get(workspace__slug=slug, project_id=project_id, pk=pk)
+        if not _can_access_asset_issue(asset):
+            return Response(
+                {"error": "The requested asset could not be found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         # Check if the asset is uploaded
         if not asset.is_uploaded:
@@ -683,6 +779,7 @@ class ProjectAssetEndpoint(BaseAPIView):
             object_name=asset.asset.name,
             disposition=disposition,
             filename=asset.attributes.get("name"),
+            expiration=_asset_signed_url_expiration(asset),
         )
         # Redirect to the signed URL
         return HttpResponseRedirect(signed_url)
@@ -874,12 +971,18 @@ class WorkspaceAssetDownloadEndpoint(BaseAPIView):
                 {"error": "The requested asset could not be found."},
                 status=status.HTTP_404_NOT_FOUND,
             )
+        if not _can_access_asset_issue(asset):
+            return Response(
+                {"error": "The requested asset could not be found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         storage = S3Storage(request=request)
         signed_url = storage.generate_presigned_url(
             object_name=asset.asset.name,
             disposition="attachment",
             filename=asset.attributes.get("name", uuid.uuid4().hex),
+            expiration=_asset_signed_url_expiration(asset),
         )
 
         return HttpResponseRedirect(signed_url)
@@ -902,12 +1005,18 @@ class ProjectAssetDownloadEndpoint(BaseAPIView):
                 {"error": "The requested asset could not be found."},
                 status=status.HTTP_404_NOT_FOUND,
             )
+        if not _can_access_asset_issue(asset):
+            return Response(
+                {"error": "The requested asset could not be found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         storage = S3Storage(request=request)
         signed_url = storage.generate_presigned_url(
             object_name=asset.asset.name,
             disposition="attachment",
             filename=asset.attributes.get("name", uuid.uuid4().hex),
+            expiration=_asset_signed_url_expiration(asset),
         )
 
         return HttpResponseRedirect(signed_url)

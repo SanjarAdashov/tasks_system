@@ -20,7 +20,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 # Module imports
 from .. import BaseAPIView
 from plane.app.serializers import IssueAttachmentSerializer
-from plane.db.models import FileAsset, Issue, Project, ProjectMember, Workspace
+from plane.db.models import FileAsset, Issue, IssueVisibility, Project, ProjectMember, Workspace
 from plane.bgtasks.issue_activities_task import issue_activity
 from plane.app.permissions import allow_permission, ROLE
 from plane.settings.storage import S3Storage
@@ -240,6 +240,12 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
                 object_name=asset.asset.name,
                 disposition=disposition,
                 filename=asset.attributes.get("name"),
+                expiration=300
+                if Issue.objects.filter(
+                    id=issue_id,
+                    visibility=IssueVisibility.RESTRICTED,
+                ).exists()
+                else None,
             )
             return HttpResponseRedirect(presigned_url)
 

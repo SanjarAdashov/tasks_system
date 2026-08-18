@@ -14,6 +14,7 @@ import { findTotalDaysInRange, generateWorkItemLink } from "@plane/utils";
 // components
 import { SIDEBAR_WIDTH } from "@/components/gantt-chart/constants";
 import { IssueIdentifier } from "@/components/issues/issue-detail/issue-identifier";
+import { IssueRestrictedBadge } from "@/components/issues/issue-access-control";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
 import { useIssues } from "@/hooks/store/use-issues";
@@ -71,9 +72,10 @@ export const IssueGanttBlock = observer(function IssueGanttBlock(props: Props) {
           >
             <div className="absolute top-0 left-0 h-full w-full bg-surface-1/50" />
             <div
-              className="sticky w-auto flex-1 truncate overflow-hidden px-2.5 py-1 text-13 text-primary"
+              className="sticky flex w-auto flex-1 items-center gap-1.5 truncate overflow-hidden px-2.5 py-1 text-13 text-primary"
               style={{ left: `${SIDEBAR_WIDTH}px` }}
             >
+              <IssueRestrictedBadge issueVisibility={issueDetails?.visibility} />
               {issueDetails?.name}
             </div>
           </div>
@@ -151,6 +153,7 @@ export const IssueGanttSidebarBlock = observer(function IssueGanttSidebarBlock(p
             displayProperties={issuesFilter?.issueFilters?.displayProperties}
           />
         )}
+        <IssueRestrictedBadge issueVisibility={issueDetails?.visibility} />
         <Tooltip tooltipContent={issueDetails?.name} isMobile={isMobile}>
           <span className="flex-grow truncate text-13 font-medium">{issueDetails?.name}</span>
         </Tooltip>

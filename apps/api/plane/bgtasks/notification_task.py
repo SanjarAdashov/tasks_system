@@ -23,6 +23,7 @@ from plane.db.models import (
     IssueActivity,
     UserNotificationPreference,
     ProjectMember,
+    IssueVisibility,
 )
 from django.db.models import Subquery
 
@@ -30,6 +31,7 @@ from django.db.models import Subquery
 from celery import shared_task
 from bs4 import BeautifulSoup
 from plane.utils.telegram import enqueue_telegram_notifications
+from plane.utils.issue_access import issue_authorized_user_ids
 
 
 # =========== Issue Description Html Parsing and notification Functions ======================
@@ -245,10 +247,22 @@ def notifications(
             2. From the latest set of mentions, extract the users which are not a subscribers & make them subscribers
             """
 
-            # get the list of active project members
-            project_members = ProjectMember.objects.filter(project_id=project_id, is_active=True).values_list(
-                "member_id", flat=True
-            )
+            issue = Issue.unscoped_objects.filter(pk=issue_id).first()
+            if not issue:
+                return
+
+            # Restricted tasks may notify only users who still have access at
+            # delivery time. This single recipient set feeds in-app, email and
+            # Telegram creation below.
+            project_members = ProjectMember.objects.filter(
+                project_id=project_id,
+                is_active=True,
+            ).values_list("member_id", flat=True)
+            if issue.visibility == IssueVisibility.RESTRICTED:
+                project_members = User.objects.filter(
+                    id__in=issue_authorized_user_ids(issue),
+                    is_active=True,
+                ).values_list("id", flat=True)
 
             # Get new mentions from the newer instance
             new_mentions = get_new_mentions(requested_instance=requested_data, current_instance=current_instance)
@@ -304,8 +318,6 @@ def notifications(
                 .exclude(subscriber_id__in=list(new_mentions + comment_mentions + [actor_id]))
                 .values_list("subscriber", flat=True)
             )
-
-            issue = Issue.objects.filter(pk=issue_id).first()
 
             if subscriber:
                 # add the user to issue subscriber
