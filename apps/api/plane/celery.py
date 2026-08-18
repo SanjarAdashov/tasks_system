@@ -51,6 +51,10 @@ app.conf.beat_schedule = {
         "task": "plane.bgtasks.telegram_notification_task.process_due_telegram_deliveries",
         "schedule": crontab(minute="*"),
     },
+    "send-due-meeting-reminders": {
+        "task": "plane.bgtasks.calendar_notification_task.process_due_meeting_reminders",
+        "schedule": crontab(minute="*"),
+    },
     "push-instance-metrics": {
         "task": "plane.license.bgtasks.telemetry_metrics.push_instance_metrics",
         "schedule": schedule(run_every=timedelta(minutes=METRICS_PUSH_INTERVAL_MINUTES)),
@@ -95,6 +99,14 @@ app.conf.beat_schedule = {
     "check-every-day-to-delete-exporter-history": {
         "task": "plane.bgtasks.exporter_expired_task.delete_old_s3_link",
         "schedule": crontab(hour=3, minute=45),  # UTC 03:45
+    },
+    "sync-official-holiday-calendars": {
+        "task": "plane.bgtasks.calendar_task.sync_official_holiday_calendars",
+        "schedule": crontab(hour=4, minute=15),  # UTC 04:15 / UZT 09:15
+    },
+    "sync-external-calendars": {
+        "task": "plane.bgtasks.calendar_task.sync_all_calendar_connections",
+        "schedule": crontab(minute="*/5"),
     },
 }
 

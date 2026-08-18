@@ -3,6 +3,7 @@
 # See the LICENSE file for details.
 
 from .analytic import urlpatterns as analytic_urls
+from .calendar import urlpatterns as calendar_urls
 from .api import urlpatterns as api_urls
 from .asset import urlpatterns as asset_urls
 from .cycle import urlpatterns as cycle_urls
@@ -25,6 +26,7 @@ from .exporter import urlpatterns as exporter_urls
 
 urlpatterns = [
     *analytic_urls,
+    *calendar_urls,
     *asset_urls,
     *cycle_urls,
     *estimate_urls,

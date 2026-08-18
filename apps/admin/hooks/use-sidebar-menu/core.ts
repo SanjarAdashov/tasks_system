@@ -4,7 +4,7 @@
  * See the LICENSE file for details.
  */
 
-import { Image, BrainCog, Cog, Mail, Send, UserRoundCog, Users } from "lucide-react";
+import { Image, BrainCog, CalendarSync, Cog, Mail, Send, UserRoundCog, Users } from "lucide-react";
 // plane imports
 import { LockIcon, WorkspaceIcon } from "@plane/propel/icons";
 // types
@@ -14,6 +14,7 @@ export type TCoreSidebarMenuKey =
   | "general"
   | "email"
   | "telegram"
+  | "calendar"
   | "workspace"
   | "users"
   | "user-groups"
@@ -39,6 +40,12 @@ export const coreSidebarMenuLinks: Record<TCoreSidebarMenuKey, TSidebarMenuItem>
     name: "Telegram",
     description: "Configure personal bot notifications.",
     href: `/telegram/`,
+  },
+  calendar: {
+    Icon: CalendarSync,
+    name: "Calendar and meetings",
+    description: "Configure calendar OAuth and Google Meet.",
+    href: `/calendar/`,
   },
   workspace: {
     Icon: WorkspaceIcon,

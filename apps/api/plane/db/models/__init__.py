@@ -135,6 +135,34 @@ from .custom_grouping import (
     ProjectCustomGrouping,
     ProjectCustomGroupingPreference,
 )
+from .calendar import (
+    CalendarConnection,
+    CalendarConnectionStatus,
+    CalendarPreference,
+    CalendarProvider,
+    CalendarSyncMode,
+    Meeting,
+    MeetingActivity,
+    MeetingAttachment,
+    MeetingAttendanceMode,
+    MeetingAvailability,
+    MeetingComment,
+    MeetingExternalEvent,
+    MeetingLinkSource,
+    MeetingParticipant,
+    MeetingParticipantRole,
+    MeetingParticipantSource,
+    MeetingRecurrenceException,
+    MeetingReminder,
+    MeetingResponseStatus,
+    MeetingStatus,
+    MeetingType,
+    MeetingVisibility,
+    WorkspaceCalendarSettings,
+    WorkspaceHoliday,
+    get_default_calendar_filters,
+    get_default_working_hours,
+)
 
 from .favorite import UserFavorite
 

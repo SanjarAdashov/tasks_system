@@ -246,6 +246,16 @@ export class InstanceService extends APIService {
       });
   }
 
+  async calendarOAuthAuthorizationUrl(returnUrl: string, purpose: "personal_calendar" | "system_meet") {
+    return this.get("/api/users/me/calendar/connections/oauth/start/", {
+      params: { provider: "GOOGLE", purpose, return_url: returnUrl },
+    })
+      .then((response) => response.data as { authorization_url: string })
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
   async uploadInterfaceThemeBackground(file: File): Promise<TFileSignedURLResponse> {
     const fileMetaData = await getFileMetaDataForUpload(file);
     const signedURLResponse = await this.post("/api/instances/interface-theme/background/", fileMetaData)

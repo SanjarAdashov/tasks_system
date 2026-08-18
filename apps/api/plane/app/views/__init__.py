@@ -2,6 +2,25 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 # See the LICENSE file for details.
 
+from .calendar import (
+    CalendarAvailabilityEndpoint,
+    CalendarConnectionViewSet,
+    CalendarOAuthCallbackEndpoint,
+    CalendarOAuthStartEndpoint,
+    CalendarPreferenceEndpoint,
+    IssueMeetingDefaultsEndpoint,
+    MeetingCommentViewSet,
+    MeetingAttachmentViewSet,
+    MeetingICSEndpoint,
+    MeetingTypeViewSet,
+    MeetingViewSet,
+    PublicMeetingAttachmentEndpoint,
+    PublicMeetingResponseEndpoint,
+    WorkspaceCalendarSettingsEndpoint,
+    WorkspaceHolidayViewSet,
+    WorkspaceHolidaySyncEndpoint,
+)
+
 from .project.base import (
     ProjectViewSet,
     ProjectIdentifierEndpoint,

@@ -295,6 +295,51 @@ unsplash_config_variables = [
     },
 ]
 
+calendar_config_variables = [
+    {
+        "key": "CALENDAR_GOOGLE_CLIENT_ID",
+        "value": os.environ.get("CALENDAR_GOOGLE_CLIENT_ID", ""),
+        "category": "CALENDAR",
+        "is_encrypted": False,
+    },
+    {
+        "key": "CALENDAR_GOOGLE_CLIENT_SECRET",
+        "value": os.environ.get("CALENDAR_GOOGLE_CLIENT_SECRET", ""),
+        "category": "CALENDAR",
+        "is_encrypted": True,
+    },
+    {
+        "key": "CALENDAR_MICROSOFT_CLIENT_ID",
+        "value": os.environ.get("CALENDAR_MICROSOFT_CLIENT_ID", ""),
+        "category": "CALENDAR",
+        "is_encrypted": False,
+    },
+    {
+        "key": "CALENDAR_MICROSOFT_CLIENT_SECRET",
+        "value": os.environ.get("CALENDAR_MICROSOFT_CLIENT_SECRET", ""),
+        "category": "CALENDAR",
+        "is_encrypted": True,
+    },
+    {
+        "key": "CALENDAR_MICROSOFT_TENANT",
+        "value": os.environ.get("CALENDAR_MICROSOFT_TENANT", "common"),
+        "category": "CALENDAR",
+        "is_encrypted": False,
+    },
+    {
+        "key": "CALENDAR_GOOGLE_MEET_REFRESH_TOKEN",
+        "value": os.environ.get("CALENDAR_GOOGLE_MEET_REFRESH_TOKEN", ""),
+        "category": "CALENDAR",
+        "is_encrypted": True,
+    },
+    {
+        "key": "CALENDAR_GOOGLE_MEET_ACCOUNT",
+        "value": os.environ.get("CALENDAR_GOOGLE_MEET_ACCOUNT", ""),
+        "category": "CALENDAR",
+        "is_encrypted": False,
+    },
+]
+
 core_config_variables = [
     *authentication_config_variables,
     *workspace_management_config_variables,
@@ -306,4 +351,5 @@ core_config_variables = [
     *smtp_config_variables,
     *llm_config_variables,
     *unsplash_config_variables,
+    *calendar_config_variables,
 ]

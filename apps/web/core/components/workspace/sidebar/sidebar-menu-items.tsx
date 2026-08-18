@@ -78,7 +78,8 @@ export const SidebarMenuItems = observer(function SidebarMenuItems() {
     personalItems.sort((a, b) => a.sort_order - b.sort_order);
 
     // Merge static items with sorted personal items
-    return [...items, ...personalItems];
+    const calendarItem = WORKSPACE_SIDEBAR_STATIC_NAVIGATION_ITEMS["calendar"];
+    return [...items, ...personalItems, ...(calendarItem ? [calendarItem] : [])];
   }, [personalPreferences]);
 
   const sortedNavigationItems = useMemo(

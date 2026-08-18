@@ -3,6 +3,19 @@
 # See the LICENSE file for details.
 
 from .base import BaseSerializer
+from .calendar import (
+    CalendarConnectionSerializer,
+    CalendarPreferenceSerializer,
+    CalendarUserSerializer,
+    MeetingActivitySerializer,
+    MeetingAttachmentSerializer,
+    MeetingCommentSerializer,
+    MeetingParticipantSerializer,
+    MeetingSerializer,
+    MeetingTypeSerializer,
+    WorkspaceCalendarSettingsSerializer,
+    WorkspaceHolidaySerializer,
+)
 from .user import (
     UserSerializer,
     UserLiteSerializer,

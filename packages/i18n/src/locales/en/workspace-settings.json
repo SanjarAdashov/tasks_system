@@ -6,6 +6,20 @@
     "copy_key": "Copy and save this secret key in Plane Pages. You can't see this key after you hit Close. A CSV file containing the key has been downloaded.",
     "token_copied": "Token copied to clipboard.",
     "settings": {
+      "calendar": {
+        "title": "Calendar and working hours",
+        "heading": "Workspace calendar",
+        "description": "Configure working hours, official Uzbekistan holidays, and company overrides.",
+        "work_hours": "Working hours",
+        "work_hours_hint": "The default is 08:00–22:00, Monday–Friday, in each user's timezone.",
+        "holidays": "Days off and holidays",
+        "holidays_hint": "Data is synced daily from the official my.gov.uz calendar. Manual overrides take priority.",
+        "sync_now": "Sync with my.gov.uz",
+        "holiday_name": "Day name",
+        "make_workday": "Make a workday",
+        "company_workday": "Company workday",
+        "use_source": "Restore source data"
+      },
       "general": {
         "title": "General",
         "upload_logo": "Upload logo",

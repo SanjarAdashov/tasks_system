@@ -7,6 +7,7 @@
 import { useEffect, useState } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
+import useSWR from "swr";
 // types
 import { PROJECT_ERROR_MESSAGES, EUserPermissions, EUserPermissionsLevel } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
@@ -18,6 +19,7 @@ import { AlertModalCore } from "@plane/ui";
 import { useIssues } from "@/hooks/store/use-issues";
 import { useProject } from "@/hooks/store/use-project";
 import { useUser, useUserPermissions } from "@/hooks/store/user";
+import calendarService from "@/services/calendar.service";
 
 type Props = {
   isOpen: boolean;
@@ -33,6 +35,7 @@ export const DeleteIssueModal = observer(function DeleteIssueModal(props: Props)
   const { dataId, data, isOpen, handleClose, isSubIssue = false, onSubmit, isEpic = false } = props;
   // states
   const [isDeleting, setIsDeleting] = useState(false);
+  const [cancelLinkedMeetings, setCancelLinkedMeetings] = useState(true);
   // store hooks
   const { workspaceSlug } = useParams();
   const { issueMap } = useIssues();
@@ -44,12 +47,12 @@ export const DeleteIssueModal = observer(function DeleteIssueModal(props: Props)
 
   useEffect(() => {
     setIsDeleting(false);
+    setCancelLinkedMeetings(true);
   }, [isOpen]);
 
-  if (!dataId && !data) return null;
-
   // derived values
-  const issue = data ? data : issueMap[dataId!];
+  const issue = data || (dataId ? issueMap[dataId] : undefined);
+  const issueId = issue?.id;
   const projectDetails = getProjectById(issue?.project_id);
   const isIssueCreator = issue?.created_by === currentUser?.id;
 
@@ -61,6 +64,14 @@ export const DeleteIssueModal = observer(function DeleteIssueModal(props: Props)
   );
 
   const authorized = isIssueCreator || canPerformProjectAdminActions;
+  const { data: linkedMeetings = [] } = useSWR(
+    isOpen && workspaceSlug && issueId ? `ISSUE_MEETINGS_BEFORE_DELETE_${issueId}` : null,
+    () => calendarService.getIssueMeetings(workspaceSlug.toString(), issueId!),
+    { revalidateOnFocus: false }
+  );
+  const activeLinkedMeetings = linkedMeetings.filter((meeting) => meeting.status === "PLANNED");
+
+  if (!dataId && !data) return null;
 
   const onClose = () => {
     setIsDeleting(false);
@@ -81,7 +92,16 @@ export const DeleteIssueModal = observer(function DeleteIssueModal(props: Props)
       return;
     }
     if (onSubmit)
-      await onSubmit()
+      await (async () => {
+        if (cancelLinkedMeetings && activeLinkedMeetings.length > 0) {
+          await Promise.all(
+            activeLinkedMeetings.map((meeting) =>
+              calendarService.cancelMeeting(workspaceSlug.toString(), meeting.id, t("calendar.task_deleted_reason"))
+            )
+          );
+        }
+        await onSubmit();
+      })()
         .then(() => {
           setToast({
             type: TOAST_TYPE.SUCCESS,
@@ -91,6 +111,7 @@ export const DeleteIssueModal = observer(function DeleteIssueModal(props: Props)
             }),
           });
           onClose();
+          return undefined;
         })
         .catch((errors) => {
           const isPermissionError =
@@ -123,6 +144,17 @@ export const DeleteIssueModal = observer(function DeleteIssueModal(props: Props)
             {projectDetails?.identifier}-{issue?.sequence_id}
           </span>
           {` ? All of the data related to the ${isEpic ? "epic" : "work item"} will be permanently removed. This action cannot be undone.`}
+          {activeLinkedMeetings.length > 0 && (
+            <label className="mt-4 flex items-start gap-2 rounded-md border border-subtle bg-surface-2 p-3 text-11 text-secondary">
+              <input
+                type="checkbox"
+                className="mt-0.5"
+                checked={cancelLinkedMeetings}
+                onChange={(event) => setCancelLinkedMeetings(event.target.checked)}
+              />
+              <span>{t("calendar.cancel_linked_meetings", { count: activeLinkedMeetings.length })}</span>
+            </label>
+          )}
         </>
       }
     />

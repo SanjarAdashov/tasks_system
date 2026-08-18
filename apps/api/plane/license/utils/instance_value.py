@@ -65,3 +65,26 @@ def get_email_configuration():
     if not configuration[-1]:
         configuration[-1] = DEFAULT_EMAIL_FROM
     return tuple(configuration)
+
+
+def get_calendar_configuration():
+    """Return calendar OAuth and system Meet settings without exposing secrets to clients."""
+    keys = [
+        "CALENDAR_GOOGLE_CLIENT_ID",
+        "CALENDAR_GOOGLE_CLIENT_SECRET",
+        "CALENDAR_MICROSOFT_CLIENT_ID",
+        "CALENDAR_MICROSOFT_CLIENT_SECRET",
+        "CALENDAR_MICROSOFT_TENANT",
+        "CALENDAR_GOOGLE_MEET_REFRESH_TOKEN",
+        "CALENDAR_GOOGLE_MEET_ACCOUNT",
+    ]
+    defaults = {
+        "CALENDAR_MICROSOFT_TENANT": "common",
+    }
+    values = get_configuration_value(
+        [
+            {"key": key, "default": os.environ.get(key, defaults.get(key, ""))}
+            for key in keys
+        ]
+    )
+    return dict(zip(keys, values))

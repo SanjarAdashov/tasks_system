@@ -45,6 +45,10 @@ export const PROFILE_SETTINGS: Record<
     key: "notifications",
     i18n_label: "profile.actions.notifications",
   },
+  calendars: {
+    key: "calendars",
+    i18n_label: "profile.actions.calendars",
+  },
   "api-tokens": {
     key: "api-tokens",
     i18n_label: "profile.actions.api-tokens",
@@ -61,6 +65,7 @@ export const GROUPED_PROFILE_SETTINGS: Record<
     PROFILE_SETTINGS["general"],
     PROFILE_SETTINGS["preferences"],
     PROFILE_SETTINGS["notifications"],
+    PROFILE_SETTINGS["calendars"],
     PROFILE_SETTINGS["security"],
   ],
   [PROFILE_SETTINGS_CATEGORY.DEVELOPER]: [PROFILE_SETTINGS["api-tokens"]],

@@ -6,7 +6,8 @@
 
 import { useState } from "react";
 import { observer } from "mobx-react";
-import { Clock } from "lucide-react";
+import { CalendarClock, Clock } from "lucide-react";
+import { useRouter } from "next/navigation";
 // plane imports
 import { Avatar, Row } from "@plane/ui";
 import { cn, calculateTimeAgo, renderFormattedDate, renderFormattedTime, getFileURL } from "@plane/utils";
@@ -31,6 +32,7 @@ export const NotificationItem = observer(function NotificationItem(props: TNotif
   const { asJson: notification, markNotificationAsRead } = useNotification(notificationId);
   const { getIsIssuePeeked, setPeekIssue } = useIssueDetail();
   const { getWorkspaceBySlug } = useWorkspace();
+  const router = useRouter();
   // states
   const [isSnoozeStateModalOpen, setIsSnoozeStateModalOpen] = useState(false);
   const [customSnoozeModal, setCustomSnoozeModal] = useState(false);
@@ -40,10 +42,22 @@ export const NotificationItem = observer(function NotificationItem(props: TNotif
   const issueId = notification?.data?.issue?.id || undefined;
   const workspace = getWorkspaceBySlug(workspaceSlug);
 
-  const notificationField = notification?.data?.issue_activity.field || undefined;
+  const notificationField = notification?.data?.issue_activity?.field || undefined;
   const notificationTriggeredBy = notification.triggered_by_details || undefined;
+  const isMeetingNotification = notification.entity_name === "meeting" && Boolean(notification.data?.meeting?.id);
 
   const handleNotificationIssuePeekOverview = async () => {
+    if (isMeetingNotification && !isSnoozeStateModalOpen && !customSnoozeModal) {
+      if (notification.read_at === null) {
+        try {
+          await markNotificationAsRead(workspaceSlug);
+        } catch (error) {
+          console.error(error);
+        }
+      }
+      router.push(`/${workspaceSlug}/calendar?meeting=${notification.data?.meeting?.id}`);
+      return;
+    }
     if (workspaceSlug && projectId && issueId && !isSnoozeStateModalOpen && !customSnoozeModal) {
       setPeekIssue(undefined);
       setCurrentSelectedNotificationId(notificationId);
@@ -65,7 +79,13 @@ export const NotificationItem = observer(function NotificationItem(props: TNotif
     }
   };
 
-  if (!workspaceSlug || !notificationId || !notification?.id || !notificationField || !workspace?.id || !projectId)
+  if (
+    !workspaceSlug ||
+    !notificationId ||
+    !notification?.id ||
+    !workspace?.id ||
+    (!isMeetingNotification && (!notificationField || !projectId))
+  )
     return <></>;
 
   return (
@@ -85,26 +105,34 @@ export const NotificationItem = observer(function NotificationItem(props: TNotif
 
       <div className="relative flex w-full gap-2">
         <div className="relative flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-layer-1">
-          {notificationTriggeredBy && (
-            <Avatar
-              name={notificationTriggeredBy.display_name || notificationTriggeredBy?.first_name}
-              src={getFileURL(notificationTriggeredBy.avatar_url)}
-              size={42}
-              shape="circle"
-              className="bg-layer-1 text-body-sm-medium"
-            />
+          {isMeetingNotification ? (
+            <CalendarClock className="size-5 text-accent-primary" />
+          ) : (
+            notificationTriggeredBy && (
+              <Avatar
+                name={notificationTriggeredBy.display_name || notificationTriggeredBy?.first_name}
+                src={getFileURL(notificationTriggeredBy.avatar_url)}
+                size={42}
+                shape="circle"
+                className="bg-layer-1 text-body-sm-medium"
+              />
+            )
           )}
         </div>
 
         <div className="-mt-2 w-full space-y-1">
           <div className="relative flex h-8 items-center gap-3">
             <div className="line-clamp-1 w-full truncate overflow-hidden text-body-xs-medium break-all whitespace-normal text-primary">
-              <NotificationContent
-                notification={notification}
-                workspaceId={workspace.id}
-                workspaceSlug={workspaceSlug}
-                projectId={projectId}
-              />
+              {isMeetingNotification ? (
+                <span className="text-primary">{notification.message_stripped || notification.title}</span>
+              ) : (
+                <NotificationContent
+                  notification={notification}
+                  workspaceId={workspace.id}
+                  workspaceSlug={workspaceSlug}
+                  projectId={projectId ?? ""}
+                />
+              )}
             </div>
             <NotificationOption
               workspaceSlug={workspaceSlug}
@@ -118,8 +146,21 @@ export const NotificationItem = observer(function NotificationItem(props: TNotif
 
           <div className="relative flex items-center gap-3 text-caption-sm-regular text-secondary">
             <div className="line-clamp-1 w-full truncate overflow-hidden break-words whitespace-normal">
-              {notification?.data?.issue?.identifier}-{notification?.data?.issue?.sequence_id}&nbsp;
-              {notification?.data?.issue?.name}
+              {isMeetingNotification ? (
+                <>
+                  {notification.data?.meeting?.starts_at
+                    ? new Intl.DateTimeFormat(undefined, {
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      }).format(new Date(notification.data.meeting.starts_at))
+                    : notification.data?.meeting?.title}
+                </>
+              ) : (
+                <>
+                  {notification?.data?.issue?.identifier}-{notification?.data?.issue?.sequence_id}&nbsp;
+                  {notification?.data?.issue?.name}
+                </>
+              )}
             </div>
             <div className="flex-shrink-0">
               {notification?.snoozed_till ? (

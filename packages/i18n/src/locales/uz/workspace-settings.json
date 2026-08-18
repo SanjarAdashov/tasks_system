@@ -6,6 +6,20 @@
     "copy_key": "Ushbu maxfiy kalitdan nusxa oling va Plane sahifalarida saqlang. Yopish tugmasini bosganingizdan keyin bu kalitni ko'ra olmaysiz. Kalitni o'z ichiga olgan CSV fayli yuklab olindi.",
     "token_copied": "Token vaqtinchalik xotiraga nusxalandi.",
     "settings": {
+      "calendar": {
+        "title": "Kalendar va ish vaqti",
+        "heading": "Ish maydoni kalendari",
+        "description": "Ish vaqtini, O‘zbekiston rasmiy dam olish kunlarini va kompaniya istisnolarini sozlang.",
+        "work_hours": "Ish vaqti",
+        "work_hours_hint": "Standart jadval: dushanba–juma, foydalanuvchi vaqt mintaqasida 08:00–22:00.",
+        "holidays": "Dam olish va bayram kunlari",
+        "holidays_hint": "Ma’lumotlar har kuni my.gov.uz rasmiy kalendaridan olinadi. Qo‘lda kiritilgan istisnolar ustuvor.",
+        "sync_now": "my.gov.uz bilan yangilash",
+        "holiday_name": "Kun nomi",
+        "make_workday": "Ish kuni qilish",
+        "company_workday": "Kompaniya ish kuni",
+        "use_source": "Manba ma’lumotini qaytarish"
+      },
       "general": {
         "title": "Umumiy",
         "upload_logo": "Logotip yuklash",

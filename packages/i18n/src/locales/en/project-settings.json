@@ -1,6 +1,19 @@
 {
   "project_settings": {
     "sidebar_title": "Project settings",
+    "meeting_types": {
+      "label": "Meeting types",
+      "heading": "Project meeting types",
+      "description": "Configure the names, colors, duration, and format of meetings available in this project.",
+      "create": "Create type",
+      "edit": "Edit type",
+      "name": "Name",
+      "color": "Color",
+      "duration": "Default duration, min",
+      "mode": "Default format",
+      "default": "Default",
+      "delete_confirm": "Delete this meeting type? Existing meetings will keep its name and color."
+    },
     "work_item_fields": {
       "label": "Work item fields",
       "heading": "Work item fields",

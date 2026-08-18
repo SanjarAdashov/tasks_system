@@ -1,6 +1,19 @@
 {
   "project_settings": {
     "sidebar_title": "Loyiha sozlamalari",
+    "meeting_types": {
+      "label": "Uchrashuv turlari",
+      "heading": "Loyiha uchrashuv turlari",
+      "description": "Ushbu loyihadagi uchrashuv nomi, rangi, davomiyligi va formatini sozlang.",
+      "create": "Tur yaratish",
+      "edit": "Turni tahrirlash",
+      "name": "Nomi",
+      "color": "Rang",
+      "duration": "Standart davomiylik, daqiqa",
+      "mode": "Standart format",
+      "default": "Standart",
+      "delete_confirm": "Uchrashuv turi o‘chirilsinmi? Mavjud uchrashuvlarda nom va rang saqlanadi."
+    },
     "work_item_fields": {
       "label": "Ish elementi maydonlari",
       "heading": "Ish elementi maydonlari",
