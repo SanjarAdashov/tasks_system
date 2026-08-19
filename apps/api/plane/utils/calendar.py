@@ -10,6 +10,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from plane.db.models import (
+    CalendarConnectionStatus,
     CalendarPreference,
     Meeting,
     MeetingAvailability,
@@ -352,7 +353,10 @@ def user_busy_intervals(user_ids, range_start, range_end, *, exclude_meeting_id=
 
     external_events = MeetingExternalEvent.objects.filter(
         connection__user_id__in=user_ids,
-        connection__status="CONNECTED",
+        connection__status__in=[
+            CalendarConnectionStatus.CONNECTED,
+            CalendarConnectionStatus.PARTIAL,
+        ],
         is_deleted_at_provider=False,
         availability__in=[MeetingAvailability.BUSY, MeetingAvailability.MAYBE, MeetingAvailability.AWAY],
         starts_at__lt=range_end,

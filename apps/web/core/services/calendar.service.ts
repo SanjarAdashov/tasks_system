@@ -177,7 +177,7 @@ export class CalendarService extends APIService {
     }).then((response) => response.data);
   }
 
-  async resyncConnection(connectionId: string) {
+  async resyncConnection(connectionId: string): Promise<{ queued: boolean; queued_at: string }> {
     return this.post(`/api/users/me/calendar/connections/${connectionId}/resync/`).then((response) => response.data);
   }
 

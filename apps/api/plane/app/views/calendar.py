@@ -30,6 +30,7 @@ from plane.app.serializers import (
 from plane.app.views.base import BaseAPIView, BaseViewSet
 from plane.db.models import (
     CalendarConnection,
+    CalendarConnectionStatus,
     CalendarPreference,
     Issue,
     Meeting,
@@ -232,7 +233,10 @@ class MeetingViewSet(BaseViewSet):
 
         external = MeetingExternalEvent.objects.filter(
             connection__user=request.user,
-            connection__status="CONNECTED",
+            connection__status__in=[
+                CalendarConnectionStatus.CONNECTED,
+                CalendarConnectionStatus.PARTIAL,
+            ],
             meeting__isnull=True,
             is_deleted_at_provider=False,
             starts_at__lt=range_end,
@@ -781,13 +785,14 @@ class CalendarConnectionViewSet(BaseViewSet):
 
     def resync(self, request, pk):
         connection = self.get_object()
+        queued_at = timezone.now()
         connection.last_error = ""
         connection.last_error_at = None
         connection.save(update_fields=["last_error", "last_error_at", "updated_at"])
         from plane.bgtasks.calendar_task import sync_calendar_connection
 
         sync_calendar_connection.delay(str(connection.id))
-        return Response({"queued": True})
+        return Response({"queued": True, "queued_at": queued_at})
 
     def calendars(self, request, pk):
         connection = self.get_object()

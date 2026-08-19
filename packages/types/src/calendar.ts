@@ -229,10 +229,11 @@ export interface TCalendarConnection {
   provider: "GOOGLE" | "MICROSOFT" | "ICLOUD" | "CALDAV";
   account_email: string;
   account_label: string;
-  status: "CONNECTED" | "PAUSED" | "ERROR";
+  status: "CONNECTED" | "PARTIAL" | "PAUSED" | "ERROR";
   selected_calendars: string[];
   sync_mode: "FULL" | "INBOUND_BUSY" | "OUTBOUND_GTS" | "DISABLED";
   last_synced_at?: string | null;
+  last_error_at?: string | null;
   last_error?: string;
   has_credentials: boolean;
 }

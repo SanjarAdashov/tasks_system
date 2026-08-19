@@ -28,7 +28,11 @@ def sync_calendar_connection(connection_id):
 @shared_task
 def sync_all_calendar_connections():
     connection_ids = CalendarConnection.objects.filter(
-        status__in=[CalendarConnectionStatus.CONNECTED, CalendarConnectionStatus.ERROR]
+        status__in=[
+            CalendarConnectionStatus.CONNECTED,
+            CalendarConnectionStatus.PARTIAL,
+            CalendarConnectionStatus.ERROR,
+        ]
     ).values_list("id", flat=True)
     for connection_id in connection_ids.iterator(chunk_size=250):
         sync_calendar_connection.delay(str(connection_id))

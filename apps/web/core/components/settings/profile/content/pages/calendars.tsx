@@ -53,6 +53,14 @@ const inputClass =
 const ICLOUD_SERVER_URL = "https://caldav.icloud.com";
 const APPLE_ACCOUNT_URL = "https://account.apple.com/";
 const isValidEmail = (value: string) => /^\S+@\S+\.\S+$/.test(value.trim());
+const wait = (milliseconds: number) => new Promise((resolve) => window.setTimeout(resolve, milliseconds));
+
+const connectionStatusKey: Record<TCalendarConnection["status"], string> = {
+  CONNECTED: "profile.calendars.status_connected",
+  PARTIAL: "profile.calendars.status_partial",
+  PAUSED: "profile.calendars.status_paused",
+  ERROR: "profile.calendars.status_error",
+};
 
 function ConnectionCalendars({
   connection,
@@ -132,6 +140,7 @@ export function CalendarsProfileSettings() {
   const [isSaving, setIsSaving] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [showAdvancedICloud, setShowAdvancedICloud] = useState(false);
+  const [syncingConnectionIds, setSyncingConnectionIds] = useState<string[]>([]);
   const [workingHoursDraft, setWorkingHoursDraft] = useState<TCalendarPreference["working_hours"] | null>(null);
   const weekdays = useMemo(
     () =>
@@ -211,6 +220,66 @@ export function CalendarsProfileSettings() {
     setCredentialForm(null);
     setConnectionError(null);
     setShowAdvancedICloud(false);
+  };
+
+  const resyncConnection = async (connectionId: string) => {
+    setSyncingConnectionIds((current) => [...current, connectionId]);
+    try {
+      const { queued_at: queuedAt } = await calendarService.resyncConnection(connectionId);
+      await mutate();
+      setToast({
+        type: TOAST_TYPE.INFO,
+        title: t("profile.calendars.sync_started"),
+        message: t("profile.calendars.sync_queued"),
+      });
+      const queuedAtTime = new Date(queuedAt).getTime();
+      const waitForResult = async (attemptsRemaining: number): Promise<TCalendarConnection | null> => {
+        if (attemptsRemaining <= 0) return null;
+        await wait(2000);
+        const latestConnections = await calendarService.getConnections();
+        await mutate(latestConnections, false);
+        const connection = latestConnections.find((item) => item.id === connectionId);
+        if (!connection) return null;
+        const completedAt = Math.max(
+          connection.last_synced_at ? new Date(connection.last_synced_at).getTime() : 0,
+          connection.last_error_at ? new Date(connection.last_error_at).getTime() : 0
+        );
+        return completedAt >= queuedAtTime ? connection : waitForResult(attemptsRemaining - 1);
+      };
+      const connection = await waitForResult(30);
+      if (connection?.status === "ERROR") {
+        setToast({
+          type: TOAST_TYPE.ERROR,
+          title: t("profile.calendars.sync_failed"),
+          message: connection.last_error || t("profile.calendars.sync_failed_hint"),
+        });
+      } else if (connection?.status === "PARTIAL") {
+        setToast({
+          type: TOAST_TYPE.WARNING,
+          title: t("profile.calendars.sync_partial"),
+          message: t("profile.calendars.sync_partial_hint"),
+        });
+      } else if (connection) {
+        setToast({
+          type: TOAST_TYPE.SUCCESS,
+          title: t("common.success"),
+          message: t("profile.calendars.sync_complete"),
+        });
+      } else
+        setToast({
+          type: TOAST_TYPE.INFO,
+          title: t("profile.calendars.sync_still_running"),
+          message: t("profile.calendars.sync_still_running_hint"),
+        });
+    } catch {
+      setToast({
+        type: TOAST_TYPE.ERROR,
+        title: t("profile.calendars.sync_failed"),
+        message: t("profile.calendars.sync_failed_hint"),
+      });
+    } finally {
+      setSyncingConnectionIds((current) => current.filter((id) => id !== connectionId));
+    }
   };
 
   return (
@@ -393,9 +462,15 @@ export function CalendarsProfileSettings() {
                 {connection.account_label || connection.account_email}
               </div>
               <div className="mt-0.5 text-10 text-secondary">
-                {connection.provider} · {connection.status}
+                {connection.provider} · {t(connectionStatusKey[connection.status])}
               </div>
-              {connection.last_error && <div className="mt-1 text-10 text-danger-primary">{connection.last_error}</div>}
+              {connection.last_error && (
+                <div
+                  className={`mt-1 text-10 ${connection.status === "PARTIAL" ? "text-warning-primary" : "text-danger-primary"}`}
+                >
+                  {connection.status === "PARTIAL" ? t("profile.calendars.sync_partial_hint") : connection.last_error}
+                </div>
+              )}
             </div>
             <CalendarSelect
               value={connection.sync_mode}
@@ -429,15 +504,9 @@ export function CalendarsProfileSettings() {
             <Button
               variant="ghost"
               prependIcon={<RefreshCw className="size-3" />}
-              onClick={async () => {
-                await calendarService.resyncConnection(connection.id);
-                await mutate();
-                setToast({
-                  type: TOAST_TYPE.SUCCESS,
-                  title: t("common.success"),
-                  message: t("profile.calendars.sync_queued"),
-                });
-              }}
+              disabled={syncingConnectionIds.includes(connection.id)}
+              loading={syncingConnectionIds.includes(connection.id)}
+              onClick={() => resyncConnection(connection.id)}
             >
               {t("profile.calendars.refresh")}
             </Button>

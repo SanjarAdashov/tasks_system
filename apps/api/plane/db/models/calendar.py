@@ -91,6 +91,7 @@ class CalendarSyncMode(models.TextChoices):
 
 class CalendarConnectionStatus(models.TextChoices):
     CONNECTED = "CONNECTED", "Connected"
+    PARTIAL = "PARTIAL", "Partially synchronized"
     PAUSED = "PAUSED", "Paused"
     ERROR = "ERROR", "Error"
 

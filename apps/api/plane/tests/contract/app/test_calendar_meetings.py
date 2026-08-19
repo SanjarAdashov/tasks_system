@@ -160,6 +160,22 @@ class TestCalendarConnections:
         assert response.data["error"] == "calendar_connection_failed"
         assert not CalendarConnection.objects.filter(user=create_user, provider="ICLOUD").exists()
 
+    @patch("plane.bgtasks.calendar_task.sync_calendar_connection.delay")
+    def test_manual_resync_returns_a_polling_checkpoint(self, sync_delay, session_client, create_user):
+        connection = CalendarConnection.objects.create(
+            user=create_user,
+            provider="GOOGLE",
+            account_email="calendar-owner@example.com",
+            account_label="Calendar",
+        )
+
+        response = session_client.post(f"/api/users/me/calendar/connections/{connection.id}/resync/")
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["queued"] is True
+        assert response.data["queued_at"] is not None
+        sync_delay.assert_called_once_with(str(connection.id))
+
 
 @pytest.mark.contract
 @pytest.mark.django_db

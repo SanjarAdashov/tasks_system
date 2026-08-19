@@ -22,6 +22,7 @@ from zoneinfo import ZoneInfo
 # ruff: noqa: E501 -- provider payload dictionaries are clearer when kept on one line
 
 import requests
+from dateutil.rrule import rrulestr
 from django.conf import settings
 from django.core import signing
 from django.db import transaction
@@ -275,23 +276,24 @@ def _discover_caldav_calendars(*, server_url, credentials, account_label="", acc
         has_calendar_type = (
             resource_type is not None and resource_type.find("{urn:ietf:params:xml:ns:caldav}calendar") is not None
         )
+        is_scheduling_collection = resource_type is not None and any(
+            resource_type.find(f"{{urn:ietf:params:xml:ns:caldav}}{name}") is not None
+            for name in ("schedule-inbox", "schedule-outbox")
+        )
         components = node.findall(
             ".//{urn:ietf:params:xml:ns:caldav}supported-calendar-component-set/{urn:ietf:params:xml:ns:caldav}comp"
         )
         has_events = any((item.attrib.get("name") or "").upper() == "VEVENT" for item in components)
-        if not has_calendar_type and not has_events:
+        # A CalDAV home collection and scheduling inbox/outbox can advertise
+        # VEVENT support without accepting calendar-query REPORT requests.
+        # Only a real CalDAV calendar collection is safe to synchronize.
+        if not has_calendar_type or is_scheduling_collection or (components and not has_events):
             continue
         calendar_url = urljoin(home_url, href)
         name = node.findtext(".//{DAV:}displayname") or calendar_url.rstrip("/").rsplit("/", 1)[-1]
         calendars.append({"id": calendar_url, "name": name, "primary": not calendars})
     if not calendars:
-        calendars.append(
-            {
-                "id": server_url,
-                "name": account_label or account_email or "Calendar",
-                "primary": True,
-            }
-        )
+        raise CalendarProviderError("No event calendars were found in this CalDAV account.")
     return calendars
 
 
@@ -586,21 +588,267 @@ def _unfold_ical(text):
     return re.sub(r"\r?\n[ \t]", "", text)
 
 
+def _ical_properties(block, name):
+    matches = re.finditer(
+        rf"^{re.escape(name)}(?P<params>(?:;[^:]*)?):(?P<value>.*)$",
+        block,
+        flags=re.MULTILINE | re.IGNORECASE,
+    )
+    properties = []
+    for match in matches:
+        params = {}
+        for raw_param in match.group("params").lstrip(";").split(";"):
+            if not raw_param or "=" not in raw_param:
+                continue
+            key, value = raw_param.split("=", 1)
+            params[key.upper()] = value.strip().strip('"')
+        properties.append((params, match.group("value").strip()))
+    return properties
+
+
+def _ical_property(block, name):
+    properties = _ical_properties(block, name)
+    return properties[0] if properties else ({}, "")
+
+
 def _ical_value(block, name):
-    match = re.search(rf"^{re.escape(name)}(?:;[^:]*)?:(.*)$", block, flags=re.MULTILINE | re.IGNORECASE)
-    return match.group(1).strip() if match else ""
+    return _ical_property(block, name)[1]
 
 
-def _ical_datetime(value):
+def _ical_timezone(tzid):
+    value = str(tzid or "").strip().strip('"')
+    if not value:
+        return dt_timezone.utc
+    candidates = [value, value.lstrip("/")]
+    for marker in ("Tzfile/", "zoneinfo/"):
+        if marker in value:
+            candidates.append(value.split(marker, 1)[1])
+    parts = value.strip("/").split("/")
+    if len(parts) >= 2:
+        candidates.append("/".join(parts[-2:]))
+    for candidate in dict.fromkeys(candidates):
+        try:
+            return ZoneInfo(candidate)
+        except (KeyError, ValueError):
+            continue
+    return dt_timezone.utc
+
+
+def _ical_datetime(value, tzid=""):
     value = value.strip()
-    formats = ["%Y%m%dT%H%M%SZ", "%Y%m%dT%H%M%S", "%Y%m%d"]
-    for fmt in formats:
+    formats = [
+        ("%Y%m%dT%H%M%SZ", dt_timezone.utc),
+        ("%Y%m%dT%H%MZ", dt_timezone.utc),
+        ("%Y%m%dT%H%M%S", _ical_timezone(tzid)),
+        ("%Y%m%dT%H%M", _ical_timezone(tzid)),
+        ("%Y%m%d", _ical_timezone(tzid)),
+    ]
+    for fmt, value_timezone in formats:
         try:
             parsed = datetime.strptime(value, fmt)
-            return parsed.replace(tzinfo=dt_timezone.utc)
+            return parsed.replace(tzinfo=value_timezone)
         except ValueError:
             continue
     return None
+
+
+def _ical_datetime_property(block, name):
+    params, value = _ical_property(block, name)
+    return _ical_datetime(value, params.get("TZID", "")), params, value
+
+
+def _ical_duration(value):
+    match = re.fullmatch(
+        r"P(?:(?P<weeks>\d+)W)?(?:(?P<days>\d+)D)?(?:T(?:(?P<hours>\d+)H)?(?:(?P<minutes>\d+)M)?(?:(?P<seconds>\d+)S)?)?",
+        str(value or "").strip(),
+        flags=re.IGNORECASE,
+    )
+    if not match:
+        return None
+    return timedelta(
+        weeks=int(match.group("weeks") or 0),
+        days=int(match.group("days") or 0),
+        hours=int(match.group("hours") or 0),
+        minutes=int(match.group("minutes") or 0),
+        seconds=int(match.group("seconds") or 0),
+    )
+
+
+def _ical_unescape(value):
+    return (
+        str(value or "")
+        .replace("\\n", "\n")
+        .replace("\\N", "\n")
+        .replace("\\,", ",")
+        .replace("\\;", ";")
+        .replace("\\\\", "\\")
+    )
+
+
+def _ical_event_window(block):
+    starts_at, start_params, start_value = _ical_datetime_property(block, "DTSTART")
+    ends_at, _, _ = _ical_datetime_property(block, "DTEND")
+    all_day = start_params.get("VALUE", "").upper() == "DATE" or len(start_value) == 8
+    if starts_at and not ends_at:
+        duration = _ical_duration(_ical_value(block, "DURATION"))
+        if duration:
+            ends_at = starts_at + duration
+        elif all_day:
+            ends_at = starts_at + timedelta(days=1)
+        else:
+            # RFC 5545 permits an instantaneous event without DTEND. Persist a
+            # minimal interval so the calendar and availability queries can
+            # display it instead of silently dropping it.
+            ends_at = starts_at + timedelta(minutes=1)
+    return starts_at, ends_at, all_day
+
+
+def _ical_utc_key(value):
+    if not value:
+        return ""
+    return value.astimezone(dt_timezone.utc).replace(microsecond=0).isoformat()
+
+
+def _ical_exdates(block):
+    values = set()
+    for params, raw_values in _ical_properties(block, "EXDATE"):
+        for raw_value in raw_values.split(","):
+            parsed = _ical_datetime(raw_value, params.get("TZID", ""))
+            if parsed:
+                values.add(_ical_utc_key(parsed))
+    return values
+
+
+def _ical_event_payload(block, *, event_id, calendar_id, href, starts_at=None, ends_at=None, recurring=False):
+    parsed_start, parsed_end, all_day = _ical_event_window(block)
+    starts_at = starts_at or parsed_start
+    ends_at = ends_at or parsed_end
+    recurrence_id, _, _ = _ical_datetime_property(block, "RECURRENCE-ID")
+    return {
+        "id": event_id,
+        "calendar_id": calendar_id,
+        "title": _ical_unescape(_ical_value(block, "SUMMARY")),
+        "starts_at": starts_at,
+        "ends_at": ends_at,
+        "all_day": all_day,
+        "provider_updated_at": _ical_datetime_property(block, "LAST-MODIFIED")[0],
+        "etag": "",
+        "deleted": _ical_value(block, "STATUS").upper() == "CANCELLED",
+        "is_recurring_instance": recurring,
+        "original_starts_at": recurrence_id,
+        "raw_payload": {"href": href},
+    }
+
+
+def _expand_ical_events(blocks, *, calendar_id, href, range_start, range_end):
+    grouped = {}
+    for block in blocks:
+        uid = _ical_value(block, "UID") or href
+        grouped.setdefault(uid, []).append(block)
+
+    events = []
+    skipped = 0
+    for uid, event_blocks in grouped.items():
+        master = next((block for block in event_blocks if not _ical_value(block, "RECURRENCE-ID")), None)
+        overrides = {}
+        for block in event_blocks:
+            recurrence_id, _, _ = _ical_datetime_property(block, "RECURRENCE-ID")
+            if recurrence_id:
+                overrides[_ical_utc_key(recurrence_id)] = block
+
+        rrule_value = _ical_value(master, "RRULE") if master else ""
+        if master and rrule_value:
+            master_start, master_end, _ = _ical_event_window(master)
+            if not master_start or not master_end or master_end <= master_start:
+                skipped += 1
+                continue
+            try:
+                rule = rrulestr(rrule_value, dtstart=master_start)
+                # dateutil requires recurrence boundaries compatible with the
+                # DTSTART timezone. Convert without changing the instant.
+                recurrence_timezone = master_start.tzinfo or dt_timezone.utc
+                occurrences = rule.between(
+                    range_start.astimezone(recurrence_timezone),
+                    range_end.astimezone(recurrence_timezone),
+                    inc=True,
+                )
+            except (TypeError, ValueError, OverflowError):
+                skipped += 1
+                continue
+            duration = master_end - master_start
+            exdates = _ical_exdates(master)
+            handled_overrides = set()
+            for occurrence in occurrences[:5000]:
+                occurrence_key = _ical_utc_key(occurrence)
+                if occurrence_key in exdates:
+                    continue
+                override = overrides.get(occurrence_key)
+                if override:
+                    handled_overrides.add(occurrence_key)
+                    override_start, override_end, _ = _ical_event_window(override)
+                    event = _ical_event_payload(
+                        override,
+                        event_id=f"{uid}::{occurrence_key}",
+                        calendar_id=calendar_id,
+                        href=href,
+                        starts_at=override_start or occurrence,
+                        ends_at=override_end or ((override_start or occurrence) + duration),
+                        recurring=True,
+                    )
+                    event["original_starts_at"] = occurrence
+                else:
+                    event = _ical_event_payload(
+                        master,
+                        event_id=f"{uid}::{occurrence_key}",
+                        calendar_id=calendar_id,
+                        href=href,
+                        starts_at=occurrence,
+                        ends_at=occurrence + duration,
+                        recurring=True,
+                    )
+                    event["original_starts_at"] = occurrence
+                events.append(event)
+            for occurrence_key, override in overrides.items():
+                if occurrence_key in handled_overrides:
+                    continue
+                override_start, override_end, _ = _ical_event_window(override)
+                if not override_start or not override_end:
+                    skipped += 1
+                    continue
+                event = _ical_event_payload(
+                    override,
+                    event_id=f"{uid}::{occurrence_key}",
+                    calendar_id=calendar_id,
+                    href=href,
+                    starts_at=override_start,
+                    ends_at=override_end,
+                    recurring=True,
+                )
+                events.append(event)
+        else:
+            for index, block in enumerate(event_blocks):
+                event_id = uid if len(event_blocks) == 1 else f"{uid}::{index}"
+                event = _ical_event_payload(
+                    block,
+                    event_id=event_id,
+                    calendar_id=calendar_id,
+                    href=href,
+                )
+                if not event["starts_at"] or not event["ends_at"]:
+                    skipped += 1
+                    continue
+                events.append(event)
+    # Some CalDAV servers include malformed or detached instances outside the
+    # requested time-range. Reject invalid intervals and keep the local mirror
+    # bounded to the requested window.
+    bounded_events = []
+    for event in events:
+        if not event["starts_at"] or not event["ends_at"] or event["ends_at"] <= event["starts_at"]:
+            skipped += 1
+            continue
+        if event["starts_at"] < range_end and event["ends_at"] > range_start:
+            bounded_events.append(event)
+    return bounded_events, skipped
 
 
 def pull_caldav(connection, *, range_start, range_end):
@@ -617,45 +865,70 @@ def pull_caldav(connection, *, range_start, range_end):
   </c:comp-filter></c:comp-filter></c:filter>
 </c:calendar-query>"""
     count = 0
+    successful_sources = 0
+    failures = []
+    skipped_events = 0
     for server_url in calendar_urls:
-        response = requests.request(
-            "REPORT",
-            server_url,
-            headers=headers,
-            data=body.encode(),
-            auth=(credentials.get("username", ""), credentials.get("app_password", "")),
-            timeout=HTTP_TIMEOUT,
-        )
+        try:
+            response = requests.request(
+                "REPORT",
+                server_url,
+                headers=headers,
+                data=body.encode(),
+                auth=(credentials.get("username", ""), credentials.get("app_password", "")),
+                timeout=HTTP_TIMEOUT,
+            )
+        except requests.RequestException:
+            failures.append({"calendar_id": server_url, "reason": "network error"})
+            continue
         if response.status_code not in (200, 207):
-            raise CalendarProviderError(f"CalDAV server returned HTTP {response.status_code}.")
-        root = ElementTree.fromstring(response.content)
+            failures.append({"calendar_id": server_url, "reason": f"HTTP {response.status_code}"})
+            continue
+        try:
+            root = ElementTree.fromstring(response.content)
+        except ElementTree.ParseError:
+            failures.append({"calendar_id": server_url, "reason": "invalid XML"})
+            continue
+        successful_sources += 1
+        seen_event_ids = set()
         for response_node in root.findall("{DAV:}response"):
             href = response_node.findtext("{DAV:}href") or ""
             data_node = response_node.find(".//{urn:ietf:params:xml:ns:caldav}calendar-data")
             if data_node is None or not data_node.text:
                 continue
             text = _unfold_ical(data_node.text)
-            for block in re.findall(r"BEGIN:VEVENT(.*?)END:VEVENT", text, flags=re.DOTALL | re.IGNORECASE):
-                starts_at = _ical_datetime(_ical_value(block, "DTSTART"))
-                ends_at = _ical_datetime(_ical_value(block, "DTEND"))
-                event_id = _ical_value(block, "UID") or href
-                _upsert_event(
-                    connection,
-                    {
-                        "id": event_id,
-                        "calendar_id": server_url,
-                        "title": _ical_value(block, "SUMMARY"),
-                        "starts_at": starts_at,
-                        "ends_at": ends_at,
-                        "all_day": len(_ical_value(block, "DTSTART")) == 8,
-                        "provider_updated_at": _ical_datetime(_ical_value(block, "LAST-MODIFIED")),
-                        "etag": response_node.findtext(".//{DAV:}getetag") or "",
-                        "deleted": _ical_value(block, "STATUS").upper() == "CANCELLED",
-                        "raw_payload": {"href": href},
-                    },
-                )
-                count += 1
-    return count
+            blocks = re.findall(r"BEGIN:VEVENT(.*?)END:VEVENT", text, flags=re.DOTALL | re.IGNORECASE)
+            events, skipped = _expand_ical_events(
+                blocks,
+                calendar_id=server_url,
+                href=href,
+                range_start=range_start,
+                range_end=range_end,
+            )
+            skipped_events += skipped
+            etag = response_node.findtext(".//{DAV:}getetag") or ""
+            for event in events:
+                event["etag"] = etag
+                row = _upsert_event(connection, event)
+                if row:
+                    seen_event_ids.add(event["id"][:512])
+                    count += 1
+        stale_events = MeetingExternalEvent.objects.filter(
+            connection=connection,
+            provider_calendar_id=server_url[:512],
+            starts_at__lt=range_end,
+            ends_at__gt=range_start,
+            deleted_at__isnull=True,
+        )
+        if seen_event_ids:
+            stale_events = stale_events.exclude(provider_event_id__in=seen_event_ids)
+        stale_events.update(is_deleted_at_provider=True)
+    return {
+        "events": count,
+        "successful_sources": successful_sources,
+        "failures": failures,
+        "skipped_events": skipped_events,
+    }
 
 
 def sync_connection(connection, *, range_start=None, range_end=None):
@@ -669,7 +942,35 @@ def sync_connection(connection, *, range_start=None, range_end=None):
         elif connection.provider == CalendarProvider.MICROSOFT:
             count = pull_microsoft(connection, range_start=range_start, range_end=range_end)
         else:
-            count = pull_caldav(connection, range_start=range_start, range_end=range_end)
+            calendars = discover_caldav_calendars(connection)
+            valid_ids = [str(item["id"]) for item in calendars]
+            selected_ids = [item for item in (connection.selected_calendars or []) if item in valid_ids]
+            if not selected_ids and valid_ids:
+                selected_ids = [str(item["id"]) for item in calendars if item.get("primary")] or [valid_ids[0]]
+            if selected_ids != (connection.selected_calendars or []):
+                connection.selected_calendars = selected_ids
+                CalendarConnection.objects.filter(pk=connection.pk).update(selected_calendars=selected_ids)
+            result = pull_caldav(connection, range_start=range_start, range_end=range_end)
+            count = result["events"]
+            failures = result["failures"]
+            skipped_events = result["skipped_events"]
+            if failures and result["successful_sources"] == 0:
+                reasons = ", ".join(sorted({item["reason"] for item in failures}))
+                raise CalendarProviderError(f"All selected calendars failed to synchronize ({reasons}).")
+            warning_parts = []
+            if failures:
+                reasons = ", ".join(sorted({item["reason"] for item in failures}))
+                warning_parts.append(f"{len(failures)} calendar source(s) could not be synchronized: {reasons}.")
+            if skipped_events:
+                warning_parts.append(f"{skipped_events} event(s) had unsupported recurrence or date data.")
+            if warning_parts:
+                CalendarConnection.objects.filter(pk=connection.pk).update(
+                    status=CalendarConnectionStatus.PARTIAL,
+                    last_synced_at=timezone.now(),
+                    last_error=" ".join(warning_parts)[:2000],
+                    last_error_at=timezone.now(),
+                )
+                return count
         CalendarConnection.objects.filter(pk=connection.pk).update(
             status=CalendarConnectionStatus.CONNECTED,
             last_synced_at=timezone.now(),
@@ -976,7 +1277,11 @@ def sync_meeting(meeting):
     user_ids.add(meeting.organizer_id)
     connections = CalendarConnection.objects.filter(
         user_id__in=user_ids,
-        status__in=[CalendarConnectionStatus.CONNECTED, CalendarConnectionStatus.ERROR],
+        status__in=[
+            CalendarConnectionStatus.CONNECTED,
+            CalendarConnectionStatus.PARTIAL,
+            CalendarConnectionStatus.ERROR,
+        ],
         sync_mode__in=[CalendarSyncMode.FULL, CalendarSyncMode.OUTBOUND_GTS],
     )
     results = []
@@ -1001,7 +1306,7 @@ def sync_meeting(meeting):
 
 
 def safe_return_url(value, request):
-    fallback = "/profile/settings/calendars"
+    fallback = "/settings/profile/calendars"
     if not value:
         return fallback
     parsed = urlparse(value)
