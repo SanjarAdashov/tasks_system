@@ -242,15 +242,15 @@ def _caldav_propfind(url, *, credentials, body, depth="0"):
         auth=(credentials.get("username", ""), credentials.get("app_password", "")),
         timeout=HTTP_TIMEOUT,
     )
+    if response.status_code in (401, 403):
+        raise CalendarProviderError("Calendar credentials were rejected.")
     if response.status_code not in (200, 207):
         raise CalendarProviderError(f"CalDAV server returned HTTP {response.status_code} during discovery.")
     return ElementTree.fromstring(response.content)
 
 
-def discover_caldav_calendars(connection):
-    """Resolve a CalDAV account root (including iCloud) to VEVENT collections."""
-    credentials = _json_credentials(connection)
-    server_url = _server_url(connection)
+def _discover_caldav_calendars(*, server_url, credentials, account_label="", account_email=""):
+    """Resolve a CalDAV account root to VEVENT collections."""
     discovery_body = """<?xml version="1.0" encoding="utf-8" ?>
 <d:propfind xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
   <d:prop><d:current-user-principal/><c:calendar-home-set/><d:displayname/><d:resourcetype/></d:prop>
@@ -288,11 +288,40 @@ def discover_caldav_calendars(connection):
         calendars.append(
             {
                 "id": server_url,
-                "name": connection.account_label or connection.account_email or "Calendar",
+                "name": account_label or account_email or "Calendar",
                 "primary": True,
             }
         )
     return calendars
+
+
+def discover_caldav_calendars_with_credentials(
+    *, server_url, username, app_password, account_label="", account_email=""
+):
+    """Verify CalDAV credentials and return the account calendars without persisting secrets."""
+    try:
+        return _discover_caldav_calendars(
+            server_url=server_url,
+            credentials={"username": username, "app_password": app_password},
+            account_label=account_label,
+            account_email=account_email,
+        )
+    except requests.RequestException as exc:
+        raise CalendarProviderError("Calendar server could not be reached.") from exc
+    except ElementTree.ParseError as exc:
+        raise CalendarProviderError("Calendar server returned an invalid response.") from exc
+
+
+def discover_caldav_calendars(connection):
+    """Resolve a stored CalDAV account (including iCloud) to VEVENT collections."""
+    credentials = _json_credentials(connection)
+    return discover_caldav_calendars_with_credentials(
+        server_url=_server_url(connection),
+        username=credentials.get("username", ""),
+        app_password=credentials.get("app_password", ""),
+        account_label=connection.account_label,
+        account_email=connection.account_email,
+    )
 
 
 def list_provider_calendars(connection):

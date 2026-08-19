@@ -74,6 +74,7 @@ from plane.utils.attachments import get_attachment_disposition, validate_project
 from plane.utils.external_calendar import (
     CalendarProviderError,
     build_oauth_authorization_url,
+    discover_caldav_calendars_with_credentials,
     exchange_oauth_code,
     list_provider_calendars,
     oauth_account_profile,
@@ -737,10 +738,32 @@ class CalendarConnectionViewSet(BaseViewSet):
     def create(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        verified_calendars = []
+        if serializer.validated_data.get("provider") in ("ICLOUD", "CALDAV"):
+            try:
+                verified_calendars = discover_caldav_calendars_with_credentials(
+                    server_url=serializer.validated_data["server_url"],
+                    username=serializer.validated_data["username"],
+                    app_password=serializer.validated_data["app_password"],
+                    account_label=serializer.validated_data.get("account_label", ""),
+                    account_email=serializer.validated_data.get("account_email", ""),
+                )
+            except CalendarProviderError as exc:
+                return Response(
+                    {
+                        "error": "calendar_connection_failed",
+                        "detail": str(exc),
+                    },
+                    status=400,
+                )
         try:
             connection = serializer.save()
         except IntegrityError:
             return Response({"account_email": "This calendar account is already connected."}, status=409)
+        if verified_calendars:
+            selected_calendars = [str(item["id"]) for item in verified_calendars if item.get("primary")]
+            connection.selected_calendars = selected_calendars or [str(verified_calendars[0]["id"])]
+            connection.save(update_fields=["selected_calendars", "updated_at"])
         from plane.bgtasks.calendar_task import sync_calendar_connection
 
         transaction.on_commit(lambda: sync_calendar_connection.delay(str(connection.id)))

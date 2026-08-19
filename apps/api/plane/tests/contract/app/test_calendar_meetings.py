@@ -8,6 +8,7 @@ from rest_framework.test import APIClient
 
 from plane.app.views.calendar import meeting_ics
 from plane.db.models import (
+    CalendarConnection,
     Issue,
     IssueAssignee,
     IssueSubscriber,
@@ -19,6 +20,7 @@ from plane.db.models import (
     WorkspaceMember,
 )
 from plane.utils.calendar import read_signed_calendar_token, sign_participant_token
+from plane.utils.external_calendar import CalendarProviderError
 
 
 def make_user(email, first_name):
@@ -92,6 +94,71 @@ def meeting_payload(project, **overrides):
     }
     payload.update(overrides)
     return payload
+
+
+@pytest.mark.contract
+@pytest.mark.django_db
+class TestCalendarConnections:
+    @patch("plane.app.views.calendar.discover_caldav_calendars_with_credentials")
+    @patch("plane.bgtasks.calendar_task.sync_calendar_connection.delay")
+    def test_icloud_connection_is_verified_and_selects_primary_calendar(
+        self, sync_delay, discover, session_client, create_user, django_capture_on_commit_callbacks
+    ):
+        discover.return_value = [
+            {"id": "https://caldav.example.test/personal/", "name": "Personal", "primary": True},
+            {"id": "https://caldav.example.test/work/", "name": "Work", "primary": False},
+        ]
+
+        with django_capture_on_commit_callbacks(execute=True):
+            response = session_client.post(
+                "/api/users/me/calendar/connections/",
+                {
+                    "provider": "ICLOUD",
+                    "account_email": "calendar-owner@example.com",
+                    "account_label": "Apple iCloud",
+                    "server_url": "https://caldav.icloud.com",
+                    "username": "calendar-owner@example.com",
+                    "app_password": "test-app-password",
+                    "sync_mode": "FULL",
+                },
+                format="json",
+            )
+
+        assert response.status_code == status.HTTP_201_CREATED
+        connection = CalendarConnection.objects.get(user=create_user, provider="ICLOUD")
+        assert connection.selected_calendars == ["https://caldav.example.test/personal/"]
+        assert response.data["selected_calendars"] == connection.selected_calendars
+        assert "app_password" not in response.data
+        discover.assert_called_once_with(
+            server_url="https://caldav.icloud.com",
+            username="calendar-owner@example.com",
+            app_password="test-app-password",
+            account_label="Apple iCloud",
+            account_email="calendar-owner@example.com",
+        )
+        sync_delay.assert_called_once_with(str(connection.id))
+
+    @patch("plane.app.views.calendar.discover_caldav_calendars_with_credentials")
+    def test_icloud_connection_rejects_invalid_credentials_without_saving(self, discover, session_client, create_user):
+        discover.side_effect = CalendarProviderError("Calendar credentials were rejected.")
+
+        response = session_client.post(
+            "/api/users/me/calendar/connections/",
+            {
+                "provider": "ICLOUD",
+                "account_email": "calendar-owner@example.com",
+                "account_label": "Apple iCloud",
+                "server_url": "https://caldav.icloud.com",
+                "username": "calendar-owner@example.com",
+                "app_password": "wrong-password",
+                "sync_mode": "FULL",
+            },
+            format="json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.data["error"] == "calendar_connection_failed"
+        assert not CalendarConnection.objects.filter(user=create_user, provider="ICLOUD").exists()
 
 
 @pytest.mark.contract

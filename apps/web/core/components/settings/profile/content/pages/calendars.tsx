@@ -10,11 +10,16 @@ import {
   ArrowUpFromLine,
   CalendarDays,
   CalendarSync,
+  CheckCircle2,
   ChevronDown,
   CircleOff,
   Cloud,
+  ExternalLink,
+  KeyRound,
   List,
+  Mail,
   RefreshCw,
+  ShieldCheck,
   Trash2,
 } from "lucide-react";
 import { useTranslation } from "@plane/i18n";
@@ -44,6 +49,10 @@ const providers = [
 
 const inputClass =
   "h-9 w-full rounded-md border border-subtle bg-surface-1 px-3 text-12 text-primary outline-none focus:border-accent-primary";
+
+const ICLOUD_SERVER_URL = "https://caldav.icloud.com";
+const APPLE_ACCOUNT_URL = "https://account.apple.com/";
+const isValidEmail = (value: string) => /^\S+@\S+\.\S+$/.test(value.trim());
 
 function ConnectionCalendars({
   connection,
@@ -121,6 +130,8 @@ export function CalendarsProfileSettings() {
   );
   const [credentialForm, setCredentialForm] = useState<CredentialForm | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [showAdvancedICloud, setShowAdvancedICloud] = useState(false);
   const [workingHoursDraft, setWorkingHoursDraft] = useState<TCalendarPreference["working_hours"] | null>(null);
   const weekdays = useMemo(
     () =>
@@ -147,16 +158,59 @@ export function CalendarsProfileSettings() {
 
   const saveCredentials = async () => {
     if (!credentialForm) return;
+    const isICloud = credentialForm.provider === "ICLOUD";
+    const accountEmail = credentialForm.account_email.trim();
+    const payload = isICloud
+      ? {
+          provider: "ICLOUD",
+          account_email: accountEmail,
+          account_label: credentialForm.account_label.trim() || t("profile.calendars.icloud_default_label"),
+          server_url: ICLOUD_SERVER_URL,
+          username: accountEmail,
+          app_password: credentialForm.app_password,
+          sync_mode: "FULL",
+        }
+      : { ...credentialForm, sync_mode: "FULL" };
+    setConnectionError(null);
     setIsSaving(true);
     try {
-      await calendarService.createConnection({ ...credentialForm, sync_mode: "FULL" });
+      await calendarService.createConnection(payload);
       setCredentialForm(null);
       await mutate();
+      setToast({
+        type: TOAST_TYPE.SUCCESS,
+        title: t("common.success"),
+        message: t(isICloud ? "profile.calendars.icloud_connected" : "profile.calendars.calendar_connected"),
+      });
     } catch {
-      setToast({ type: TOAST_TYPE.ERROR, title: t("toast.error") });
+      const message = t(
+        isICloud ? "profile.calendars.icloud_connection_error" : "profile.calendars.calendar_connection_error"
+      );
+      setConnectionError(message);
+      setToast({ type: TOAST_TYPE.ERROR, title: t("toast.error"), message });
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const openCredentialForm = (provider: "ICLOUD" | "CALDAV") => {
+    setConnectionError(null);
+    setShowAdvancedICloud(false);
+    setCredentialForm({
+      provider,
+      account_email: "",
+      account_label: "",
+      server_url: provider === "ICLOUD" ? ICLOUD_SERVER_URL : "",
+      username: "",
+      app_password: "",
+    });
+  };
+
+  const closeCredentialForm = () => {
+    if (isSaving) return;
+    setCredentialForm(null);
+    setConnectionError(null);
+    setShowAdvancedICloud(false);
   };
 
   return (
@@ -314,14 +368,7 @@ export function CalendarsProfileSettings() {
                   onClick={() =>
                     item.provider === "GOOGLE" || item.provider === "MICROSOFT"
                       ? connectOAuth(item.provider)
-                      : setCredentialForm({
-                          provider: item.provider,
-                          account_email: "",
-                          account_label: "",
-                          server_url: item.provider === "ICLOUD" ? "https://caldav.icloud.com" : "",
-                          username: "",
-                          app_password: "",
-                        })
+                      : openCredentialForm(item.provider)
                   }
                 >
                   {t("profile.calendars.connect")}
@@ -412,59 +459,244 @@ export function CalendarsProfileSettings() {
 
       <ModalCore
         isOpen={Boolean(credentialForm)}
-        handleClose={() => setCredentialForm(null)}
+        handleClose={closeCredentialForm}
         width={EModalWidth.LG}
         className="!bg-surface-1"
       >
-        {credentialForm && (
+        {credentialForm?.provider === "ICLOUD" ? (
+          <div className="overflow-hidden">
+            <div className="border-b border-subtle bg-gradient-to-br from-[#8B5CF6]/[0.12] via-surface-1 to-surface-1 px-5 py-4">
+              <div className="flex items-start gap-3">
+                <div className="shadow-sm grid size-10 shrink-0 place-items-center rounded-xl bg-[#8B5CF6] text-white">
+                  <Cloud className="size-5" />
+                </div>
+                <div>
+                  <div className="text-16 font-semibold text-primary">{t("profile.calendars.icloud_title")}</div>
+                  <div className="mt-1 max-w-lg text-11 leading-5 text-secondary">
+                    {t("profile.calendars.icloud_description")}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-5 p-5">
+              <div className="grid gap-4 sm:grid-cols-[28px_1fr]">
+                <div className="grid size-7 place-items-center rounded-full bg-[#8B5CF6]/15 text-11 font-semibold text-[#8B5CF6]">
+                  1
+                </div>
+                <div>
+                  <label htmlFor="icloud-account-email" className="text-11 font-semibold text-primary">
+                    {t("profile.calendars.icloud_email_label")}
+                  </label>
+                  <div className="mt-1 text-10 leading-4 text-secondary">
+                    {t("profile.calendars.icloud_email_hint")}
+                  </div>
+                  <div className="relative mt-2">
+                    <Mail className="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-tertiary" />
+                    <input
+                      id="icloud-account-email"
+                      type="email"
+                      autoComplete="email"
+                      value={credentialForm.account_email}
+                      onChange={(event) => setCredentialForm({ ...credentialForm, account_email: event.target.value })}
+                      placeholder={t("profile.calendars.icloud_email_placeholder")}
+                      className={`${inputClass} pl-9`}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-[28px_1fr]">
+                <div className="grid size-7 place-items-center rounded-full bg-[#8B5CF6]/15 text-11 font-semibold text-[#8B5CF6]">
+                  2
+                </div>
+                <div>
+                  <div className="text-11 font-semibold text-primary">
+                    {t("profile.calendars.icloud_password_step")}
+                  </div>
+                  <div className="mt-1 text-10 leading-4 text-secondary">
+                    {t("profile.calendars.icloud_password_hint")}
+                  </div>
+                  <Button
+                    variant="secondary"
+                    className="mt-2"
+                    prependIcon={<ExternalLink className="size-3.5" />}
+                    onClick={() => window.open(APPLE_ACCOUNT_URL, "_blank", "noopener,noreferrer")}
+                  >
+                    {t("profile.calendars.open_apple_account")}
+                  </Button>
+                  <label htmlFor="icloud-app-password" className="mt-3 block text-10 font-medium text-secondary">
+                    {t("profile.calendars.app_password")}
+                  </label>
+                  <div className="relative mt-1.5">
+                    <KeyRound className="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-tertiary" />
+                    <input
+                      id="icloud-app-password"
+                      type="password"
+                      autoComplete="new-password"
+                      value={credentialForm.app_password}
+                      onChange={(event) => setCredentialForm({ ...credentialForm, app_password: event.target.value })}
+                      placeholder={t("profile.calendars.icloud_password_placeholder")}
+                      className={`${inputClass} pl-9`}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-[#8B5CF6]/25 bg-[#8B5CF6]/[0.07] p-3">
+                <div className="flex gap-3">
+                  <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-[#8B5CF6]" />
+                  <div>
+                    <div className="text-11 font-semibold text-primary">
+                      {t("profile.calendars.icloud_automatic_title")}
+                    </div>
+                    <div className="mt-0.5 text-10 leading-4 text-secondary">
+                      {t("profile.calendars.icloud_automatic_description")}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-subtle">
+                <button
+                  type="button"
+                  aria-expanded={showAdvancedICloud}
+                  onClick={() => setShowAdvancedICloud((current) => !current)}
+                  className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left text-10 font-semibold text-secondary hover:text-primary"
+                >
+                  {t("profile.calendars.advanced_settings")}
+                  <ChevronDown className={`size-3.5 transition ${showAdvancedICloud ? "rotate-180" : ""}`} />
+                </button>
+                {showAdvancedICloud && (
+                  <div className="grid gap-3 border-t border-subtle p-3 sm:grid-cols-2">
+                    <label className="text-10 font-medium text-secondary">
+                      {t("profile.calendars.account_label")}
+                      <input
+                        value={credentialForm.account_label}
+                        onChange={(event) =>
+                          setCredentialForm({ ...credentialForm, account_label: event.target.value })
+                        }
+                        placeholder={t("profile.calendars.icloud_default_label")}
+                        className={`${inputClass} mt-1.5`}
+                      />
+                    </label>
+                    <label className="text-10 font-medium text-secondary">
+                      {t("profile.calendars.caldav_server")}
+                      <input
+                        readOnly
+                        value={ICLOUD_SERVER_URL}
+                        className={`${inputClass} mt-1.5 cursor-default bg-surface-2 text-secondary`}
+                      />
+                    </label>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex items-start gap-2 text-10 leading-4 text-tertiary">
+                <ShieldCheck className="mt-0.5 size-3.5 shrink-0" />
+                {t("profile.calendars.credentials_hint")}
+              </div>
+
+              {connectionError && (
+                <div role="alert" className="rounded-lg bg-danger-primary/10 px-3 py-2 text-10 text-danger-primary">
+                  {connectionError}
+                </div>
+              )}
+
+              <div className="flex justify-end gap-2 border-t border-subtle pt-4">
+                <Button variant="secondary" disabled={isSaving} onClick={closeCredentialForm}>
+                  {t("common.cancel")}
+                </Button>
+                <Button
+                  variant="primary"
+                  loading={isSaving}
+                  disabled={!isValidEmail(credentialForm.account_email) || !credentialForm.app_password.trim()}
+                  onClick={saveCredentials}
+                >
+                  {t("profile.calendars.connect_icloud")}
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : credentialForm ? (
           <div className="space-y-4 p-5">
             <div>
-              <div className="text-16 font-semibold text-primary">{credentialForm.provider}</div>
-              <div className="mt-1 text-11 text-secondary">{t("profile.calendars.credentials_hint")}</div>
+              <div className="text-16 font-semibold text-primary">{t("profile.calendars.caldav_title")}</div>
+              <div className="mt-1 text-11 text-secondary">{t("profile.calendars.caldav_description")}</div>
             </div>
-            <input
-              type="email"
-              value={credentialForm.account_email}
-              onChange={(event) => setCredentialForm({ ...credentialForm, account_email: event.target.value })}
-              placeholder="Email"
-              className={inputClass}
-            />
-            <input
-              value={credentialForm.account_label}
-              onChange={(event) => setCredentialForm({ ...credentialForm, account_label: event.target.value })}
-              placeholder={t("profile.calendars.account_label")}
-              className={inputClass}
-            />
-            <input
-              type="url"
-              value={credentialForm.server_url}
-              onChange={(event) => setCredentialForm({ ...credentialForm, server_url: event.target.value })}
-              placeholder="CalDAV URL"
-              className={inputClass}
-            />
-            <input
-              value={credentialForm.username}
-              onChange={(event) => setCredentialForm({ ...credentialForm, username: event.target.value })}
-              placeholder={t("profile.calendars.username")}
-              className={inputClass}
-            />
-            <input
-              type="password"
-              value={credentialForm.app_password}
-              onChange={(event) => setCredentialForm({ ...credentialForm, app_password: event.target.value })}
-              placeholder={t("profile.calendars.app_password")}
-              className={inputClass}
-            />
-            <div className="flex justify-end gap-2 pt-2">
-              <Button variant="secondary" onClick={() => setCredentialForm(null)}>
+            <label className="block text-10 font-medium text-secondary">
+              {t("profile.calendars.icloud_email_label")}
+              <input
+                type="email"
+                value={credentialForm.account_email}
+                onChange={(event) => setCredentialForm({ ...credentialForm, account_email: event.target.value })}
+                placeholder={t("profile.calendars.icloud_email_placeholder")}
+                className={`${inputClass} mt-1.5`}
+              />
+            </label>
+            <label className="block text-10 font-medium text-secondary">
+              {t("profile.calendars.account_label")}
+              <input
+                value={credentialForm.account_label}
+                onChange={(event) => setCredentialForm({ ...credentialForm, account_label: event.target.value })}
+                placeholder={t("profile.calendars.account_label")}
+                className={`${inputClass} mt-1.5`}
+              />
+            </label>
+            <label className="block text-10 font-medium text-secondary">
+              {t("profile.calendars.caldav_server")}
+              <input
+                type="url"
+                value={credentialForm.server_url}
+                onChange={(event) => setCredentialForm({ ...credentialForm, server_url: event.target.value })}
+                placeholder="https://calendar.example.com/caldav/"
+                className={`${inputClass} mt-1.5`}
+              />
+            </label>
+            <label className="block text-10 font-medium text-secondary">
+              {t("profile.calendars.username")}
+              <input
+                value={credentialForm.username}
+                onChange={(event) => setCredentialForm({ ...credentialForm, username: event.target.value })}
+                placeholder={t("profile.calendars.username")}
+                className={`${inputClass} mt-1.5`}
+              />
+            </label>
+            <label className="block text-10 font-medium text-secondary">
+              {t("profile.calendars.app_password")}
+              <input
+                type="password"
+                value={credentialForm.app_password}
+                onChange={(event) => setCredentialForm({ ...credentialForm, app_password: event.target.value })}
+                placeholder={t("profile.calendars.app_password")}
+                className={`${inputClass} mt-1.5`}
+              />
+            </label>
+            {connectionError && (
+              <div role="alert" className="rounded-lg bg-danger-primary/10 px-3 py-2 text-10 text-danger-primary">
+                {connectionError}
+              </div>
+            )}
+            <div className="flex justify-end gap-2 border-t border-subtle pt-4">
+              <Button variant="secondary" disabled={isSaving} onClick={closeCredentialForm}>
                 {t("common.cancel")}
               </Button>
-              <Button variant="primary" loading={isSaving} onClick={saveCredentials}>
+              <Button
+                variant="primary"
+                loading={isSaving}
+                disabled={
+                  !isValidEmail(credentialForm.account_email) ||
+                  !credentialForm.server_url.trim() ||
+                  !credentialForm.username.trim() ||
+                  !credentialForm.app_password.trim()
+                }
+                onClick={saveCredentials}
+              >
                 {t("profile.calendars.connect")}
               </Button>
             </div>
           </div>
-        )}
+        ) : null}
       </ModalCore>
     </div>
   );
