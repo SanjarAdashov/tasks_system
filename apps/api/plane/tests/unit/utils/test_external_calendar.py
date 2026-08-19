@@ -119,6 +119,35 @@ SUMMARY:Moved flight review
     ]
 
 
+def test_caldav_zero_duration_override_does_not_make_sync_partial():
+    master = """
+UID:weekly-review
+DTSTART:20231110T123000Z
+DTEND:20231110T150000Z
+RRULE:FREQ=WEEKLY;BYDAY=FR
+SUMMARY:Weekly review
+"""
+    old_zero_duration_override = """
+UID:weekly-review
+RECURRENCE-ID:20241011T123000Z
+DTSTART:20241011T232600Z
+DTEND:20241011T232600Z
+SUMMARY:Old override
+"""
+
+    events, skipped = _expand_ical_events(
+        [master, old_zero_duration_override],
+        calendar_id="work",
+        href="/work/weekly-review.ics",
+        range_start=datetime(2026, 8, 17, tzinfo=timezone.utc),
+        range_end=datetime(2026, 8, 24, tzinfo=timezone.utc),
+    )
+
+    assert skipped == 0
+    assert len(events) == 1
+    assert events[0]["starts_at"] == datetime(2026, 8, 21, 12, 30, tzinfo=timezone.utc)
+
+
 class _FakeCalendarConnectionManager:
     def __init__(self):
         self.updates = []

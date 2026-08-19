@@ -689,16 +689,17 @@ def _ical_event_window(block):
     starts_at, start_params, start_value = _ical_datetime_property(block, "DTSTART")
     ends_at, _, _ = _ical_datetime_property(block, "DTEND")
     all_day = start_params.get("VALUE", "").upper() == "DATE" or len(start_value) == 8
-    if starts_at and not ends_at:
+    if starts_at and (not ends_at or ends_at <= starts_at):
         duration = _ical_duration(_ical_value(block, "DURATION"))
-        if duration:
+        if duration and duration > timedelta(0):
             ends_at = starts_at + duration
         elif all_day:
             ends_at = starts_at + timedelta(days=1)
         else:
-            # RFC 5545 permits an instantaneous event without DTEND. Persist a
-            # minimal interval so the calendar and availability queries can
-            # display it instead of silently dropping it.
+            # RFC 5545 permits an instantaneous event without DTEND, and Apple
+            # can also emit detached overrides whose DTSTART and DTEND are
+            # equal. Persist a minimal interval so either form can be mirrored
+            # without turning an otherwise successful sync into a warning.
             ends_at = starts_at + timedelta(minutes=1)
     return starts_at, ends_at, all_day
 
