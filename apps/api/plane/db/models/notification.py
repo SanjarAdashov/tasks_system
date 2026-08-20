@@ -107,6 +107,7 @@ class UserNotificationPreference(BaseModel):
     comment = models.BooleanField(default=True)
     mention = models.BooleanField(default=True)
     issue_completed = models.BooleanField(default=True)
+    project_announcement = models.BooleanField(default=True)
 
     class Meta:
         verbose_name = "UserNotificationPreference"
@@ -199,6 +200,7 @@ class TelegramNotificationPreference(BaseModel):
     property_change = models.BooleanField(default=True)
     role_change = models.BooleanField(default=True)
     account_activity = models.BooleanField(default=True)
+    project_announcement = models.BooleanField(default=True)
     quiet_hours_enabled = models.BooleanField(default=False)
     quiet_hours = models.JSONField(default=get_default_telegram_quiet_hours)
 

@@ -24,6 +24,7 @@ class TelegramNotificationPreferenceSerializer(BaseSerializer):
             "property_change",
             "role_change",
             "account_activity",
+            "project_announcement",
             "quiet_hours_enabled",
             "quiet_hours",
         ]

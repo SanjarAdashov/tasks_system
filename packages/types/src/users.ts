@@ -195,6 +195,7 @@ export interface IUserEmailNotificationSettings {
   comment: boolean;
   mention: boolean;
   issue_completed: boolean;
+  project_announcement: boolean;
 }
 
 export type TTelegramNotificationCategory =
@@ -207,7 +208,8 @@ export type TTelegramNotificationCategory =
   | "due_date"
   | "property_change"
   | "role_change"
-  | "account_activity";
+  | "account_activity"
+  | "project_announcement";
 
 export type TTelegramQuietHours = Record<
   "1" | "2" | "3" | "4" | "5" | "6" | "7",

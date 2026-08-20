@@ -29,7 +29,11 @@ from plane.db.models import (
 from plane.license.utils.instance_value import get_email_configuration
 from plane.utils.birthday import is_birthday_on, render_birthday_greeting, user_language
 from plane.utils.calendar import expand_recurrence, sign_participant_token
-from plane.utils.telegram import application_url, enqueue_system_telegram_notification
+from plane.utils.telegram import (
+    application_url,
+    enqueue_system_telegram_notification,
+    enqueue_telegram_notifications,
+)
 
 
 LOGGER = logging.getLogger("plane.worker")
@@ -281,13 +285,18 @@ def _deliver_advance_birthday_notifications(birthday_user, tomorrow):
     if not workspace_ids:
         return
     workspace_by_recipient = {}
-    recipients = User.objects.filter(
-        workspace_member__workspace_id__in=workspace_ids,
-        workspace_member__is_active=True,
-        is_active=True,
-        blocked_at__isnull=True,
-        is_bot=False,
-    ).exclude(pk=birthday_user.id).select_related("profile").distinct()
+    recipients = (
+        User.objects.filter(
+            workspace_member__workspace_id__in=workspace_ids,
+            workspace_member__is_active=True,
+            is_active=True,
+            blocked_at__isnull=True,
+            is_bot=False,
+        )
+        .exclude(pk=birthday_user.id)
+        .select_related("profile")
+        .distinct()
+    )
     for membership in WorkspaceMember.objects.filter(
         workspace_id__in=workspace_ids,
         is_active=True,
@@ -335,7 +344,10 @@ def _deliver_advance_birthday_notifications(birthday_user, tomorrow):
                 category="account_activity",
                 event="birthday_tomorrow",
                 context={
-                    "localized": {language: message, "en": BIRTHDAY_ADVANCE_COPY["en"]["body"].format(name=birthday_name)},
+                    "localized": {
+                        language: message,
+                        "en": BIRTHDAY_ADVANCE_COPY["en"]["body"].format(name=birthday_name),
+                    },
                     "workspace_id": str(workspace_id) if workspace_id else None,
                     "url": application_url(f"{workspace.slug}/calendar/") if workspace else application_url(""),
                     "button_key": "open_home",
@@ -403,16 +415,18 @@ def send_meeting_notifications(
         rendered_meeting = copy(meeting)
         rendered_meeting.starts_at = occurrence_start
         rendered_meeting.ends_at = occurrence_end
-    participants = meeting.participants.filter(removed_at__isnull=True, notify_by_email=True).select_related(
-        "user__calendar_preference"
-    )
+    participants = meeting.participants.filter(removed_at__isnull=True).select_related("user__calendar_preference")
     if participant_ids:
         participants = participants.filter(id__in=participant_ids)
     connection, sender = _smtp_connection()
     sent = 0
     if connection:
         for participant in participants:
-            if not participant.email or not _notification_enabled(participant.user, "email_notifications_enabled"):
+            if (
+                not participant.notify_by_email
+                or not participant.email
+                or not _notification_enabled(participant.user, "email_notifications_enabled")
+            ):
                 continue
             try:
                 subject, text, html_body = _render_message(rendered_meeting, participant, event)
@@ -460,8 +474,9 @@ def send_meeting_notifications(
             )
             for item in internal
         ]
-        Notification.objects.bulk_create(rows, ignore_conflicts=True)
-    return {"sent": sent}
+        notifications = Notification.objects.bulk_create(rows, ignore_conflicts=True)
+        enqueue_telegram_notifications(notifications)
+    return {"sent": sent, "in_app": len(notifications) if meeting.workspace_id else 0}
 
 
 @shared_task
@@ -494,7 +509,7 @@ def send_meeting_response_notification(participant_id):
         except Exception:
             LOGGER.exception("Failed to send meeting RSVP email", extra={"meeting_id": str(meeting.id)})
     if meeting.workspace_id and _notification_enabled(organizer, "in_app_notifications_enabled"):
-        Notification.objects.create(
+        notification = Notification.objects.create(
             workspace=meeting.workspace,
             project=meeting.project,
             data={"meeting": {"id": str(meeting.id), "title": meeting.title, "event": "RSVP_CHANGED"}},
@@ -507,6 +522,7 @@ def send_meeting_response_notification(participant_id):
             triggered_by=participant.user or organizer,
             receiver=organizer,
         )
+        enqueue_telegram_notifications([notification])
     return {"sent": sent}
 
 

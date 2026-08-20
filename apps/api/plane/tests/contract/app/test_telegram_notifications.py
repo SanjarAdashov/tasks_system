@@ -14,6 +14,7 @@ from rest_framework.test import APIClient
 
 from plane.db.models import (
     Notification,
+    Meeting,
     Profile,
     Project,
     TelegramDelivery,
@@ -27,6 +28,7 @@ from plane.app.views.project.invite import notify_project_joined
 from plane.app.views.workspace.invite import notify_workspace_joined
 from plane.utils.telegram import (
     enqueue_telegram_notifications,
+    may_deliver,
     preference_for,
     quiet_hours_available_at,
     render_delivery,
@@ -207,6 +209,82 @@ class TestTelegramNotifications:
         assert delivery.category == "priority"
         assert delivery.payload["issue_key"] == "TGN-1"
         assert queued == [str(delivery.id)]
+
+    def test_meeting_notification_creates_localized_personal_delivery(self, monkeypatch):
+        actor = create_user("meeting-actor")
+        receiver = create_user("meeting-receiver")
+        receiver.profile.language = "ru"
+        receiver.profile.save(update_fields=["language", "updated_at"])
+        configure_bot()
+        connection = TelegramUserConnection.objects.create(
+            user=receiver,
+            telegram_user_id=121,
+            chat_id=221,
+            bot_id=12345,
+        )
+        workspace = Workspace.objects.create(
+            name="Meeting workspace",
+            slug=f"meeting-{uuid.uuid4().hex[:8]}",
+            owner=actor,
+        )
+        project = Project.objects.create(
+            name="Meeting project",
+            identifier="MTG",
+            workspace=workspace,
+            created_by=actor,
+        )
+        starts_at = timezone.now() + timezone.timedelta(days=1)
+        meeting = Meeting.objects.create(
+            workspace=workspace,
+            project=project,
+            organizer=actor,
+            title="Flight readiness review",
+            starts_at=starts_at,
+            ends_at=starts_at + timezone.timedelta(minutes=45),
+            timezone="Asia/Tashkent",
+        )
+        notification = Notification.objects.create(
+            workspace=workspace,
+            project=project,
+            sender="in_app:calendar:meeting",
+            triggered_by=actor,
+            receiver=receiver,
+            entity_identifier=meeting.id,
+            entity_name="meeting",
+            title=meeting.title,
+            message={"event": "CREATED"},
+            data={
+                "meeting": {
+                    "id": str(meeting.id),
+                    "title": meeting.title,
+                    "starts_at": meeting.starts_at.isoformat(),
+                    "ends_at": meeting.ends_at.isoformat(),
+                    "event": "CREATED",
+                }
+            },
+        )
+        queued = []
+        monkeypatch.setattr(
+            "plane.bgtasks.telegram_notification_task.deliver_telegram_delivery.delay",
+            lambda delivery_id: queued.append(delivery_id),
+        )
+
+        deliveries = enqueue_telegram_notifications([notification])
+
+        assert len(deliveries) == 1
+        delivery = TelegramDelivery.objects.get(connection=connection)
+        assert delivery.category == "account_activity"
+        assert delivery.issue_id is None
+        assert delivery.payload["kind"] == "meeting"
+        assert delivery.payload["meeting_id"] == str(meeting.id)
+        assert delivery.payload["url"].endswith(f"/{workspace.slug}/calendar?meeting={meeting.id}")
+        assert may_deliver(delivery) is True
+        assert queued == [str(delivery.id)]
+
+        rendered = render_delivery(delivery)
+        assert "Приглашение на встречу" in rendered["text"]
+        assert meeting.title in rendered["text"]
+        assert rendered["reply_markup"]["inline_keyboard"][0][0]["text"] == "Открыть календарь"
 
     def test_bulk_created_mention_with_string_receiver_id_creates_delivery(self, monkeypatch):
         actor = create_user("mention-actor")

@@ -2,6 +2,14 @@
   "notification": {
     "label": "Входящие",
     "page_label": "{workspace} - Входящие",
+    "announcement": {
+      "standard": "Уведомление проекта",
+      "important": "Важное уведомление проекта",
+      "open": "Открыть уведомление",
+      "back": "Назад",
+      "attachments": "Вложения",
+      "not_found": "Уведомление недоступно"
+    },
     "options": {
       "mark_all_as_read": "Пометить все как прочитанные",
       "mark_read": "Пометить как прочитанное",

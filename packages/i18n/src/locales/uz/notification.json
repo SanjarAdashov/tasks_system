@@ -2,6 +2,14 @@
   "notification": {
     "label": "Kiruvchi quti",
     "page_label": "{workspace} - Kirish qutisi",
+    "announcement": {
+      "standard": "Loyiha bildirishnomasi",
+      "important": "Muhim loyiha bildirishnomasi",
+      "open": "Bildirishnomani ochish",
+      "back": "Orqaga",
+      "attachments": "Ilovalar",
+      "not_found": "Bu bildirishnoma mavjud emas"
+    },
     "options": {
       "mark_all_as_read": "Hammasini o'qilgan deb belgilang",
       "mark_read": "O'qilgan deb belgilang",

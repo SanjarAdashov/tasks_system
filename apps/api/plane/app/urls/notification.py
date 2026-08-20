@@ -14,6 +14,8 @@ from plane.app.views import (
     TelegramLinkEndpoint,
     TelegramNotificationPreferenceEndpoint,
     TelegramWebhookEndpoint,
+    ProjectAnnouncementAttachmentEndpoint,
+    ProjectAnnouncementUserEndpoint,
 )
 
 
@@ -52,6 +54,26 @@ urlpatterns = [
         "users/me/notification-preferences/",
         UserNotificationPreferenceEndpoint.as_view(),
         name="user-notification-preferences",
+    ),
+    path(
+        "workspaces/<str:slug>/users/project-announcements/important/",
+        ProjectAnnouncementUserEndpoint.as_view(),
+        name="important-project-announcements",
+    ),
+    path(
+        "workspaces/<str:slug>/users/project-announcements/<uuid:pk>/",
+        ProjectAnnouncementUserEndpoint.as_view(),
+        name="project-announcement-detail",
+    ),
+    path(
+        "workspaces/<str:slug>/users/project-announcements/<uuid:pk>/dismiss/",
+        ProjectAnnouncementUserEndpoint.as_view(),
+        name="project-announcement-dismiss",
+    ),
+    path(
+        "workspaces/<str:slug>/project-announcements/<uuid:announcement_id>/attachments/<uuid:pk>/",
+        ProjectAnnouncementAttachmentEndpoint.as_view(),
+        name="project-announcement-attachment",
     ),
     path("users/me/telegram/", TelegramNotificationPreferenceEndpoint.as_view(), name="telegram-preferences"),
     path("users/me/telegram/link/", TelegramLinkEndpoint.as_view(), name="telegram-link"),

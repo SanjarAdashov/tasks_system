@@ -90,6 +90,10 @@ export const coreRoutes: RouteConfigEntry[] = [
         // Notifications
         layout("./(all)/[workspaceSlug]/(projects)/notifications/layout.tsx", [
           route(":workspaceSlug/notifications", "./(all)/[workspaceSlug]/(projects)/notifications/page.tsx"),
+          route(
+            ":workspaceSlug/notifications/announcements/:announcementId",
+            "./(all)/[workspaceSlug]/(projects)/notifications/announcements/[announcementId]/page.tsx"
+          ),
         ]),
 
         // Profile
@@ -375,6 +379,11 @@ export const coreRoutes: RouteConfigEntry[] = [
             route(
               ":workspaceSlug/settings/projects/:projectId/meeting-types",
               "./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/meeting-types/page.tsx"
+            ),
+            // Project notifications
+            route(
+              ":workspaceSlug/settings/projects/:projectId/announcements",
+              "./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/announcements/page.tsx"
             ),
             // Project Automations
             layout("./(all)/[workspaceSlug]/(settings)/settings/projects/[projectId]/automations/layout.tsx", [

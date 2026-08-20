@@ -7,7 +7,11 @@ from celery import shared_task
 from django.db import transaction
 from django.utils import timezone
 
-from plane.db.models import TelegramDelivery, TelegramUserConnection
+from plane.db.models import (
+    ProjectAnnouncementRecipient,
+    TelegramDelivery,
+    TelegramUserConnection,
+)
 from plane.utils.telegram import TelegramAPIError, may_deliver, render_delivery, telegram_api_call
 
 
@@ -47,13 +51,38 @@ def deliver_telegram_delivery(delivery_id):
         if delivery.connection.status != TelegramUserConnection.Status.CONNECTED or not may_deliver(delivery):
             delivery.status = TelegramDelivery.Status.CANCELLED
             delivery.save(update_fields=["status", "updated_at"])
+            if delivery.notification_id:
+                ProjectAnnouncementRecipient.objects.filter(notification_id=delivery.notification_id).update(
+                    telegram_status=ProjectAnnouncementRecipient.DeliveryStatus.SKIPPED,
+                )
             return
         delivery.status = TelegramDelivery.Status.PROCESSING
         delivery.attempts += 1
         delivery.save(update_fields=["status", "attempts", "updated_at"])
 
     try:
-        result = telegram_api_call("sendMessage", render_delivery(delivery))
+        payload = render_delivery(delivery)
+        split_long = payload.pop("split_long", False)
+        text = payload.get("text") or ""
+        if split_long and len(text) > 4096:
+            chunks = []
+            remaining = text
+            while remaining:
+                boundary = min(4000, len(remaining))
+                if boundary < len(remaining):
+                    newline = remaining.rfind("\n", 0, boundary)
+                    if newline > 1000:
+                        boundary = newline
+                chunks.append(remaining[:boundary].strip())
+                remaining = remaining[boundary:].lstrip()
+            result = None
+            for index, chunk in enumerate(chunks):
+                chunk_payload = {**payload, "text": chunk}
+                if index < len(chunks) - 1:
+                    chunk_payload.pop("reply_markup", None)
+                result = telegram_api_call("sendMessage", chunk_payload)
+        else:
+            result = telegram_api_call("sendMessage", payload)
     except TelegramAPIError as exc:
         retryable = exc.error_code in {None, 429, 500, 502, 503, 504}
         with transaction.atomic():
@@ -71,6 +100,11 @@ def deliver_telegram_delivery(delivery_id):
                 connection.last_error_at = timezone.now()
                 connection.save(update_fields=["status", "last_error", "last_error_at", "updated_at"])
             delivery.save(update_fields=["status", "available_at", "last_error", "updated_at"])
+            if delivery.notification_id and delivery.status == TelegramDelivery.Status.FAILED:
+                ProjectAnnouncementRecipient.objects.filter(notification_id=delivery.notification_id).update(
+                    telegram_status=ProjectAnnouncementRecipient.DeliveryStatus.FAILED,
+                    telegram_error=str(exc)[:1000],
+                )
         return
 
     now = timezone.now()
@@ -85,6 +119,11 @@ def deliver_telegram_delivery(delivery_id):
         last_error="",
         status=TelegramUserConnection.Status.CONNECTED,
     )
+    if delivery.notification_id:
+        ProjectAnnouncementRecipient.objects.filter(notification_id=delivery.notification_id).update(
+            telegram_status=ProjectAnnouncementRecipient.DeliveryStatus.SENT,
+            telegram_error="",
+        )
 
 
 @shared_task

@@ -157,6 +157,12 @@ from .intake_form import IntakeFormSerializer
 from .analytic import AnalyticViewSerializer
 
 from .notification import NotificationSerializer, UserNotificationPreferenceSerializer
+from .project_announcement import (
+    ProjectAnnouncementAttachmentSerializer,
+    ProjectAnnouncementDetailSerializer,
+    ProjectAnnouncementRecipientSerializer,
+    ProjectAnnouncementSerializer,
+)
 
 from .exporter import ExporterHistorySerializer
 

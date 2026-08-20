@@ -30,6 +30,7 @@ const CATEGORY_KEYS: TTelegramNotificationCategory[] = [
   "property_change",
   "role_change",
   "account_activity",
+  "project_announcement",
 ];
 
 const WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"] as const;

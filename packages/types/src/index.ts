@@ -52,6 +52,7 @@ export * from "./state-transition";
 export * from "./timezone";
 export * from "./users";
 export * from "./user-group";
+export * from "./project-announcement";
 export * from "./utils";
 export * from "./view-props";
 export * from "./views";

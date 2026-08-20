@@ -5,7 +5,17 @@
  */
 
 import type { LucideIcon } from "lucide-react";
-import { CalendarCog, GitBranch, ListChecks, ListOrdered, Paperclip, UserRoundCog, Users, Zap } from "lucide-react";
+import {
+  CalendarCog,
+  GitBranch,
+  ListChecks,
+  ListOrdered,
+  Megaphone,
+  Paperclip,
+  UserRoundCog,
+  Users,
+  Zap,
+} from "lucide-react";
 // plane imports
 import type { ISvgIcons } from "@plane/propel/icons";
 import {
@@ -39,5 +49,6 @@ export const PROJECT_SETTINGS_ICONS: Record<TProjectSettingsTabs, LucideIcon | R
   estimates: EstimatePropertyIcon,
   work_item_fields: ListChecks,
   meeting_types: CalendarCog,
+  announcements: Megaphone,
   automations: Zap,
 };

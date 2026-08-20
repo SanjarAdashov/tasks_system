@@ -6,7 +6,7 @@
 
 import { useState } from "react";
 import { observer } from "mobx-react";
-import { CalendarClock, Clock } from "lucide-react";
+import { BellRing, CalendarClock, Clock } from "lucide-react";
 import { useRouter } from "next/navigation";
 // plane imports
 import { Avatar, Row } from "@plane/ui";
@@ -45,8 +45,21 @@ export const NotificationItem = observer(function NotificationItem(props: TNotif
   const notificationField = notification?.data?.issue_activity?.field || undefined;
   const notificationTriggeredBy = notification.triggered_by_details || undefined;
   const isMeetingNotification = notification.entity_name === "meeting" && Boolean(notification.data?.meeting?.id);
+  const isProjectAnnouncement =
+    notification.entity_name === "project_announcement" && Boolean(notification.data?.project_announcement?.id);
 
   const handleNotificationIssuePeekOverview = async () => {
+    if (isProjectAnnouncement && !isSnoozeStateModalOpen && !customSnoozeModal) {
+      if (notification.read_at === null) {
+        try {
+          await markNotificationAsRead(workspaceSlug);
+        } catch (error) {
+          console.error(error);
+        }
+      }
+      router.push(`/${workspaceSlug}/notifications/announcements/${notification.data?.project_announcement?.id}`);
+      return;
+    }
     if (isMeetingNotification && !isSnoozeStateModalOpen && !customSnoozeModal) {
       if (notification.read_at === null) {
         try {
@@ -84,7 +97,7 @@ export const NotificationItem = observer(function NotificationItem(props: TNotif
     !notificationId ||
     !notification?.id ||
     !workspace?.id ||
-    (!isMeetingNotification && (!notificationField || !projectId))
+    (!isMeetingNotification && !isProjectAnnouncement && (!notificationField || !projectId))
   )
     return <></>;
 
@@ -107,6 +120,8 @@ export const NotificationItem = observer(function NotificationItem(props: TNotif
         <div className="relative flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-layer-1">
           {isMeetingNotification ? (
             <CalendarClock className="size-5 text-accent-primary" />
+          ) : isProjectAnnouncement ? (
+            <BellRing className="size-5 text-accent-primary" />
           ) : (
             notificationTriggeredBy && (
               <Avatar
@@ -123,8 +138,10 @@ export const NotificationItem = observer(function NotificationItem(props: TNotif
         <div className="-mt-2 w-full space-y-1">
           <div className="relative flex h-8 items-center gap-3">
             <div className="line-clamp-1 w-full truncate overflow-hidden text-body-xs-medium break-all whitespace-normal text-primary">
-              {isMeetingNotification ? (
-                <span className="text-primary">{notification.message_stripped || notification.title}</span>
+              {isMeetingNotification || isProjectAnnouncement ? (
+                <span className="text-primary">
+                  {isProjectAnnouncement ? notification.title : notification.message_stripped || notification.title}
+                </span>
               ) : (
                 <NotificationContent
                   notification={notification}
@@ -155,6 +172,8 @@ export const NotificationItem = observer(function NotificationItem(props: TNotif
                       }).format(new Date(notification.data.meeting.starts_at))
                     : notification.data?.meeting?.title}
                 </>
+              ) : isProjectAnnouncement ? (
+                <>{notification.data?.project_announcement?.project_name}</>
               ) : (
                 <>
                   {notification?.data?.issue?.identifier}-{notification?.data?.issue?.sequence_id}&nbsp;

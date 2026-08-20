@@ -1,4 +1,5 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import useSWR from "swr";
 import { ArrowRight, Rocket, Sparkles, X, Zap } from "lucide-react";
 import { useTranslation } from "@plane/i18n";
@@ -24,9 +25,14 @@ const colors = ["#ffb020", "#ff5630", "#6554c0", "#00b8d9", "#36b37e", "#ff8b00"
 
 function CelebrationCanvas({ active }: { active: boolean }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [portalRoot, setPortalRoot] = useState<HTMLElement | null>(null);
 
   useEffect(() => {
-    if (!active || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    setPortalRoot(document.body);
+  }, []);
+
+  useEffect(() => {
+    if (!active || !portalRoot || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const canvas = canvasRef.current;
     const context = canvas?.getContext("2d");
     if (!canvas || !context) return;
@@ -69,6 +75,15 @@ function CelebrationCanvas({ active }: { active: boolean }) {
     const draw = () => {
       context.clearRect(0, 0, window.innerWidth, window.innerHeight);
       particles = particles.filter((particle) => particle.life > 0 && particle.y < window.innerHeight + 40);
+      const modalRect = document.querySelector<HTMLElement>(".birthday-celebration-modal")?.getBoundingClientRect();
+      context.save();
+      if (modalRect) {
+        const gap = 8;
+        context.beginPath();
+        context.rect(0, 0, window.innerWidth, window.innerHeight);
+        context.rect(modalRect.left - gap, modalRect.top - gap, modalRect.width + gap * 2, modalRect.height + gap * 2);
+        context.clip("evenodd");
+      }
       particles.forEach((particle) => {
         particle.x += particle.vx;
         particle.y += particle.vy;
@@ -84,6 +99,7 @@ function CelebrationCanvas({ active }: { active: boolean }) {
         context.fillRect(-particle.size / 2, -particle.size / 3, particle.size, particle.size * 0.65);
         context.restore();
       });
+      context.restore();
       frame = window.requestAnimationFrame(draw);
     };
 
@@ -98,9 +114,14 @@ function CelebrationCanvas({ active }: { active: boolean }) {
       window.cancelAnimationFrame(frame);
       context.clearRect(0, 0, window.innerWidth, window.innerHeight);
     };
-  }, [active]);
+  }, [active, portalRoot]);
 
-  return <canvas ref={canvasRef} aria-hidden className="pointer-events-none fixed inset-0 z-[80]" />;
+  if (!portalRoot) return null;
+
+  return createPortal(
+    <canvas ref={canvasRef} aria-hidden className="pointer-events-none fixed inset-0 z-40" />,
+    portalRoot
+  );
 }
 
 const trimGreetingFromMessage = (message?: string, name?: string) => {

@@ -162,6 +162,26 @@ export const NotificationsProfileSettingsForm = observer(function NotificationsP
           />
         }
       />
+      <SettingsControlItem
+        title={t("account_settings.notifications.project_announcement.title")}
+        description={t("account_settings.notifications.project_announcement.description")}
+        control={
+          <Controller
+            control={control}
+            name="project_announcement"
+            render={({ field: { value, onChange } }) => (
+              <ToggleSwitch
+                value={value}
+                onChange={(newValue) => {
+                  onChange(newValue);
+                  handleSettingChange("project_announcement", newValue);
+                }}
+                size="sm"
+              />
+            )}
+          />
+        }
+      />
     </div>
   );
 });

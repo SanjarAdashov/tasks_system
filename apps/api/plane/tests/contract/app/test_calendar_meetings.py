@@ -8,6 +8,7 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from plane.app.views.calendar import meeting_ics
+from plane.bgtasks.calendar_notification_task import send_meeting_notifications
 from plane.db.models import (
     CalendarConnection,
     Issue,
@@ -15,6 +16,7 @@ from plane.db.models import (
     IssueSubscriber,
     Meeting,
     MeetingParticipant,
+    Notification,
     Project,
     ProjectMember,
     User,
@@ -329,6 +331,52 @@ class TestMeetings:
         )
         assert response.status_code == status.HTTP_200_OK
         assert response.data["response_status"] == "ACCEPTED"
+
+    def test_created_meeting_is_visible_in_app_and_enqueued_for_telegram_when_email_is_disabled(
+        self,
+        monkeypatch,
+        session_client,
+        workspace,
+        project,
+        member,
+    ):
+        created = session_client.post(
+            meeting_url(workspace),
+            meeting_payload(project, participants=[{"user_id": str(member.id)}]),
+            format="json",
+        )
+        assert created.status_code == status.HTTP_201_CREATED
+        MeetingParticipant.objects.filter(meeting_id=created.data["id"], user=member).update(notify_by_email=False)
+
+        enqueued = []
+        monkeypatch.setattr(
+            "plane.bgtasks.calendar_notification_task._smtp_connection",
+            lambda: (None, "tasks@example.com"),
+        )
+        monkeypatch.setattr(
+            "plane.bgtasks.calendar_notification_task.enqueue_telegram_notifications",
+            lambda notifications: enqueued.extend(notifications),
+        )
+
+        result = send_meeting_notifications(str(created.data["id"]), "CREATED")
+
+        assert result == {"sent": 0, "in_app": 1}
+        notification = Notification.objects.get(
+            entity_name="meeting",
+            entity_identifier=created.data["id"],
+            receiver=member,
+        )
+        assert enqueued == [notification]
+
+        member_client = APIClient()
+        member_client.force_authenticate(user=member)
+        listed = member_client.get(f"/api/workspaces/{workspace.slug}/users/notifications/")
+        unread = member_client.get(f"/api/workspaces/{workspace.slug}/users/notifications/unread/")
+
+        assert listed.status_code == status.HTTP_200_OK
+        assert [item["id"] for item in listed.data] == [notification.id]
+        assert unread.status_code == status.HTTP_200_OK
+        assert unread.data["total_unread_notifications_count"] == 1
 
     def test_public_response_page_uses_browser_language(self, session_client, workspace, project, member):
         created = session_client.post(

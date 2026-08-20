@@ -142,6 +142,13 @@ export const PROJECT_SETTINGS: Record<TProjectSettingsTabs, TProjectSettingsItem
     access: [EUserProjectRoles.ADMIN],
     highlight: (pathname: string, baseUrl: string) => pathname === `${baseUrl}/meeting-types/`,
   },
+  announcements: {
+    key: "announcements",
+    i18n_label: "project_settings.announcements.label",
+    href: `/announcements`,
+    access: [EUserProjectRoles.ADMIN],
+    highlight: (pathname: string, baseUrl: string) => pathname === `${baseUrl}/announcements/`,
+  },
   automations: {
     key: "automations",
     i18n_label: "project_settings.automations.label",
@@ -175,5 +182,9 @@ export const GROUPED_PROJECT_SETTINGS: Record<PROJECT_SETTINGS_CATEGORY, TProjec
     PROJECT_SETTINGS["work_item_fields"],
     PROJECT_SETTINGS["meeting_types"],
   ],
-  [PROJECT_SETTINGS_CATEGORY.EXECUTION]: [PROJECT_SETTINGS["attachments"], PROJECT_SETTINGS["automations"]],
+  [PROJECT_SETTINGS_CATEGORY.EXECUTION]: [
+    PROJECT_SETTINGS["attachments"],
+    PROJECT_SETTINGS["announcements"],
+    PROJECT_SETTINGS["automations"],
+  ],
 };

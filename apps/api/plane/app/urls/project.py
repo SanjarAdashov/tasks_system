@@ -32,10 +32,21 @@ from plane.app.views import (
     IntakeFormAccessCodeEndpoint,
     IntakeFormSlugSuggestionEndpoint,
     IntakeFormViewSet,
+    ProjectAnnouncementAdminEndpoint,
 )
 
 
 urlpatterns = [
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/announcements/",
+        ProjectAnnouncementAdminEndpoint.as_view(),
+        name="project-announcements",
+    ),
+    path(
+        "workspaces/<str:slug>/projects/<uuid:project_id>/announcements/<uuid:pk>/",
+        ProjectAnnouncementAdminEndpoint.as_view(),
+        name="project-announcement-admin-detail",
+    ),
     path(
         "workspaces/<str:slug>/projects/",
         ProjectViewSet.as_view({"get": "list", "post": "create"}),
@@ -237,9 +248,7 @@ urlpatterns = [
     ),
     path(
         "workspaces/<str:slug>/projects/<uuid:project_id>/user-groups/<uuid:pk>/",
-        ProjectUserGroupViewSet.as_view(
-            {"get": "retrieve", "patch": "partial_update", "delete": "destroy"}
-        ),
+        ProjectUserGroupViewSet.as_view({"get": "retrieve", "patch": "partial_update", "delete": "destroy"}),
         name="project-user-group-detail",
     ),
     path(

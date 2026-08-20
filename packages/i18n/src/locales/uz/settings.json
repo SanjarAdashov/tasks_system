@@ -65,6 +65,10 @@
       "heading": "Bildirishnoma sozlamalari",
       "description": "Email va Telegram orqali qaysi bildirishnomalarni olishni tanlang.",
       "email_heading": "Email bildirishnomalari",
+      "project_announcement": {
+        "title": "Loyiha bildirishnomalari",
+        "description": "Loyiha administratorlari yuborgan e'lonlar."
+      },
       "select_default_view": "Standart ko'rinishni tanlang",
       "compact": "Yilni",
       "full": "To'liq ekran",
@@ -107,6 +111,10 @@
           "account_activity": {
             "title": "Hisob va tizim",
             "description": "Xavfsizlik, hisob va kvota haqidagi muhim xabarlar."
+          },
+          "project_announcement": {
+            "title": "Loyiha bildirishnomalari",
+            "description": "Loyiha administratorlari yuborgan e'lonlar."
           }
         },
         "weekday": {

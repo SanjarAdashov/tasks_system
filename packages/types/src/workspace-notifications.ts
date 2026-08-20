@@ -45,6 +45,14 @@ export type TNotificationData = {
     ends_at?: string;
     event: "CREATED" | "UPDATED" | "CANCELLED" | "REMINDER" | "RSVP_CHANGED";
   };
+  project_announcement?: {
+    id: string;
+    title: string;
+    type: "standard" | "important";
+    project_id: string;
+    project_name: string;
+    attachment_count: number;
+  };
 };
 
 export type TNotification = {
@@ -55,7 +63,7 @@ export type TNotification = {
   entity_name: string | undefined;
   message_html: string | undefined;
   message: undefined;
-  message_stripped: undefined;
+  message_stripped: string | undefined;
   sender: string | undefined;
   receiver: string | undefined;
   triggered_by: string | undefined;

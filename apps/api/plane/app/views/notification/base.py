@@ -18,13 +18,16 @@ from plane.db.models import (
     Issue,
     IssueAssignee,
     IssueSubscriber,
+    Meeting,
     Notification,
+    ProjectAnnouncementRecipient,
     UserNotificationPreference,
     WorkspaceMember,
 )
 from plane.utils.paginator import BasePaginator
 from plane.utils.order_queryset import NOTIFICATION_ORDER_BY_ALLOWLIST, sanitize_order_by
 from plane.app.permissions import allow_permission, ROLE
+from plane.utils.calendar import meetings_visible_to
 
 # Module imports
 from ..base import BaseAPIView, BaseViewSet
@@ -35,11 +38,30 @@ def _visible_issue_ids(request, slug):
 
 
 def _visible_notification_queryset(request, slug):
+    meeting_ids = meetings_visible_to(
+        Meeting.objects.filter(workspace__slug=slug),
+        request.user,
+    ).values("id")
+    announcement_ids = ProjectAnnouncementRecipient.objects.filter(
+        announcement__workspace__slug=slug,
+        user=request.user,
+    ).values("announcement_id")
     return Notification.objects.filter(
         workspace__slug=slug,
         receiver_id=request.user.id,
-        entity_name="issue",
-        entity_identifier__in=_visible_issue_ids(request, slug),
+    ).filter(
+        Q(
+            entity_name="issue",
+            entity_identifier__in=_visible_issue_ids(request, slug),
+        )
+        | Q(
+            entity_name="meeting",
+            entity_identifier__in=meeting_ids,
+        )
+        | Q(
+            entity_name="project_announcement",
+            entity_identifier__in=announcement_ids,
+        )
     )
 
 
@@ -48,13 +70,10 @@ class NotificationViewSet(BaseViewSet, BasePaginator):
     serializer_class = NotificationSerializer
 
     def get_queryset(self):
-        return (
-            _visible_notification_queryset(
-                self.request,
-                self.kwargs.get("slug"),
-            )
-            .select_related("workspace", "project", "triggered_by", "receiver")
-        )
+        return _visible_notification_queryset(
+            self.request,
+            self.kwargs.get("slug"),
+        ).select_related("workspace", "project", "triggered_by", "receiver")
 
     @allow_permission(allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST], level="WORKSPACE")
     def list(self, request, slug):
@@ -180,6 +199,7 @@ class NotificationViewSet(BaseViewSet, BasePaginator):
         notification = _visible_notification_queryset(request, slug).get(pk=pk)
         notification.read_at = timezone.now()
         notification.save()
+        ProjectAnnouncementRecipient.objects.filter(notification=notification).update(read_at=notification.read_at)
         serializer = NotificationSerializer(notification)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -188,6 +208,7 @@ class NotificationViewSet(BaseViewSet, BasePaginator):
         notification = _visible_notification_queryset(request, slug).get(pk=pk)
         notification.read_at = None
         notification.save()
+        ProjectAnnouncementRecipient.objects.filter(notification=notification).update(read_at=None)
         serializer = NotificationSerializer(notification)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -207,6 +228,17 @@ class NotificationViewSet(BaseViewSet, BasePaginator):
         serializer = NotificationSerializer(notification)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @allow_permission(allowed_roles=[ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST], level="WORKSPACE")
+    def destroy(self, request, slug, pk):
+        notification = _visible_notification_queryset(request, slug).get(pk=pk)
+        if notification.entity_name == "project_announcement":
+            return Response(
+                {"error": "Project notifications cannot be deleted."},
+                status=status.HTTP_405_METHOD_NOT_ALLOWED,
+            )
+        notification.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 
 class UnreadNotificationEndpoint(BaseAPIView):
     use_read_replica = True
@@ -215,7 +247,8 @@ class UnreadNotificationEndpoint(BaseAPIView):
     def get(self, request, slug):
         # Watching Issues Count
         unread_notifications_count = (
-            _visible_notification_queryset(request, slug).filter(
+            _visible_notification_queryset(request, slug)
+            .filter(
                 read_at__isnull=True,
                 archived_at__isnull=True,
                 snoozed_till__isnull=True,
@@ -224,12 +257,16 @@ class UnreadNotificationEndpoint(BaseAPIView):
             .count()
         )
 
-        mention_notifications_count = _visible_notification_queryset(request, slug).filter(
-            read_at__isnull=True,
-            archived_at__isnull=True,
-            snoozed_till__isnull=True,
-            sender__icontains="mentioned",
-        ).count()
+        mention_notifications_count = (
+            _visible_notification_queryset(request, slug)
+            .filter(
+                read_at__isnull=True,
+                archived_at__isnull=True,
+                snoozed_till__isnull=True,
+                sender__icontains="mentioned",
+            )
+            .count()
+        )
 
         return Response(
             {
@@ -248,7 +285,8 @@ class MarkAllReadNotificationViewSet(BaseViewSet):
         type = request.data.get("type", "all")
 
         notifications = (
-            _visible_notification_queryset(request, slug).filter(read_at__isnull=True)
+            _visible_notification_queryset(request, slug)
+            .filter(read_at__isnull=True)
             .select_related("workspace", "project", "triggered_by", "receiver")
             .order_by("snoozed_till", "-created_at")
         )
@@ -292,10 +330,14 @@ class MarkAllReadNotificationViewSet(BaseViewSet):
                 notifications = notifications.filter(entity_identifier__in=issue_ids)
 
         updated_notifications = []
+        read_at = timezone.now()
         for notification in notifications:
-            notification.read_at = timezone.now()
+            notification.read_at = read_at
             updated_notifications.append(notification)
         Notification.objects.bulk_update(updated_notifications, ["read_at"], batch_size=100)
+        ProjectAnnouncementRecipient.objects.filter(
+            notification_id__in=[notification.id for notification in updated_notifications]
+        ).update(read_at=read_at)
         return Response({"message": "Successful"}, status=status.HTTP_200_OK)
 
 

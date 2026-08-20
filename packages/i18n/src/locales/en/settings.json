@@ -65,6 +65,10 @@
       "heading": "Notification settings",
       "description": "Choose which notifications you receive by email and in Telegram.",
       "email_heading": "Email notifications",
+      "project_announcement": {
+        "title": "Project notifications",
+        "description": "Announcements sent by project administrators."
+      },
       "select_default_view": "Select default view",
       "compact": "Compact",
       "full": "Full Screen",
@@ -107,6 +111,10 @@
           "account_activity": {
             "title": "Account and system",
             "description": "Important security, account, and quota messages."
+          },
+          "project_announcement": {
+            "title": "Project notifications",
+            "description": "Announcements sent by project administrators."
           }
         },
         "weekday": {

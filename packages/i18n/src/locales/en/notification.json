@@ -2,6 +2,14 @@
   "notification": {
     "label": "Inbox",
     "page_label": "{workspace} - Inbox",
+    "announcement": {
+      "standard": "Project notification",
+      "important": "Important project notification",
+      "open": "Open notification",
+      "back": "Back",
+      "attachments": "Attachments",
+      "not_found": "This notification is unavailable"
+    },
     "options": {
       "mark_all_as_read": "Mark all as read",
       "mark_read": "Mark as read",

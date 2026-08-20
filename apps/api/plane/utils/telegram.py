@@ -54,6 +54,7 @@ PREFERENCE_FIELDS = {
     "property_change",
     "role_change",
     "account_activity",
+    "project_announcement",
 }
 
 TELEGRAM_COMMENT_CATEGORIES = {"mention", "comment"}
@@ -259,6 +260,10 @@ def quiet_hours_available_at(user, preference, now=None):
 
 
 def notification_category(notification):
+    if notification.entity_name == "project_announcement":
+        return "project_announcement"
+    if notification.entity_name == "meeting":
+        return "account_activity"
     activity = (notification.data or {}).get("issue_activity") or {}
     field = activity.get("field") or ""
     if field in {"assignees", "assignee"}:
@@ -351,6 +356,53 @@ def _issue_payload(notification):
     }
 
 
+def _meeting_payload(notification):
+    meeting = (notification.data or {}).get("meeting") or {}
+    workspace_slug = notification.workspace.slug
+    meeting_id = meeting.get("id") or str(notification.entity_identifier or "")
+    return {
+        "kind": "meeting",
+        "workspace_slug": workspace_slug,
+        "project_id": str(notification.project_id) if notification.project_id else None,
+        "meeting_id": meeting_id,
+        "meeting_title": meeting.get("title") or notification.title or "",
+        "event": meeting.get("event") or (notification.message or {}).get("event") or "UPDATED",
+        "starts_at": meeting.get("starts_at"),
+        "ends_at": meeting.get("ends_at"),
+        "actor_name": user_name(notification.triggered_by) if notification.triggered_by else "GTS Tasks System",
+        "url": application_url(f"{workspace_slug}/calendar?meeting={meeting_id}"),
+    }
+
+
+def _project_announcement_payload(notification):
+    announcement = (notification.data or {}).get("project_announcement") or {}
+    workspace_slug = notification.workspace.slug
+    announcement_id = announcement.get("id") or str(notification.entity_identifier or "")
+    attachment_rows = []
+    recipient = getattr(notification, "project_announcement_recipient", None)
+    if recipient:
+        attachment_rows = list(recipient.announcement.attachments.select_related("asset").all())
+    return {
+        "kind": "project_announcement",
+        "announcement_type": announcement.get("type") or "standard",
+        "project_name": announcement.get("project_name") or getattr(notification.project, "name", ""),
+        "title": announcement.get("title") or notification.title or "",
+        "content": notification.message_stripped or "",
+        "actor_name": user_name(notification.triggered_by) if notification.triggered_by else "GTS Tasks System",
+        "attachments": [
+            {
+                "name": row.asset.attributes.get("name") or "attachment",
+                "url": application_url(
+                    f"api/workspaces/{workspace_slug}/project-announcements/{announcement_id}/"
+                    f"attachments/{row.id}/?disposition=attachment"
+                ),
+            }
+            for row in attachment_rows
+        ],
+        "url": application_url(f"{workspace_slug}/notifications/announcements/{announcement_id}"),
+    }
+
+
 def enqueue_telegram_notifications(notifications):
     notifications = list(notifications)
     if not notifications or not telegram_configuration()["enabled"]:
@@ -373,13 +425,21 @@ def enqueue_telegram_notifications(notifications):
     for notification in notifications:
         receiver_id = str(notification.receiver_id)
         connection = connections.get(receiver_id)
-        if not connection or str(notification.triggered_by_id or "") == receiver_id:
+        if not connection or (
+            notification.entity_name != "project_announcement"
+            and str(notification.triggered_by_id or "") == receiver_id
+        ):
             continue
         preference = preferences.get(receiver_id) or preference_for(connection.user)
         category = notification_category(notification)
         if not preference.enabled or not getattr(preference, category, False):
             continue
-        payload = _issue_payload(notification)
+        if notification.entity_name == "meeting":
+            payload = _meeting_payload(notification)
+        elif notification.entity_name == "project_announcement":
+            payload = _project_announcement_payload(notification)
+        else:
+            payload = _issue_payload(notification)
         deliveries.append(
             TelegramDelivery(
                 connection=connection,
@@ -387,7 +447,7 @@ def enqueue_telegram_notifications(notifications):
                 notification=notification if notification.pk else None,
                 workspace_id=notification.workspace_id,
                 project_id=notification.project_id,
-                issue_id=notification.entity_identifier,
+                issue_id=notification.entity_identifier if notification.entity_name == "issue" else None,
                 category=category,
                 payload=payload,
                 available_at=quiet_hours_available_at(connection.user, preference),
@@ -475,12 +535,24 @@ TRANSLATIONS = {
         "attachment_removed": "File removed from a task",
         "role_change": "Access changed",
         "account_activity": "Account notification",
+        "project_announcement": "Project notification",
+        "project_announcement_important": "Important project notification",
+        "open_notification": "Open notification",
+        "attachments": "Attachments",
         "open_task": "Open task",
         "open_settings": "Open settings",
         "open_project": "Open project",
         "open_workspace": "Open workspace",
         "open_account": "Open account",
         "open_home": "Open GTS Tasks",
+        "open_calendar": "Open calendar",
+        "meeting_CREATED": "Meeting invitation",
+        "meeting_UPDATED": "Meeting updated",
+        "meeting_CANCELLED": "Meeting cancelled",
+        "meeting_REMINDER": "Meeting reminder",
+        "meeting_RSVP_CHANGED": "Invitation response",
+        "when": "When",
+        "organizer": "Organizer",
         "field": "Field",
         "old": "Was",
         "new": "Now",
@@ -523,12 +595,24 @@ TRANSLATIONS = {
         "attachment_removed": "Из задачи удалён файл",
         "role_change": "Права доступа изменены",
         "account_activity": "Уведомление об аккаунте",
+        "project_announcement": "Уведомление проекта",
+        "project_announcement_important": "Важное уведомление проекта",
+        "open_notification": "Открыть уведомление",
+        "attachments": "Вложения",
         "open_task": "Открыть задачу",
         "open_settings": "Открыть настройки",
         "open_project": "Открыть проект",
         "open_workspace": "Открыть рабочее пространство",
         "open_account": "Открыть аккаунт",
         "open_home": "Открыть GTS Tasks",
+        "open_calendar": "Открыть календарь",
+        "meeting_CREATED": "Приглашение на встречу",
+        "meeting_UPDATED": "Встреча изменена",
+        "meeting_CANCELLED": "Встреча отменена",
+        "meeting_REMINDER": "Напоминание о встрече",
+        "meeting_RSVP_CHANGED": "Ответ на приглашение",
+        "when": "Когда",
+        "organizer": "Организатор",
         "field": "Поле",
         "old": "Было",
         "new": "Стало",
@@ -571,12 +655,24 @@ TRANSLATIONS = {
         "attachment_removed": "Vazifadan fayl olib tashlandi",
         "role_change": "Kirish huquqlari o‘zgardi",
         "account_activity": "Hisob bildirishnomasi",
+        "project_announcement": "Loyiha bildirishnomasi",
+        "project_announcement_important": "Muhim loyiha bildirishnomasi",
+        "open_notification": "Bildirishnomani ochish",
+        "attachments": "Ilovalar",
         "open_task": "Vazifani ochish",
         "open_settings": "Sozlamalarni ochish",
         "open_project": "Loyihani ochish",
         "open_workspace": "Ish maydonini ochish",
         "open_account": "Hisobni ochish",
         "open_home": "GTS Tasks-ni ochish",
+        "open_calendar": "Kalendarni ochish",
+        "meeting_CREATED": "Uchrashuvga taklif",
+        "meeting_UPDATED": "Uchrashuv o‘zgartirildi",
+        "meeting_CANCELLED": "Uchrashuv bekor qilindi",
+        "meeting_REMINDER": "Uchrashuv eslatmasi",
+        "meeting_RSVP_CHANGED": "Taklifga javob",
+        "when": "Vaqti",
+        "organizer": "Tashkilotchi",
         "field": "Maydon",
         "old": "Oldin",
         "new": "Hozir",
@@ -643,6 +739,17 @@ def _date_value(value, language):
     return parsed.strftime("%d.%m.%Y")
 
 
+def _meeting_datetime(value, user, language):
+    try:
+        parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        parsed = parsed.astimezone(ZoneInfo(user.user_timezone or "UTC"))
+    except (TypeError, ValueError, KeyError):
+        return ""
+    if language == "en":
+        return parsed.strftime("%b %d, %Y %H:%M")
+    return parsed.strftime("%d.%m.%Y %H:%M")
+
+
 def _activity_value(value, field, language, strings):
     if value is None or str(value).strip().lower() in TELEGRAM_EMPTY_VALUES:
         return strings["not_set"]
@@ -695,6 +802,44 @@ def render_delivery(delivery):
         text = "\n".join(lines)
         url = payload.get("url") or application_url("")
         button = strings[_system_button_key(payload)]
+    elif payload.get("kind") == "meeting":
+        event = payload.get("event") or "UPDATED"
+        title = strings.get(f"meeting_{event}", strings["account_activity"])
+        lines = [
+            f"<b>{html.escape(title)}</b>",
+            "",
+            f"<b>{html.escape(str(payload.get('meeting_title') or ''))}</b>",
+        ]
+        starts_at = _meeting_datetime(payload.get("starts_at"), delivery.receiver, language)
+        if starts_at:
+            lines.append(f"{strings['when']}: {html.escape(starts_at)}")
+        if payload.get("actor_name"):
+            actor_label = strings["changed_by"] if event == "RSVP_CHANGED" else strings["organizer"]
+            lines.append(f"{actor_label}: {html.escape(str(payload['actor_name']))}")
+        text = "\n".join(lines)
+        url = payload.get("url") or application_url("")
+        button = strings["open_calendar"]
+    elif payload.get("kind") == "project_announcement":
+        title_key = (
+            "project_announcement_important"
+            if payload.get("announcement_type") == "important"
+            else "project_announcement"
+        )
+        lines = [
+            strings[title_key],
+            str(payload.get("project_name") or ""),
+            "",
+            str(payload.get("title") or ""),
+            "",
+            str(payload.get("content") or ""),
+        ]
+        attachments = payload.get("attachments") or []
+        if attachments:
+            lines.extend(["", f"{strings['attachments']}:"])
+            lines.extend(f"• {row.get('name')}: {row.get('url')}" for row in attachments)
+        text = "\n".join(lines)
+        url = payload.get("url") or application_url("")
+        button = strings["open_notification"]
     else:
         attachment_event = payload.get("attachment_event")
         title_key = f"attachment_{attachment_event}" if attachment_event else delivery.category
@@ -728,13 +873,17 @@ def render_delivery(delivery):
         text = "\n".join(lines)
         url = payload.get("url") or application_url("")
         button = strings["open_task"]
-    return {
+    rendered = {
         "chat_id": delivery.connection.chat_id,
-        "text": text[:4096],
-        "parse_mode": "HTML",
+        "text": text if payload.get("kind") == "project_announcement" else text[:4096],
+        "parse_mode": None if payload.get("kind") == "project_announcement" else "HTML",
         "disable_web_page_preview": True,
         "reply_markup": {"inline_keyboard": [[{"text": button, "url": url}]]},
+        "split_long": payload.get("kind") == "project_announcement",
     }
+    if rendered["parse_mode"] is None:
+        rendered.pop("parse_mode")
+    return rendered
 
 
 def may_deliver(delivery):

@@ -42,6 +42,7 @@ export type TProjectSettingsTabs =
   | "estimates"
   | "work_item_fields"
   | "meeting_types"
+  | "announcements"
   | "automations";
 export type TProjectSettingsItem = {
   key: TProjectSettingsTabs;

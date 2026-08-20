@@ -77,6 +77,11 @@ from .notification import (
     TelegramUserConnection,
     UserNotificationPreference,
 )
+from .project_announcement import (
+    ProjectAnnouncement,
+    ProjectAnnouncementAttachment,
+    ProjectAnnouncementRecipient,
+)
 from .page import Page, PageLabel, PageLog, ProjectPage, PageVersion
 from .project import (
     Project,

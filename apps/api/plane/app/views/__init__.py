@@ -272,6 +272,11 @@ from .notification.base import (
     UnreadNotificationEndpoint,
     UserNotificationPreferenceEndpoint,
 )
+from .project.announcement import (
+    ProjectAnnouncementAdminEndpoint,
+    ProjectAnnouncementAttachmentEndpoint,
+    ProjectAnnouncementUserEndpoint,
+)
 
 from .exporter.base import ExportIssuesEndpoint
 
