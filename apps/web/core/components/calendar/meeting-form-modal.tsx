@@ -112,6 +112,9 @@ const memberName = (member: IWorkspaceMember) => {
 
 const memberEmail = (member: IWorkspaceMember) => member.member?.email || member.email || "";
 
+const meetingParticipantUserId = (participant: TMeetingParticipant) =>
+  participant.user?.id || participant.user_id || "";
+
 const initialForm = (
   initialDate: Date,
   meeting?: TMeeting | null,
@@ -202,8 +205,7 @@ export function MeetingFormModal(props: Props) {
     setParticipants(
       new Map(
         (meeting?.participant_details || prefill?.participants || [])
-          .filter((item) => item.user)
-          .map((item) => [item.user?.id || "", item.role] as const)
+          .map((item) => [meetingParticipantUserId(item), item.role] as const)
           .filter(([id]) => Boolean(id))
       )
     );
