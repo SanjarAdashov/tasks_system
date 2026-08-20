@@ -15,6 +15,53 @@ const getInterfaceLanguage = (): string => {
 
 const usesNumericDateFormat = () => ["ru", "uz"].includes(getInterfaceLanguage());
 
+const BIRTH_DATE_INPUT_PATTERN = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+const BIRTH_DATE_ISO_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+const isCalendarDate = (year: number, month: number, day: number) => {
+  if (year < 1900 || month < 1 || month > 12 || day < 1) return false;
+  return day <= new Date(year, month, 0).getDate();
+};
+
+/**
+ * Formats an ISO birth date for the explicit, locale-independent DD/MM/YYYY input.
+ * Month/day-only values returned to non-admin workspace members are formatted as DD/MM.
+ */
+export const formatBirthDateForInput = (value: string | undefined | null): string => {
+  if (!value) return "";
+  const isoMatch = value.match(BIRTH_DATE_ISO_PATTERN);
+  if (isoMatch) return `${isoMatch[3]}/${isoMatch[2]}/${isoMatch[1]}`;
+  const publicBirthdayMatch = value.match(/^(\d{2})-(\d{2})$/);
+  if (publicBirthdayMatch) return `${publicBirthdayMatch[2]}/${publicBirthdayMatch[1]}`;
+  return value;
+};
+
+/** Keeps birthday typing constrained to DD/MM/YYYY without relying on browser date formatting. */
+export const maskBirthDateInput = (value: string): string => {
+  const digits = value.replace(/\D/g, "").slice(0, 8);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+};
+
+/** Converts DD/MM/YYYY to the API's YYYY-MM-DD format and rejects invalid or future dates. */
+export const parseBirthDateInput = (value: string | undefined | null): string | undefined => {
+  if (!value) return;
+  const match = value.match(BIRTH_DATE_INPUT_PATTERN);
+  if (!match) return;
+  const [, dayString, monthString, yearString] = match;
+  const day = Number(dayString);
+  const month = Number(monthString);
+  const year = Number(yearString);
+  if (!isCalendarDate(year, month, day)) return;
+  const isoValue = `${yearString}-${monthString}-${dayString}`;
+  const today = format(new Date(), "yyyy-MM-dd");
+  return isoValue <= today ? isoValue : undefined;
+};
+
+export const isBirthDateInputValid = (value: string | undefined | null): boolean =>
+  !value || parseBirthDateInput(value) !== undefined;
+
 // Format Date Helpers
 /**
  * @returns {string | null} formatted date in the desired format or platform default format (MMM dd, yyyy)

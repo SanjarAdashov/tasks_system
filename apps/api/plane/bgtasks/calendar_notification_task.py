@@ -18,9 +18,18 @@ from django.db import transaction
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
-from plane.db.models import Meeting, MeetingReminder, Notification
+from plane.db.models import (
+    BirthdayNotificationDelivery,
+    Meeting,
+    MeetingReminder,
+    Notification,
+    User,
+    WorkspaceMember,
+)
 from plane.license.utils.instance_value import get_email_configuration
+from plane.utils.birthday import is_birthday_on, render_birthday_greeting, user_language
 from plane.utils.calendar import expand_recurrence, sign_participant_token
+from plane.utils.telegram import application_url, enqueue_system_telegram_notification
 
 
 LOGGER = logging.getLogger("plane.worker")
@@ -82,6 +91,21 @@ RESPONSE_COPY = {
         "ACCEPTED": "taklifni qabul qildi",
         "TENTATIVE": "«Balki» deb javob berdi",
         "DECLINED": "taklifni rad etdi",
+    },
+}
+
+BIRTHDAY_ADVANCE_COPY = {
+    "en": {
+        "subject": "Birthday tomorrow: {name}",
+        "body": "Tomorrow is {name}’s birthday.",
+    },
+    "ru": {
+        "subject": "Завтра день рождения: {name}",
+        "body": "Завтра день рождения у {name}.",
+    },
+    "uz": {
+        "subject": "Ertaga tug‘ilgan kun: {name}",
+        "body": "Ertaga {name}ning tug‘ilgan kuni.",
     },
 }
 
@@ -187,6 +211,171 @@ def _smtp_connection():
         ),
         sender,
     )
+
+
+def _birthday_email(subject, message, recipient, language):
+    connection, sender = _smtp_connection()
+    if not connection or not recipient.email:
+        return False
+    body = f"""<!doctype html><html lang="{language}"><body style="margin:0;background:#f4f5f7;color:#172b4d;font-family:Arial,sans-serif"><table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td align="center" style="padding:32px 16px"><table role="presentation" width="600" cellspacing="0" cellpadding="0" style="max-width:600px;background:#fff;border:1px solid #dfe1e6;border-radius:16px"><tr><td style="padding:26px 30px;border-bottom:1px solid #ebecf0"><strong style="font-size:18px">GTS Tasks System</strong></td></tr><tr><td style="padding:36px 30px"><h1 style="margin:0 0 16px;font-size:28px">{html.escape(subject)}</h1><p style="margin:0;font-size:16px;line-height:1.6">{html.escape(message)}</p></td></tr></table></td></tr></table></body></html>"""
+    try:
+        email_message = EmailMultiAlternatives(subject, message, sender, [recipient.email], connection=connection)
+        email_message.attach_alternative(body, "text/html")
+        email_message.send(fail_silently=False)
+        return True
+    except Exception:
+        LOGGER.exception("Failed to send birthday email", extra={"user_id": str(recipient.id)})
+        return False
+
+
+def _claim_birthday_delivery(recipient, birthday_user, year, delivery_type):
+    return BirthdayNotificationDelivery.objects.filter(
+        recipient=recipient,
+        birthday_user=birthday_user,
+        occurrence_year=year,
+        delivery_type=delivery_type,
+    ).exists()
+
+
+def _record_birthday_delivery(recipient, birthday_user, year, delivery_type):
+    BirthdayNotificationDelivery.objects.get_or_create(
+        recipient=recipient,
+        birthday_user=birthday_user,
+        occurrence_year=year,
+        delivery_type=delivery_type,
+    )
+
+
+def _deliver_self_birthday_greeting(user, local_date):
+    greeting = render_birthday_greeting(user)
+    year = local_date.year
+    if not _claim_birthday_delivery(user, user, year, BirthdayNotificationDelivery.DeliveryType.SELF_EMAIL):
+        if _birthday_email(greeting["title"], greeting["message"], user, greeting["language"]):
+            _record_birthday_delivery(user, user, year, BirthdayNotificationDelivery.DeliveryType.SELF_EMAIL)
+    if not _claim_birthday_delivery(user, user, year, BirthdayNotificationDelivery.DeliveryType.SELF_TELEGRAM):
+        delivery = enqueue_system_telegram_notification(
+            user=user,
+            category="account_activity",
+            event="birthday_greeting",
+            context={
+                "localized": {greeting["language"]: greeting["message"], "en": greeting["message"]},
+                "url": application_url(""),
+                "button_key": "open_home",
+            },
+            respect_preferences=False,
+            idempotency_key=f"birthday:self:{user.id}:{year}",
+        )
+        if delivery:
+            _record_birthday_delivery(user, user, year, BirthdayNotificationDelivery.DeliveryType.SELF_TELEGRAM)
+
+
+def _deliver_advance_birthday_notifications(birthday_user, tomorrow):
+    memberships = list(
+        WorkspaceMember.objects.filter(
+            member=birthday_user,
+            is_active=True,
+            workspace__deleted_at__isnull=True,
+        ).select_related("workspace")
+    )
+    workspace_ids = [membership.workspace_id for membership in memberships]
+    if not workspace_ids:
+        return
+    workspace_by_recipient = {}
+    recipients = User.objects.filter(
+        workspace_member__workspace_id__in=workspace_ids,
+        workspace_member__is_active=True,
+        is_active=True,
+        blocked_at__isnull=True,
+        is_bot=False,
+    ).exclude(pk=birthday_user.id).select_related("profile").distinct()
+    for membership in WorkspaceMember.objects.filter(
+        workspace_id__in=workspace_ids,
+        is_active=True,
+        member_id__in=recipients.values("id"),
+    ).select_related("workspace"):
+        workspace_by_recipient.setdefault(membership.member_id, membership.workspace)
+    birthday_name = birthday_user.full_name or birthday_user.email
+    year = tomorrow.year
+    for recipient in recipients:
+        language = user_language(recipient)
+        copy = BIRTHDAY_ADVANCE_COPY[language]
+        subject = copy["subject"].format(name=birthday_name)
+        message = copy["body"].format(name=birthday_name)
+        workspace = workspace_by_recipient.get(recipient.id)
+        workspace_id = workspace.id if workspace else None
+        if not _claim_birthday_delivery(
+            recipient, birthday_user, year, BirthdayNotificationDelivery.DeliveryType.ADVANCE_IN_APP
+        ):
+            Notification.objects.create(
+                workspace_id=workspace_id,
+                data={"birthday": {"user_id": str(birthday_user.id), "date": tomorrow.isoformat()}},
+                entity_identifier=birthday_user.id,
+                entity_name="birthday",
+                title=subject,
+                message={"event": "BIRTHDAY_TOMORROW"},
+                message_stripped=message,
+                sender="in_app:birthday:advance",
+                triggered_by=birthday_user,
+                receiver=recipient,
+            )
+            _record_birthday_delivery(
+                recipient, birthday_user, year, BirthdayNotificationDelivery.DeliveryType.ADVANCE_IN_APP
+            )
+        if not _claim_birthday_delivery(
+            recipient, birthday_user, year, BirthdayNotificationDelivery.DeliveryType.ADVANCE_EMAIL
+        ) and _birthday_email(subject, message, recipient, language):
+            _record_birthday_delivery(
+                recipient, birthday_user, year, BirthdayNotificationDelivery.DeliveryType.ADVANCE_EMAIL
+            )
+        if not _claim_birthday_delivery(
+            recipient, birthday_user, year, BirthdayNotificationDelivery.DeliveryType.ADVANCE_TELEGRAM
+        ):
+            delivery = enqueue_system_telegram_notification(
+                user=recipient,
+                category="account_activity",
+                event="birthday_tomorrow",
+                context={
+                    "localized": {language: message, "en": BIRTHDAY_ADVANCE_COPY["en"]["body"].format(name=birthday_name)},
+                    "workspace_id": str(workspace_id) if workspace_id else None,
+                    "url": application_url(f"{workspace.slug}/calendar/") if workspace else application_url(""),
+                    "button_key": "open_home",
+                },
+                actor=birthday_user,
+                idempotency_key=f"birthday:advance:{recipient.id}:{birthday_user.id}:{year}",
+            )
+            if delivery:
+                _record_birthday_delivery(
+                    recipient, birthday_user, year, BirthdayNotificationDelivery.DeliveryType.ADVANCE_TELEGRAM
+                )
+
+
+@shared_task
+def process_birthday_notifications():
+    now = timezone.now()
+    processed = 0
+    users = User.objects.filter(
+        date_of_birth__isnull=False,
+        is_active=True,
+        blocked_at__isnull=True,
+        is_bot=False,
+    ).select_related("profile")
+    for user in users.iterator(chunk_size=250):
+        try:
+            zone = ZoneInfo(user.user_timezone or "UTC")
+        except (ZoneInfoNotFoundError, ValueError):
+            zone = ZoneInfo("UTC")
+        local_now = now.astimezone(zone)
+        if local_now.hour != 9 or local_now.minute >= 5:
+            continue
+        today = local_now.date()
+        if is_birthday_on(user, today):
+            _deliver_self_birthday_greeting(user, today)
+            processed += 1
+        tomorrow = today + timedelta(days=1)
+        if is_birthday_on(user, tomorrow):
+            _deliver_advance_birthday_notifications(user, tomorrow)
+            processed += 1
+    return {"processed": processed}
 
 
 @shared_task

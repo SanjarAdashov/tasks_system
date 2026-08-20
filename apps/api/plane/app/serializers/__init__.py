@@ -18,10 +18,12 @@ from .calendar import (
 )
 from .user import (
     UserSerializer,
+    UserIdentitySerializer,
     UserLiteSerializer,
     ChangePasswordSerializer,
     ResetPasswordSerializer,
     UserAdminLiteSerializer,
+    UserWorkspaceMemberLiteSerializer,
     UserMeSerializer,
     UserMeSettingsSerializer,
     ProfileSerializer,
@@ -35,6 +37,7 @@ from .workspace import (
     WorkspaceLiteSerializer,
     WorkspaceThemeSerializer,
     WorkspaceMemberAdminSerializer,
+    WorkspaceMemberPeerSerializer,
     WorkspaceMemberMeSerializer,
     WorkspaceUserPropertiesSerializer,
     WorkspaceUserLinkSerializer,

@@ -157,9 +157,15 @@ export class CalendarService extends APIService {
     const form = new FormData();
     form.append("asset", file);
     return this.post(`/api/workspaces/${workspaceSlug}/calendar/meetings/${meetingId}/attachments/`, form, {
-      headers: { "Content-Type": "multipart/form-data" },
+      // Let the browser add the multipart boundary. Setting Content-Type by
+      // hand produces an invalid body in Chromium and Django cannot read the
+      // uploaded file from request.FILES.
       timeout: 0,
-    }).then((response) => response.data);
+    })
+      .then((response) => response.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
   }
 
   async deleteAttachment(workspaceSlug: string, meetingId: string, attachmentId: string) {

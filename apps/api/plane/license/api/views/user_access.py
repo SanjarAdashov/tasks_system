@@ -11,7 +11,7 @@ from rest_framework.response import Response
 
 # Module imports
 from plane.db.models import Project, ProjectMember, ProjectUserGroup, User, Workspace
-from plane.app.serializers import ProjectUserGroupSerializer, UserLiteSerializer
+from plane.app.serializers import ProjectUserGroupSerializer, UserIdentitySerializer, UserLiteSerializer
 from plane.license.api.permissions import InstanceAdminPermission
 from plane.license.api.serializers import InstanceUserSerializer
 from plane.license.models import Instance, InstanceAdmin
@@ -135,6 +135,20 @@ class InstanceUserEndpoint(BaseAPIView):
             max_per_page=100,
             default_per_page=50,
         )
+
+
+class InstanceUserProfileEndpoint(BaseAPIView):
+    permission_classes = [InstanceAdminPermission]
+
+    def patch(self, request, user_id):
+        try:
+            user = User.objects.get(pk=user_id, is_bot=False)
+        except User.DoesNotExist:
+            return Response({"error": "User does not exist"}, status=status.HTTP_404_NOT_FOUND)
+        serializer = UserIdentitySerializer(user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(InstanceUserSerializer(instance_user_queryset().get(pk=user.id)).data)
 
 
 class InstanceUserBlockEndpoint(BaseAPIView):

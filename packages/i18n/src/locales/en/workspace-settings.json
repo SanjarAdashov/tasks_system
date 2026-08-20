@@ -58,6 +58,8 @@
         "add_member": "Add member",
         "pending_invites": "Pending invites",
         "invitations_sent_successfully": "Invitations sent successfully",
+        "edit_profile": "Edit user details",
+        "edit_profile_hint": "The name and date of birth change across every workspace.",
         "leave_confirmation": "Are you sure you want to leave the workspace? You will no longer have access to this workspace. This action cannot be undone.",
         "details": {
           "full_name": "Full name",

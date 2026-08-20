@@ -136,6 +136,7 @@ from .custom_grouping import (
     ProjectCustomGroupingPreference,
 )
 from .calendar import (
+    BirthdayNotificationDelivery,
     CalendarConnection,
     CalendarConnectionStatus,
     CalendarPreference,

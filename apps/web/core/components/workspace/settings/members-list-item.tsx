@@ -22,6 +22,7 @@ import { useUser, useUserPermissions, useUserSettings } from "@/hooks/store/user
 import { useAppRouter } from "@/hooks/use-app-router";
 // plane web imports
 import { useMemberColumns } from "@/components/workspace/settings/useMemberColumns";
+import { WorkspaceMemberProfileModal } from "@/components/workspace/settings/member-profile-modal";
 
 type Props = {
   memberDetails: (IWorkspaceMember | null)[];
@@ -29,7 +30,8 @@ type Props = {
 
 export const WorkspaceMembersListItem = observer(function WorkspaceMembersListItem(props: Props) {
   const { memberDetails } = props;
-  const { columns, workspaceSlug, removeMemberModal, setRemoveMemberModal } = useMemberColumns();
+  const { columns, workspaceSlug, removeMemberModal, setRemoveMemberModal, editMemberModal, setEditMemberModal } =
+    useMemberColumns();
   // router
   const router = useAppRouter();
   // store hooks
@@ -103,6 +105,12 @@ export const WorkspaceMembersListItem = observer(function WorkspaceMembersListIt
           onSubmit={() => handleRemove(removeMemberModal.member.id)}
         />
       )}
+      <WorkspaceMemberProfileModal
+        isOpen={Boolean(editMemberModal)}
+        member={editMemberModal?.member || null}
+        workspaceSlug={workspaceSlug?.toString() || ""}
+        onClose={() => setEditMemberModal(null)}
+      />
       <Table<RowData>
         columns={columns ?? []}
         data={

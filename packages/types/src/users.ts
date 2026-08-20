@@ -30,9 +30,14 @@ export interface IUserLite {
   id: string;
   is_active?: boolean;
   is_bot: boolean;
+  last_login_medium?: TLoginMediums;
   last_name: string;
   legacy_display_name?: string;
   joining_date?: string;
+  /** Month and day only (MM-DD). Safe to expose to workspace peers. */
+  birthday?: string | null;
+  /** Full date is returned only to the user or an administrator. */
+  date_of_birth?: string | null;
 }
 export interface IUser extends IUserLite {
   // only for uploading the cover image

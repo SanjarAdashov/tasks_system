@@ -9,7 +9,12 @@ import { action, computed, makeObservable, observable, runInAction } from "mobx"
 import { computedFn } from "mobx-utils";
 // types
 import type { EUserPermissions } from "@plane/constants";
-import type { IWorkspaceBulkInviteFormData, IWorkspaceMember, IWorkspaceMemberInvitation } from "@plane/types";
+import type {
+  IWorkspaceBulkInviteFormData,
+  IWorkspaceMember,
+  IWorkspaceMemberInvitation,
+  TWorkspaceMemberUpdate,
+} from "@plane/types";
 import { getUserSearchText } from "@plane/utils";
 // services
 import { WorkspaceService } from "@/services/workspace.service";
@@ -50,7 +55,7 @@ export interface IWorkspaceMemberStore {
   fetchWorkspaceMembers: (workspaceSlug: string) => Promise<IWorkspaceMember[]>;
   fetchWorkspaceMemberInvitations: (workspaceSlug: string) => Promise<IWorkspaceMemberInvitation[]>;
   // crud actions
-  updateMember: (workspaceSlug: string, userId: string, data: { role: EUserPermissions }) => Promise<void>;
+  updateMember: (workspaceSlug: string, userId: string, data: TWorkspaceMemberUpdate) => Promise<void>;
   removeMemberFromWorkspace: (workspaceSlug: string, userId: string) => Promise<void>;
   // invite actions
   inviteMembersToWorkspace: (workspaceSlug: string, data: IWorkspaceBulkInviteFormData) => Promise<void>;
@@ -234,7 +239,10 @@ export class WorkspaceMemberStore implements IWorkspaceMemberStore {
     await this.workspaceService.fetchWorkspaceMembers(workspaceSlug).then((response) => {
       runInAction(() => {
         response.forEach((member) => {
-          set(this.memberRoot?.memberMap, member.member.id, { ...member.member, joining_date: member.created_at });
+          set(this.memberRoot?.memberMap, member.member.id, {
+            ...member.member,
+            joining_date: member.created_at,
+          });
           set(this.workspaceMemberMap, [workspaceSlug, member.member.id], {
             id: member.id,
             member: member.member.id,
@@ -252,16 +260,26 @@ export class WorkspaceMemberStore implements IWorkspaceMemberStore {
    * @param userId
    * @param data
    */
-  updateMember = async (workspaceSlug: string, userId: string, data: { role: EUserPermissions }) => {
+  updateMember = async (workspaceSlug: string, userId: string, data: TWorkspaceMemberUpdate) => {
     const memberDetails = this.getWorkspaceMemberDetails(userId);
     if (!memberDetails) throw new Error("Member not found");
     // original data to revert back in case of error
     const originalProjectMemberData = { ...this.workspaceMemberMap?.[workspaceSlug]?.[userId] };
     try {
+      if (data.role !== undefined) {
+        runInAction(() => {
+          set(this.workspaceMemberMap, [workspaceSlug, userId, "role"], data.role);
+        });
+      }
+      const response = await this.workspaceService.updateWorkspaceMember(workspaceSlug, memberDetails.id, data);
       runInAction(() => {
-        set(this.workspaceMemberMap, [workspaceSlug, userId, "role"], data.role);
+        if (response.member)
+          set(this.memberRoot.memberMap, userId, {
+            ...this.memberRoot.memberMap?.[userId],
+            ...response.member,
+          });
+        set(this.workspaceMemberMap, [workspaceSlug, userId, "role"], response.role);
       });
-      await this.workspaceService.updateWorkspaceMember(workspaceSlug, memberDetails.id, data);
     } catch (error) {
       // revert back to original members in case of error
       runInAction(() => {

@@ -2,6 +2,7 @@ from datetime import timedelta, timezone as dt_timezone
 from unittest.mock import patch
 
 import pytest
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
@@ -220,6 +221,22 @@ class TestMeetings:
         organizer_participant = meeting.participants.get(user=create_user, removed_at__isnull=True)
         assert organizer_participant.response_status == "ACCEPTED"
         assert sorted(meeting.reminders.values_list("minutes_before", flat=True)) == [10, 30]
+
+    def test_attachment_can_be_uploaded_immediately_after_meeting_creation(
+        self, session_client, create_user, workspace, project
+    ):
+        created = session_client.post(meeting_url(workspace), meeting_payload(project), format="json")
+        assert created.status_code == status.HTTP_201_CREATED
+
+        upload = session_client.post(
+            f"{meeting_url(workspace, created.data['id'])}attachments/",
+            {"asset": SimpleUploadedFile("agenda.txt", b"Meeting agenda", content_type="text/plain")},
+            format="multipart",
+        )
+
+        assert upload.status_code == status.HTTP_201_CREATED
+        assert upload.data["name"] == "agenda.txt"
+        assert upload.data["size"] == len(b"Meeting agenda")
 
     def test_all_day_meeting_uses_exclusive_end_date_in_ics(self, session_client, workspace, project):
         start = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=2)

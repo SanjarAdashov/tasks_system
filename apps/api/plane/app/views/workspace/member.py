@@ -17,8 +17,10 @@ from plane.app.permissions import WorkspaceEntityPermission, allow_permission, R
 from plane.app.serializers import (
     ProjectMemberRoleSerializer,
     WorkspaceMemberAdminSerializer,
+    WorkspaceMemberPeerSerializer,
     WorkspaceMemberMeSerializer,
     WorkSpaceMemberSerializer,
+    UserIdentitySerializer,
 )
 from plane.app.views.base import BaseAPIView
 from plane.db.models import Project, ProjectMember, WorkspaceMember, DraftIssue
@@ -78,8 +80,10 @@ class WorkSpaceMemberViewSet(BaseViewSet):
 
         # Get all active workspace members
         workspace_members = self.get_queryset()
-        if workspace_member.role > 5:
+        if workspace_member.role == ROLE.ADMIN.value:
             serializer = WorkspaceMemberAdminSerializer(workspace_members, fields=("id", "member", "role"), many=True)
+        elif workspace_member.role > ROLE.GUEST.value:
+            serializer = WorkspaceMemberPeerSerializer(workspace_members, fields=("id", "member", "role"), many=True)
         else:
             serializer = WorkSpaceMemberSerializer(workspace_members, fields=("id", "member", "role"), many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -97,8 +101,10 @@ class WorkSpaceMemberViewSet(BaseViewSet):
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        if workspace_member.role > ROLE.GUEST.value:
+        if workspace_member.role == ROLE.ADMIN.value:
             serializer = WorkspaceMemberAdminSerializer(member, fields=("id", "member", "role"))
+        elif workspace_member.role > ROLE.GUEST.value:
+            serializer = WorkspaceMemberPeerSerializer(member, fields=("id", "member", "role"))
         else:
             serializer = WorkSpaceMemberSerializer(member, fields=("id", "member", "role"))
         return Response(serializer.data, status=status.HTTP_200_OK)
@@ -109,7 +115,9 @@ class WorkSpaceMemberViewSet(BaseViewSet):
             pk=pk, workspace__slug=slug, member__is_bot=False, is_active=True
         )
         previous_role = workspace_member.role
-        if request.user.id == workspace_member.member_id:
+        user_profile = request.data.get("user_profile")
+        is_role_change = "role" in request.data and int(request.data.get("role")) != workspace_member.role
+        if request.user.id == workspace_member.member_id and is_role_change:
             return Response(
                 {"error": "You cannot update your own role"},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -119,7 +127,13 @@ class WorkSpaceMemberViewSet(BaseViewSet):
         if "role" in request.data and int(request.data.get("role")) == 5:
             ProjectMember.objects.filter(workspace__slug=slug, member_id=workspace_member.member_id).update(role=5)
 
-        serializer = WorkSpaceMemberSerializer(workspace_member, data=request.data, partial=True)
+        if user_profile is not None:
+            identity_serializer = UserIdentitySerializer(workspace_member.member, data=user_profile, partial=True)
+            identity_serializer.is_valid(raise_exception=True)
+            identity_serializer.save()
+
+        member_data = {key: value for key, value in request.data.items() if key != "user_profile"}
+        serializer = WorkSpaceMemberSerializer(workspace_member, data=member_data, partial=True)
 
         if serializer.is_valid():
             serializer.save()
@@ -140,7 +154,10 @@ class WorkSpaceMemberViewSet(BaseViewSet):
                         "uz": f"“{workspace_name}” ish maydonidagi rolingiz o‘zgardi: {role['uz']}.",
                     },
                 )
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            return Response(
+                WorkspaceMemberAdminSerializer(workspace_member, fields=("id", "member", "role")).data,
+                status=status.HTTP_200_OK,
+            )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     @allow_permission(allowed_roles=[ROLE.ADMIN], level="WORKSPACE")

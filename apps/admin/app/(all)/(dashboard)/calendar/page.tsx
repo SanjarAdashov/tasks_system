@@ -17,6 +17,7 @@ import {
   Copy,
   ExternalLink,
   KeyRound,
+  Languages,
   ShieldCheck,
   Video,
 } from "lucide-react";
@@ -36,6 +37,9 @@ const keys = [
   "CALENDAR_MICROSOFT_TENANT",
   "CALENDAR_GOOGLE_MEET_REFRESH_TOKEN",
   "CALENDAR_GOOGLE_MEET_ACCOUNT",
+  "BIRTHDAY_GREETING_TEMPLATE_RU",
+  "BIRTHDAY_GREETING_TEMPLATE_UZ",
+  "BIRTHDAY_GREETING_TEMPLATE_EN",
 ] as const;
 
 type Values = Record<(typeof keys)[number], string>;
@@ -48,6 +52,11 @@ const emptyValues: Values = {
   CALENDAR_MICROSOFT_TENANT: "common",
   CALENDAR_GOOGLE_MEET_REFRESH_TOKEN: "",
   CALENDAR_GOOGLE_MEET_ACCOUNT: "",
+  BIRTHDAY_GREETING_TEMPLATE_RU: "С днём рождения, {name}! Желаем вдохновения, ярких идей и отличного года впереди!",
+  BIRTHDAY_GREETING_TEMPLATE_UZ:
+    "Tug‘ilgan kuningiz bilan, {name}! Sizga ilhom, yorqin g‘oyalar va ajoyib yil tilaymiz!",
+  BIRTHDAY_GREETING_TEMPLATE_EN:
+    "Happy birthday, {name}! Wishing you inspiration, bright ideas, and a wonderful year ahead!",
 };
 
 type SetupStepProps = {
@@ -421,6 +430,43 @@ const InstanceCalendarPage = observer(function InstanceCalendarPage(_props: Rout
             >
               Google Meet API setup <ExternalLink className="size-3" />
             </a>
+          </section>
+
+          <section className="overflow-hidden rounded-xl border border-subtle bg-layer-1">
+            <div className="flex gap-3 border-b border-subtle p-5">
+              <div className="grid size-10 shrink-0 place-items-center rounded-lg bg-accent-subtle text-accent-primary">
+                <Languages className="size-5" />
+              </div>
+              <div>
+                <h2 className="text-16 font-semibold text-primary">Birthday greetings</h2>
+                <p className="mt-1 text-11 text-tertiary">
+                  Edit the personal message sent by email, Telegram, and shown in the celebration modal. Keep
+                  <code className="mx-1 rounded bg-layer-3 px-1 py-0.5 text-primary">{"{name}"}</code>
+                  where the user’s first name should appear.
+                </p>
+              </div>
+            </div>
+            <div className="grid gap-4 p-5 lg:grid-cols-3">
+              {(
+                [
+                  ["BIRTHDAY_GREETING_TEMPLATE_RU", "Русский"],
+                  ["BIRTHDAY_GREETING_TEMPLATE_UZ", "O‘zbekcha"],
+                  ["BIRTHDAY_GREETING_TEMPLATE_EN", "English"],
+                ] as const
+              ).map(([key, label]) => (
+                <label key={key} className="space-y-1.5 text-11 text-secondary">
+                  <span className="font-medium text-primary">{label}</span>
+                  <textarea
+                    value={values[key]}
+                    onChange={(event) => update(key, event.target.value)}
+                    rows={5}
+                    maxLength={1000}
+                    className="focus:border-accent-primary focus:ring-accent-primary/15 w-full resize-y rounded-lg border border-subtle bg-layer-2 px-3 py-2 text-12 leading-5 text-primary transition outline-none focus:ring-2"
+                  />
+                  <span className="block text-right text-9 text-tertiary">{values[key].length}/1000</span>
+                </label>
+              ))}
+            </div>
           </section>
 
           <div className="flex justify-end">

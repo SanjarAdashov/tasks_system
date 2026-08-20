@@ -30,6 +30,7 @@ from .workspace import (
 
 from .user_access import (
     InstanceUserEndpoint,
+    InstanceUserProfileEndpoint,
     InstanceUserBlockEndpoint,
     InstanceUserCreationQuotaEndpoint,
     InstanceProjectUserGroupContextEndpoint,

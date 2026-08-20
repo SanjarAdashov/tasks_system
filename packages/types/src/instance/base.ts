@@ -106,7 +106,14 @@ export interface IInstanceUser {
   blocked_at: string | null;
   blocked_reason: string | null;
   blocked_by: IUserLite | null;
+  date_of_birth?: string | null;
 }
+
+export type TInstanceUserProfilePayload = {
+  first_name: string;
+  last_name?: string;
+  date_of_birth?: string | null;
+};
 
 export interface IInstanceUserStats {
   total_users: number;
@@ -182,7 +189,10 @@ export type TInstanceConfigurationKeys =
   | "CALENDAR_MICROSOFT_CLIENT_SECRET"
   | "CALENDAR_MICROSOFT_TENANT"
   | "CALENDAR_GOOGLE_MEET_REFRESH_TOKEN"
-  | "CALENDAR_GOOGLE_MEET_ACCOUNT";
+  | "CALENDAR_GOOGLE_MEET_ACCOUNT"
+  | "BIRTHDAY_GREETING_TEMPLATE_RU"
+  | "BIRTHDAY_GREETING_TEMPLATE_UZ"
+  | "BIRTHDAY_GREETING_TEMPLATE_EN";
 
 export interface IInstanceThemeSettings {
   theme: string;

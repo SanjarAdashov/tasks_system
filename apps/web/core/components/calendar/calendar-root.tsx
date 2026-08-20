@@ -43,7 +43,9 @@ import {
   Download,
   Search,
   SlidersHorizontal,
+  Sparkles,
   Trash2,
+  CakeSlice,
   X,
 } from "lucide-react";
 import { useTranslation } from "@plane/i18n";
@@ -51,6 +53,7 @@ import { Button } from "@plane/propel/button";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import type {
   IWorkspaceMember,
+  TCalendarBirthdayEvent,
   TCalendarExternalEvent,
   TCalendarView,
   TMeeting,
@@ -59,7 +62,8 @@ import type {
   TPartialProject,
   TWorkspaceHoliday,
 } from "@plane/types";
-import { cn } from "@plane/utils";
+import { Avatar } from "@plane/ui";
+import { cn, getFileURL } from "@plane/utils";
 import calendarService from "@/services/calendar.service";
 import { ProjectService } from "@/services/project/project.service";
 import { WorkspaceService } from "@/services/workspace.service";
@@ -101,13 +105,543 @@ const rangeForView = (view: TCalendarView, date: Date) => {
 
 const holidayForDate = (holidays: TWorkspaceHoliday[], date: Date) => {
   const rows = holidays.filter((item) => item.date === format(date, "yyyy-MM-dd"));
-  return rows.find((item) => item.is_override) || rows[0];
+  return (
+    rows.find((item) => item.is_override && item.kind === "WORKDAY") ||
+    rows.find((item) => item.is_override) ||
+    rows.find((item) => item.kind === "WORKDAY") ||
+    rows[0]
+  );
 };
 
 const getMeetingColor = (meeting: TMeeting) =>
   meeting.status === "CANCELLED" ? "#6B7280" : meeting.type_color_snapshot || "#22A06B";
 
 const isPastCalendarDate = (date: Date) => startOfDay(date) < startOfDay(new Date());
+
+const birthdayEventName = (birthday: TCalendarBirthdayEvent) =>
+  [birthday.user.first_name, birthday.user.last_name].filter(Boolean).join(" ") || "—";
+
+function BirthdayEvent({
+  birthday,
+  variant = "card",
+}: {
+  birthday: TCalendarBirthdayEvent;
+  variant?: "compact" | "all-day" | "card";
+}) {
+  const { t } = useTranslation();
+  const name = birthdayEventName(birthday);
+  const compact = variant === "compact";
+  const avatarSize = compact ? 18 : variant === "all-day" ? 24 : 32;
+
+  return (
+    <div
+      className={cn("calendar-birthday-event", `calendar-birthday-event-${variant}`)}
+      title={`${t("calendar.birthday")}: ${name}`}
+    >
+      <div className="calendar-birthday-event-avatar">
+        <Avatar
+          name={name}
+          src={getFileURL(birthday.user.avatar_url ?? "")}
+          size={avatarSize}
+          showTooltip={false}
+          className="ring-1 ring-white/50"
+        />
+        <span className="calendar-birthday-event-cake" aria-hidden>
+          <CakeSlice />
+        </span>
+      </div>
+      <div className="min-w-0 flex-1">
+        {!compact && (
+          <span className="calendar-birthday-event-label text-8 font-semibold uppercase">{t("calendar.birthday")}</span>
+        )}
+        <span className={cn("block truncate font-semibold text-primary", compact ? "text-9" : "text-11")}>{name}</span>
+      </div>
+      <Sparkles className="calendar-birthday-event-sparkles" aria-hidden />
+    </div>
+  );
+}
+
+const DAY_HOUR_HEIGHT = 64;
+
+type TimelineItem = {
+  id: string;
+  title: string;
+  startsAt: Date;
+  endsAt: Date;
+  color: string;
+  meeting?: DisplayMeeting;
+  external?: TCalendarExternalEvent;
+};
+
+type PositionedTimelineItem = TimelineItem & { column: number; columns: number };
+
+const layoutTimelineItems = (items: TimelineItem[]): PositionedTimelineItem[] => {
+  const sorted = [...items].sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
+  const result: PositionedTimelineItem[] = [];
+  let cluster: TimelineItem[] = [];
+  let clusterEnd = 0;
+
+  const flushCluster = () => {
+    if (!cluster.length) return;
+    const columnEnds: number[] = [];
+    const assigned = cluster.map((item) => {
+      let column = columnEnds.findIndex((end) => end <= item.startsAt.getTime());
+      if (column === -1) column = columnEnds.length;
+      columnEnds[column] = item.endsAt.getTime();
+      return { item, column };
+    });
+    const columns = Math.max(1, columnEnds.length);
+    result.push(...assigned.map(({ item, column }) => ({ ...item, column, columns })));
+    cluster = [];
+    clusterEnd = 0;
+  };
+
+  sorted.forEach((item) => {
+    if (cluster.length && item.startsAt.getTime() >= clusterEnd) flushCluster();
+    cluster.push(item);
+    clusterEnd = Math.max(clusterEnd, item.endsAt.getTime());
+  });
+  flushCluster();
+  return result;
+};
+
+function DayTimeline({
+  date,
+  meetings,
+  externalEvents,
+  birthdays,
+  onMeetingClick,
+}: {
+  date: Date;
+  meetings: DisplayMeeting[];
+  externalEvents: TCalendarExternalEvent[];
+  birthdays: TCalendarBirthdayEvent[];
+  onMeetingClick: (meeting: DisplayMeeting) => void;
+}) {
+  const { t } = useTranslation();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [now, setNow] = useState(() => new Date());
+  const dayStart = startOfDay(date);
+  const allDayMeetings = meetings.filter((meeting) => meeting.all_day);
+  const allDayExternal = externalEvents.filter((event) => event.all_day);
+  const timelineItems = useMemo(
+    () =>
+      layoutTimelineItems([
+        ...meetings
+          .filter((meeting) => !meeting.all_day)
+          .map((meeting) => ({
+            id: meeting.occurrenceId,
+            title: meeting.title,
+            startsAt: new Date(meeting.displayStartsAt),
+            endsAt: new Date(meeting.displayEndsAt),
+            color: getMeetingColor(meeting),
+            meeting,
+          })),
+        ...externalEvents
+          .filter((event) => !event.all_day)
+          .map((event) => ({
+            id: `external:${event.id}`,
+            title: event.title || t("calendar.external"),
+            startsAt: new Date(event.starts_at),
+            endsAt: new Date(event.ends_at),
+            color: "#2684ff",
+            external: event,
+          })),
+      ]),
+    [externalEvents, meetings, t]
+  );
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const firstStart = timelineItems[0]?.startsAt;
+    const targetHour = isToday(date)
+      ? Math.max(0, new Date().getHours() - 1)
+      : Math.max(0, (firstStart?.getHours() || 9) - 1);
+    window.requestAnimationFrame(() => scrollRef.current?.scrollTo({ top: targetHour * DAY_HOUR_HEIGHT }));
+  }, [date, timelineItems]);
+
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+  const totalHeight = 24 * DAY_HOUR_HEIGHT;
+  const minutesFromDayStart = (value: Date) =>
+    Math.max(0, Math.min(24 * 60, Math.round((value.getTime() - dayStart.getTime()) / 60_000)));
+
+  return (
+    <div className="flex h-full min-h-0 flex-col">
+      {(birthdays.length > 0 || allDayMeetings.length > 0 || allDayExternal.length > 0) && (
+        <div className="grid shrink-0 grid-cols-[64px_1fr] border-b border-subtle bg-surface-2/70">
+          <div className="border-r border-subtle px-2 py-2 text-right text-9 font-semibold text-tertiary uppercase">
+            {t("calendar.all_day")}
+          </div>
+          <div className="flex flex-wrap gap-1.5 p-2">
+            {birthdays.map((birthday) => (
+              <BirthdayEvent key={birthday.id} birthday={birthday} variant="all-day" />
+            ))}
+            {allDayMeetings.map((meeting) => (
+              <MeetingChip key={meeting.occurrenceId} meeting={meeting} onClick={() => onMeetingClick(meeting)} />
+            ))}
+            {allDayExternal.map((event) => (
+              <div key={event.id} className="bg-blue-500/10 text-blue-500 rounded-md px-2 py-1 text-10">
+                {event.title || t("calendar.external")}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      <div ref={scrollRef} className="min-h-0 flex-1 overflow-auto bg-surface-1">
+        <div className="relative min-w-[680px]" style={{ height: totalHeight }}>
+          {Array.from({ length: 25 }, (_, hour) => (
+            <div
+              key={hour}
+              className="absolute right-0 left-0 border-t border-subtle"
+              style={{ top: hour * DAY_HOUR_HEIGHT }}
+            >
+              {hour < 24 && (
+                <span className="font-mono absolute -top-2.5 left-2 w-11 bg-surface-1 pr-2 text-right text-9 text-tertiary">
+                  {String(hour).padStart(2, "0")}:00
+                </span>
+              )}
+            </div>
+          ))}
+          <div className="absolute inset-y-0 right-4 left-16 border-l border-subtle">
+            {timelineItems.map((item) => {
+              const top = (minutesFromDayStart(item.startsAt) / 60) * DAY_HOUR_HEIGHT;
+              const durationMinutes = Math.max(
+                20,
+                minutesFromDayStart(item.endsAt) - minutesFromDayStart(item.startsAt)
+              );
+              const height = Math.max(28, (durationMinutes / 60) * DAY_HOUR_HEIGHT - 2);
+              const width = 100 / item.columns;
+              return (
+                <button
+                  type="button"
+                  key={item.id}
+                  onClick={() => item.meeting && onMeetingClick(item.meeting)}
+                  className={cn(
+                    "shadow-xs absolute overflow-hidden rounded-md border px-2 py-1 text-left transition",
+                    item.meeting ? "hover:shadow-md hover:z-10" : "cursor-default"
+                  )}
+                  style={{
+                    top,
+                    height,
+                    left: `calc(${item.column * width}% + 2px)`,
+                    width: `calc(${width}% - 4px)`,
+                    borderColor: `${item.color}80`,
+                    borderLeftWidth: 3,
+                    backgroundColor: `${item.color}18`,
+                  }}
+                >
+                  <div className="truncate text-10 font-semibold text-primary">{item.title}</div>
+                  <div className="font-mono mt-0.5 text-9 text-secondary">
+                    {format(item.startsAt, "HH:mm")}–{format(item.endsAt, "HH:mm")}
+                  </div>
+                </button>
+              );
+            })}
+            {isToday(date) && (
+              <div
+                className="pointer-events-none absolute right-0 left-0 z-20 border-t border-danger-strong"
+                style={{ top: (currentMinutes / 60) * DAY_HOUR_HEIGHT }}
+              >
+                <span className="absolute -top-1.5 -left-1.5 size-3 rounded-full bg-danger-primary" />
+                <span className="font-mono absolute -top-3 -left-[58px] rounded bg-danger-primary px-1.5 py-0.5 text-9 text-on-color">
+                  {format(now, "HH:mm")}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function WeekTimeline({
+  dates,
+  meetings,
+  externalEvents,
+  birthdays,
+  holidays,
+  dateLocale,
+  onMeetingClick,
+  onSlotCreate,
+  onDayOpen,
+}: {
+  dates: Date[];
+  meetings: DisplayMeeting[];
+  externalEvents: TCalendarExternalEvent[];
+  birthdays: TCalendarBirthdayEvent[];
+  holidays: TWorkspaceHoliday[];
+  dateLocale: string;
+  onMeetingClick: (meeting: DisplayMeeting) => void;
+  onSlotCreate: (date: Date) => void;
+  onDayOpen: (date: Date) => void;
+}) {
+  const { t } = useTranslation();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [now, setNow] = useState(() => new Date());
+  const totalHeight = 24 * DAY_HOUR_HEIGHT;
+  const columnTemplate = `64px repeat(${dates.length}, minmax(132px, 1fr))`;
+  const minWidth = Math.max(760, 64 + dates.length * 132);
+
+  const dayData = useMemo(
+    () =>
+      dates.map((date) => {
+        const dayMeetings = meetings.filter((meeting) => isSameDay(new Date(meeting.displayStartsAt), date));
+        const dayExternal = externalEvents.filter((event) => isSameDay(new Date(event.starts_at), date));
+        return {
+          date,
+          allDayMeetings: dayMeetings.filter((meeting) => meeting.all_day),
+          allDayExternal: dayExternal.filter((event) => event.all_day),
+          birthdays: birthdays.filter((birthday) => birthday.date === format(date, "yyyy-MM-dd")),
+          timelineItems: layoutTimelineItems([
+            ...dayMeetings
+              .filter((meeting) => !meeting.all_day)
+              .map((meeting) => ({
+                id: meeting.occurrenceId,
+                title: meeting.title,
+                startsAt: new Date(meeting.displayStartsAt),
+                endsAt: new Date(meeting.displayEndsAt),
+                color: getMeetingColor(meeting),
+                meeting,
+              })),
+            ...dayExternal
+              .filter((event) => !event.all_day)
+              .map((event) => ({
+                id: `external:${event.id}`,
+                title: event.title || t("calendar.external"),
+                startsAt: new Date(event.starts_at),
+                endsAt: new Date(event.ends_at),
+                color: "#2684ff",
+                external: event,
+              })),
+          ]),
+        };
+      }),
+    [birthdays, dates, externalEvents, meetings, t]
+  );
+
+  const hasAllDayEvents = dayData.some(
+    (day) => day.birthdays.length > 0 || day.allDayMeetings.length > 0 || day.allDayExternal.length > 0
+  );
+
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(new Date()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const earliestStart = dayData
+      .flatMap((day) => day.timelineItems)
+      .reduce<Date | null>(
+        (earliest, item) => (!earliest || item.startsAt < earliest ? item.startsAt : earliest),
+        null
+      );
+    const targetHour = dates.some((date) => isToday(date))
+      ? Math.max(0, new Date().getHours() - 1)
+      : Math.max(0, (earliestStart?.getHours() || 9) - 1);
+    window.requestAnimationFrame(() => scrollRef.current?.scrollTo({ top: targetHour * DAY_HOUR_HEIGHT }));
+  }, [dates, dayData]);
+
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+  return (
+    <div className="calendar-week-timeline h-full overflow-x-auto overflow-y-hidden bg-surface-1">
+      <div className="flex h-full min-h-0 flex-col" style={{ minWidth }}>
+        <div
+          className="grid shrink-0 border-b border-subtle bg-surface-2/80"
+          style={{ gridTemplateColumns: columnTemplate }}
+        >
+          <div className="border-r border-subtle" />
+          {dayData.map(({ date }) => {
+            const holiday = holidayForDate(holidays, date);
+            const weekend = date.getDay() === 0 || date.getDay() === 6;
+            return (
+              <button
+                type="button"
+                key={date.toISOString()}
+                onClick={() => onDayOpen(date)}
+                className={cn(
+                  "border-r border-subtle px-2 py-2 text-center transition hover:bg-layer-1",
+                  weekend && "bg-danger-subtle/5"
+                )}
+              >
+                <span className="block text-9 font-semibold text-tertiary uppercase">
+                  {new Intl.DateTimeFormat(dateLocale, { weekday: "short" }).format(date)}
+                </span>
+                <span
+                  className={cn(
+                    "mx-auto mt-1 grid size-7 place-items-center rounded-full text-12 font-semibold text-primary",
+                    isToday(date) && "bg-accent-primary text-on-color",
+                    weekend && !isToday(date) && "text-danger-primary"
+                  )}
+                >
+                  {format(date, "d")}
+                </span>
+                {holiday && (
+                  <span className="text-8 mt-1 block truncate text-danger-primary" title={holiday.name}>
+                    {holiday.name}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {hasAllDayEvents && (
+          <div
+            className="grid shrink-0 border-b border-subtle bg-surface-2/65"
+            style={{ gridTemplateColumns: columnTemplate }}
+          >
+            <div className="text-8 border-r border-subtle px-2 py-2 text-right font-semibold text-tertiary uppercase">
+              {t("calendar.all_day")}
+            </div>
+            {dayData.map((day) => (
+              <div key={day.date.toISOString()} className="min-h-10 space-y-1 border-r border-subtle p-1.5">
+                {day.birthdays.map((birthday) => (
+                  <BirthdayEvent key={birthday.id} birthday={birthday} variant="compact" />
+                ))}
+                {day.allDayMeetings.map((meeting) => (
+                  <MeetingChip key={meeting.occurrenceId} meeting={meeting} onClick={() => onMeetingClick(meeting)} />
+                ))}
+                {day.allDayExternal.map((event) => (
+                  <div
+                    key={event.id}
+                    className="bg-blue-500/10 text-blue-500 flex min-h-7 items-center gap-1 rounded-md px-2 py-1 text-9"
+                    title={event.title || t("calendar.external")}
+                  >
+                    <span className="bg-blue-500 size-1.5 shrink-0 rounded-full" />
+                    <span className="truncate">{event.title || t("calendar.external")}</span>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        )}
+
+        <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
+          <div className="relative" style={{ height: totalHeight }}>
+            {Array.from({ length: 25 }, (_, hour) => (
+              <div
+                key={hour}
+                className="absolute right-0 left-0 border-t border-subtle"
+                style={{ top: hour * DAY_HOUR_HEIGHT }}
+              >
+                {hour < 24 && (
+                  <span className="font-mono absolute -top-2.5 left-2 w-11 bg-surface-1 pr-2 text-right text-9 text-tertiary">
+                    {String(hour).padStart(2, "0")}:00
+                  </span>
+                )}
+              </div>
+            ))}
+
+            <div
+              className="absolute inset-y-0 right-0 left-16 grid"
+              style={{ gridTemplateColumns: `repeat(${dates.length}, minmax(132px, 1fr))` }}
+            >
+              {dayData.map((day) => {
+                const dayStart = startOfDay(day.date);
+                const weekend = day.date.getDay() === 0 || day.date.getDay() === 6;
+                const minutesFromDayStart = (value: Date) =>
+                  Math.max(0, Math.min(24 * 60, Math.round((value.getTime() - dayStart.getTime()) / 60_000)));
+                return (
+                  <div
+                    key={day.date.toISOString()}
+                    className={cn(
+                      "calendar-week-day-column relative border-l border-subtle",
+                      weekend && "bg-danger-subtle/5"
+                    )}
+                  >
+                    {Array.from({ length: 48 }, (_, slotIndex) => {
+                      const slotStart = new Date(dayStart);
+                      slotStart.setMinutes(slotIndex * 30, 0, 0);
+                      const isPastSlot = slotStart < now;
+                      return (
+                        <button
+                          type="button"
+                          key={slotIndex}
+                          disabled={isPastSlot}
+                          onClick={() => onSlotCreate(slotStart)}
+                          aria-label={`${t("calendar.new_meeting")} · ${new Intl.DateTimeFormat(dateLocale, {
+                            dateStyle: "medium",
+                            timeStyle: "short",
+                          }).format(slotStart)}`}
+                          className={cn(
+                            "calendar-week-slot group absolute inset-x-0 z-0 flex items-start justify-center border-b border-subtle/45 text-accent-primary transition outline-none",
+                            !isPastSlot && "hover:bg-accent-primary/10 focus-visible:bg-accent-primary/15",
+                            isPastSlot && "cursor-default"
+                          )}
+                          style={{ top: slotIndex * (DAY_HOUR_HEIGHT / 2), height: DAY_HOUR_HEIGHT / 2 }}
+                        >
+                          {!isPastSlot && (
+                            <span className="text-8 shadow-sm mt-1 flex items-center gap-1 rounded bg-surface-1/90 px-1.5 py-0.5 font-semibold opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100">
+                              <Plus className="size-2.5" /> {format(slotStart, "HH:mm")}
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+
+                    {day.timelineItems.map((item) => {
+                      const top = (minutesFromDayStart(item.startsAt) / 60) * DAY_HOUR_HEIGHT;
+                      const durationMinutes = Math.max(
+                        20,
+                        minutesFromDayStart(item.endsAt) - minutesFromDayStart(item.startsAt)
+                      );
+                      const height = Math.max(26, (durationMinutes / 60) * DAY_HOUR_HEIGHT - 2);
+                      const width = 100 / item.columns;
+                      return (
+                        <button
+                          type="button"
+                          key={item.id}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            if (item.meeting) onMeetingClick(item.meeting);
+                          }}
+                          className={cn(
+                            "shadow-xs absolute z-10 overflow-hidden rounded-md border px-1.5 py-1 text-left transition",
+                            item.meeting ? "hover:shadow-md hover:z-20" : "cursor-default"
+                          )}
+                          style={{
+                            top,
+                            height,
+                            left: `calc(${item.column * width}% + 2px)`,
+                            width: `calc(${width}% - 4px)`,
+                            borderColor: `${item.color}80`,
+                            borderLeftWidth: 3,
+                            backgroundColor: `${item.color}22`,
+                          }}
+                          title={`${format(item.startsAt, "HH:mm")}–${format(item.endsAt, "HH:mm")} · ${item.title}`}
+                        >
+                          <div className="font-mono text-8 truncate text-secondary">
+                            {format(item.startsAt, "HH:mm")}–{format(item.endsAt, "HH:mm")}
+                          </div>
+                          <div className="line-clamp-2 text-9 leading-3.5 font-semibold text-primary">{item.title}</div>
+                        </button>
+                      );
+                    })}
+
+                    {isToday(day.date) && (
+                      <div
+                        className="pointer-events-none absolute right-0 left-0 z-20 border-t border-danger-strong"
+                        style={{ top: (currentMinutes / 60) * DAY_HOUR_HEIGHT }}
+                      >
+                        <span className="absolute -top-1.5 -left-1.5 size-3 rounded-full bg-danger-primary" />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function MeetingChip({ meeting, onClick }: { meeting: DisplayMeeting; onClick: () => void }) {
   return (
@@ -559,6 +1093,7 @@ export function CalendarRoot({ workspaceSlug }: Props) {
   const [view, setView] = useState<TCalendarView>("MONTH");
   const [cursor, setCursor] = useState(new Date());
   const [createDate, setCreateDate] = useState(new Date());
+  const [createFromTimeSlot, setCreateFromTimeSlot] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [selectedMeeting, setSelectedMeeting] = useState<DisplayMeeting | null>(null);
   const [editingMeeting, setEditingMeeting] = useState<TMeeting | null>(null);
@@ -679,9 +1214,10 @@ export function CalendarRoot({ workspaceSlug }: Props) {
     else setCursor((date) => addDays(date, direction * (view === "SCHEDULE" ? 30 : 1)));
   };
 
-  const openCreate = (date = new Date()) => {
+  const openCreate = (date = new Date(), fromTimeSlot = false) => {
     if (isPastCalendarDate(date)) return;
     setCreateDate(date);
+    setCreateFromTimeSlot(fromTimeSlot);
     setEditingMeeting(null);
     setIsCreateOpen(true);
   };
@@ -694,6 +1230,8 @@ export function CalendarRoot({ workspaceSlug }: Props) {
           isSameDay(new Date(event.starts_at), date)
         )
       : [];
+  const birthdaysForDay = (date: Date) =>
+    (data?.birthday_events || []).filter((event: TCalendarBirthdayEvent) => event.date === format(date, "yyyy-MM-dd"));
 
   const hideWeekends = preferences?.show_weekends === false;
   const visibleDay = (date: Date) => !hideWeekends || (date.getDay() !== 0 && date.getDay() !== 6);
@@ -881,7 +1419,7 @@ export function CalendarRoot({ workspaceSlug }: Props) {
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-auto">
+      <div className={cn("min-h-0 flex-1", view === "DAY" || view === "WEEK" ? "overflow-hidden" : "overflow-auto")}>
         {isLoading && !data ? (
           <div className="grid h-full place-items-center text-13 text-secondary">
             <div className="flex items-center gap-2">
@@ -892,6 +1430,14 @@ export function CalendarRoot({ workspaceSlug }: Props) {
           <div className="grid h-full place-items-center p-8 text-center text-13 text-danger-primary">
             {t("calendar.saving_error")}
           </div>
+        ) : view === "DAY" ? (
+          <DayTimeline
+            date={cursor}
+            meetings={eventsForDay(cursor)}
+            externalEvents={externalForDay(cursor)}
+            birthdays={birthdaysForDay(cursor)}
+            onMeetingClick={setSelectedMeeting}
+          />
         ) : view === "MONTH" ? (
           <div className="min-w-[760px]">
             <div
@@ -912,21 +1458,30 @@ export function CalendarRoot({ workspaceSlug }: Props) {
               {monthDays.map((date) => {
                 const events = eventsForDay(date);
                 const external = externalForDay(date);
+                const birthdays = birthdaysForDay(date);
                 const holiday = holidayForDate(data?.holidays || [], date);
                 const weekend = date.getDay() === 0 || date.getDay() === 6;
                 const isPast = isPastCalendarDate(date);
                 return (
-                  <button
-                    type="button"
+                  <div
                     key={date.toISOString()}
-                    onClick={() => openCreate(date)}
-                    aria-disabled={isPast}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => {
+                      setCursor(date);
+                      setView("DAY");
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key !== "Enter" && event.key !== " ") return;
+                      event.preventDefault();
+                      setCursor(date);
+                      setView("DAY");
+                    }}
                     className={cn(
-                      "group min-h-[132px] border-r border-b border-subtle p-2 text-left align-top transition hover:bg-layer-transparent-hover",
+                      "group focus-visible:outline-accent-primary min-h-[132px] cursor-pointer border-r border-b border-subtle p-2 text-left align-top transition hover:bg-layer-transparent-hover focus-visible:outline-2 focus-visible:outline-offset-[-2px]",
                       weekend && "bg-danger-subtle/5",
                       holiday && holiday.kind !== "WORKDAY" && "bg-danger-subtle/10",
-                      !isSameMonth(date, cursor) && "opacity-45",
-                      isPast && "cursor-default hover:bg-transparent"
+                      !isSameMonth(date, cursor) && "opacity-45"
                     )}
                   >
                     <div className="mb-2 flex items-start justify-between gap-1">
@@ -940,9 +1495,22 @@ export function CalendarRoot({ workspaceSlug }: Props) {
                         {format(date, "d")}
                       </span>
                       {!isPast && (
-                        <Plus className="size-3.5 text-tertiary opacity-0 transition group-hover:opacity-100" />
+                        <button
+                          type="button"
+                          aria-label={t("calendar.new_meeting")}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            openCreate(date);
+                          }}
+                          className="grid size-7 place-items-center rounded-md text-tertiary opacity-0 transition group-hover:opacity-100 hover:bg-layer-1 hover:text-accent-primary focus:opacity-100"
+                        >
+                          <Plus className="size-4" />
+                        </button>
                       )}
                     </div>
+                    {birthdays.map((birthday) => (
+                      <BirthdayEvent key={birthday.id} birthday={birthday} variant="compact" />
+                    ))}
                     {holiday && (
                       <div
                         className={cn(
@@ -976,25 +1544,43 @@ export function CalendarRoot({ workspaceSlug }: Props) {
                         <div className="px-1 text-9 text-tertiary">+{events.length + external.length - 3}</div>
                       )}
                     </div>
-                  </button>
+                  </div>
                 );
               })}
             </div>
           </div>
+        ) : view === "WEEK" ? (
+          <WeekTimeline
+            dates={compactDays}
+            meetings={displayMeetings}
+            externalEvents={showExternal ? data?.external_events || [] : []}
+            birthdays={data?.birthday_events || []}
+            holidays={data?.holidays || []}
+            dateLocale={dateLocale}
+            onMeetingClick={setSelectedMeeting}
+            onSlotCreate={(date) => openCreate(date, true)}
+            onDayOpen={(date) => {
+              setCursor(date);
+              setView("DAY");
+            }}
+          />
         ) : (
-          <div
-            className={cn(
-              "grid min-h-full",
-              view === "WEEK" ? `min-w-[860px] ${hideWeekends ? "grid-cols-5" : "grid-cols-7"}` : "grid-cols-1"
-            )}
-          >
+          <div className="grid min-h-full grid-cols-1">
             {compactDays.map((date) => {
               const events = eventsForDay(date);
               const external = externalForDay(date);
+              const birthdays = birthdaysForDay(date);
               const holiday = holidayForDate(data?.holidays || [], date);
               const weekend = date.getDay() === 0 || date.getDay() === 6;
               const isPast = isPastCalendarDate(date);
-              if (view === "SCHEDULE" && events.length === 0 && external.length === 0 && !holiday) return null;
+              if (
+                view === "SCHEDULE" &&
+                events.length === 0 &&
+                external.length === 0 &&
+                birthdays.length === 0 &&
+                !holiday
+              )
+                return null;
               return (
                 <section
                   key={date.toISOString()}
@@ -1014,6 +1600,9 @@ export function CalendarRoot({ workspaceSlug }: Props) {
                     {renderDayHeader(date)}
                   </button>
                   <div className="space-y-2">
+                    {birthdays.map((birthday) => (
+                      <BirthdayEvent key={birthday.id} birthday={birthday} variant="card" />
+                    ))}
                     {events.map((meeting) => (
                       <button
                         type="button"
@@ -1052,7 +1641,7 @@ export function CalendarRoot({ workspaceSlug }: Props) {
                         </div>
                       </div>
                     ))}
-                    {events.length === 0 && external.length === 0 && view !== "SCHEDULE" && (
+                    {events.length === 0 && external.length === 0 && birthdays.length === 0 && view !== "SCHEDULE" && (
                       <button
                         type="button"
                         onClick={() => openCreate(date)}
@@ -1071,9 +1660,12 @@ export function CalendarRoot({ workspaceSlug }: Props) {
                 </section>
               );
             })}
-            {view === "SCHEDULE" && displayMeetings.length === 0 && (data?.external_events.length || 0) === 0 && (
-              <div className="grid min-h-80 place-items-center text-13 text-secondary">{t("calendar.no_events")}</div>
-            )}
+            {view === "SCHEDULE" &&
+              displayMeetings.length === 0 &&
+              (data?.external_events.length || 0) === 0 &&
+              (data?.birthday_events.length || 0) === 0 && (
+                <div className="grid min-h-80 place-items-center text-13 text-secondary">{t("calendar.no_events")}</div>
+              )}
           </div>
         )}
       </div>
@@ -1082,11 +1674,13 @@ export function CalendarRoot({ workspaceSlug }: Props) {
         workspaceSlug={workspaceSlug}
         isOpen={isCreateOpen}
         initialDate={createDate}
+        useExactInitialDate={createFromTimeSlot}
         projects={projects}
         workspaceMembers={workspaceMembers}
         meeting={editingMeeting}
         onClose={() => {
           setIsCreateOpen(false);
+          setCreateFromTimeSlot(false);
           setEditingMeeting(null);
         }}
         onSaved={() => {
@@ -1102,6 +1696,7 @@ export function CalendarRoot({ workspaceSlug }: Props) {
           onEdit={() => {
             setEditingMeeting(selectedMeeting);
             setCreateDate(new Date(selectedMeeting.displayStartsAt));
+            setCreateFromTimeSlot(false);
             setSelectedMeeting(null);
             setIsCreateOpen(true);
           }}

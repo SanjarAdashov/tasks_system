@@ -67,6 +67,7 @@ from .project.member import (
 )
 
 from .user.base import (
+    BirthdayGreetingEndpoint,
     UserEndpoint,
     UpdateUserOnBoardedEndpoint,
     UpdateUserTourCompletedEndpoint,

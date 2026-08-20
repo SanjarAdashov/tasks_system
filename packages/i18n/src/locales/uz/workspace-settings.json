@@ -58,6 +58,8 @@
         "add_member": "A'zo qo'shing",
         "pending_invites": "Kutilayotgan takliflar",
         "invitations_sent_successfully": "Taklifnomalar muvaffaqiyatli yuborildi",
+        "edit_profile": "Foydalanuvchi ma’lumotlarini tahrirlash",
+        "edit_profile_hint": "Ism va tug‘ilgan sana barcha ish maydonlarida o‘zgaradi.",
         "leave_confirmation": "Ish joyini tark etmoqchimisiz? Siz endi bu ish maydoniga kira olmaysiz. Bu amalni ortga qaytarib bo‘lmaydi.",
         "details": {
           "full_name": "To'liq ism",

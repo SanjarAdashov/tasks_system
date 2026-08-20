@@ -6,7 +6,7 @@
 
 import { useMemo, useState } from "react";
 import useSWR from "swr";
-import { Gauge, Search, ShieldCheck, UserRound, UserX } from "lucide-react";
+import { Gauge, Pencil, Search, ShieldCheck, UserRound, UserX } from "lucide-react";
 // plane imports
 import { Button } from "@plane/propel/button";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
@@ -18,6 +18,7 @@ import { cn, getUserFullName } from "@plane/utils";
 import { PageWrapper } from "@/components/common/page-wrapper";
 import { UserAccessModal, type TUserAccessAction } from "@/components/user/user-access-modal";
 import { UserCreationQuotaModal } from "@/components/user/user-creation-quota-modal";
+import { UserProfileModal } from "@/components/user/user-profile-modal";
 // hooks
 import { useUser } from "@/hooks/store";
 // types
@@ -51,6 +52,7 @@ const UserManagementPage = function UserManagementPage(_props: Route.ComponentPr
   const [selectedUser, setSelectedUser] = useState<IInstanceUser>();
   const [selectedAction, setSelectedAction] = useState<TUserAccessAction>("block");
   const [quotaUser, setQuotaUser] = useState<IInstanceUser>();
+  const [profileUser, setProfileUser] = useState<IInstanceUser>();
 
   const { data, error, isLoading, mutate } = useSWR(["INSTANCE_USERS", search, cursor], () =>
     instanceService.users(search, cursor)
@@ -242,6 +244,9 @@ const UserManagementPage = function UserManagementPage(_props: Route.ComponentPr
                     </div>
 
                     <div className="flex w-full justify-end gap-2 sm:w-auto">
+                      <Button variant="secondary" size="lg" onClick={() => setProfileUser(user)}>
+                        <Pencil className="mr-1 size-4" /> Edit
+                      </Button>
                       <Button variant="secondary" size="lg" onClick={() => setQuotaUser(user)}>
                         <Gauge className="mr-1 size-4" /> Quotas
                       </Button>
@@ -307,6 +312,35 @@ const UserManagementPage = function UserManagementPage(_props: Route.ComponentPr
         user={selectedUser}
       />
       <UserCreationQuotaModal user={quotaUser} onClose={() => setQuotaUser(undefined)} />
+      <UserProfileModal
+        isOpen={Boolean(profileUser)}
+        user={profileUser}
+        onClose={() => setProfileUser(undefined)}
+        onSubmit={async (payload) => {
+          if (!profileUser) return;
+          try {
+            await instanceService.updateUserProfile(profileUser.id, payload);
+            await mutate();
+            setProfileUser(undefined);
+            setToast({
+              type: TOAST_TYPE.SUCCESS,
+              title: "User details updated",
+              message: "The name and date of birth are now current across GTS Tasks System.",
+            });
+          } catch (profileError: any) {
+            setToast({
+              type: TOAST_TYPE.ERROR,
+              title: "Could not update user",
+              message:
+                profileError?.first_name?.[0] ||
+                profileError?.date_of_birth?.[0] ||
+                profileError?.error ||
+                "Check the entered values and try again.",
+            });
+            throw profileError;
+          }
+        }}
+      />
     </PageWrapper>
   );
 };

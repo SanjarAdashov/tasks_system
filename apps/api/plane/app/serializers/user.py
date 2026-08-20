@@ -27,6 +27,13 @@ class UserSerializer(BaseSerializer):
             raise serializers.ValidationError("Last name cannot contain a URL.")
         return value
 
+    def validate_date_of_birth(self, value):
+        from django.utils import timezone
+
+        if value and value > timezone.localdate():
+            raise serializers.ValidationError("Date of birth cannot be in the future.")
+        return value
+
     class Meta:
         model = User
         # Exclude password field from the serializer
@@ -59,11 +66,39 @@ class UserSerializer(BaseSerializer):
             "token_updated_at",
             "display_name",
             "legacy_display_name",
+            "birthday_greeting_seen_on",
         ]
 
         # If the user has already filled first name or last name then he is onboarded
         def get_is_onboarded(self, obj):
             return bool(obj.first_name) or bool(obj.last_name)
+
+
+class UserIdentitySerializer(BaseSerializer):
+    def validate_first_name(self, value):
+        value = value.strip()
+        if not value:
+            raise serializers.ValidationError("First name is required.")
+        if contains_url(value):
+            raise serializers.ValidationError("First name cannot contain a URL.")
+        return value
+
+    def validate_last_name(self, value):
+        value = value.strip()
+        if contains_url(value):
+            raise serializers.ValidationError("Last name cannot contain a URL.")
+        return value
+
+    def validate_date_of_birth(self, value):
+        from django.utils import timezone
+
+        if value and value > timezone.localdate():
+            raise serializers.ValidationError("Date of birth cannot be in the future.")
+        return value
+
+    class Meta:
+        model = User
+        fields = ["first_name", "last_name", "date_of_birth"]
 
 
 class UserMeSerializer(BaseSerializer):
@@ -89,6 +124,7 @@ class UserMeSerializer(BaseSerializer):
             "is_email_verified",
             "last_login_medium",
             "last_login_time",
+            "date_of_birth",
         ]
         read_only_fields = fields
 
@@ -145,6 +181,11 @@ class UserMeSettingsSerializer(BaseSerializer):
 
 
 class UserLiteSerializer(BaseSerializer):
+    birthday = serializers.SerializerMethodField()
+
+    def get_birthday(self, obj):
+        return obj.date_of_birth.strftime("%m-%d") if obj.date_of_birth else None
+
     class Meta:
         model = User
         fields = [
@@ -157,11 +198,17 @@ class UserLiteSerializer(BaseSerializer):
             "display_name",
             "legacy_display_name",
             "is_active",
+            "birthday",
         ]
         read_only_fields = fields
 
 
 class UserAdminLiteSerializer(BaseSerializer):
+    birthday = serializers.SerializerMethodField()
+
+    def get_birthday(self, obj):
+        return obj.date_of_birth.strftime("%m-%d") if obj.date_of_birth else None
+
     class Meta:
         model = User
         fields = [
@@ -176,6 +223,20 @@ class UserAdminLiteSerializer(BaseSerializer):
             "email",
             "last_login_medium",
             "is_active",
+            "birthday",
+            "date_of_birth",
+        ]
+        read_only_fields = fields
+
+
+class UserWorkspaceMemberLiteSerializer(UserLiteSerializer):
+    """Workspace peer data with birthday privacy preserved."""
+
+    class Meta(UserLiteSerializer.Meta):
+        fields = [
+            *UserLiteSerializer.Meta.fields,
+            "email",
+            "last_login_medium",
         ]
         read_only_fields = fields
 

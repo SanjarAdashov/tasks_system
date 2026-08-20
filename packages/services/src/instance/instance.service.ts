@@ -16,6 +16,7 @@ import type {
   IInstanceUser,
   IInstanceUserAccessPayload,
   IInstanceUserPagination,
+  TInstanceUserProfilePayload,
   IUserCreationQuotaSnapshot,
   IInstanceProjectUserGroupContext,
   TProjectUserGroup,
@@ -119,6 +120,14 @@ export class InstanceService extends APIService {
    */
   async unblockUser(userId: string, data: IInstanceUserAccessPayload): Promise<IInstanceUser> {
     return this.post(`/api/instances/users/${userId}/unblock/`, data)
+      .then((response) => response.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async updateUserProfile(userId: string, data: TInstanceUserProfilePayload): Promise<IInstanceUser> {
+    return this.patch(`/api/instances/users/${userId}/profile/`, data)
       .then((response) => response.data)
       .catch((error) => {
         throw error?.response?.data;

@@ -15,7 +15,14 @@ import { TOAST_TYPE, setPromiseToast, setToast } from "@plane/propel/toast";
 import { EFileAssetType } from "@plane/types";
 import type { IUser, TUserProfile } from "@plane/types";
 import { Input } from "@plane/ui";
-import { getFileURL, getUserFullName } from "@plane/utils";
+import {
+  formatBirthDateForInput,
+  getFileURL,
+  getUserFullName,
+  isBirthDateInputValid,
+  maskBirthDateInput,
+  parseBirthDateInput,
+} from "@plane/utils";
 // components
 import { DeactivateAccountModal } from "@/components/account/deactivate-account-modal";
 import { ImagePickerPopover } from "@/components/core/image-picker-popover";
@@ -38,6 +45,7 @@ type TUserProfileForm = {
   cover_image_url: string;
   first_name: string;
   last_name: string;
+  date_of_birth: string;
   email: string;
   role: string;
   language: string;
@@ -72,6 +80,7 @@ export const GeneralProfileSettingsForm = observer(function GeneralProfileSettin
       cover_image_url: user.cover_image_url || "",
       first_name: user.first_name || "",
       last_name: user.last_name || "",
+      date_of_birth: formatBirthDateForInput(user.date_of_birth),
       email: user.email || "",
       role: profile.role || "Product / Project Manager",
       language: profile.language || "en",
@@ -119,6 +128,7 @@ export const GeneralProfileSettingsForm = observer(function GeneralProfileSettin
     const userPayload: Partial<IUser> = {
       first_name: formData.first_name,
       last_name: formData.last_name,
+      date_of_birth: parseBirthDateInput(formData.date_of_birth) || null,
       avatar_url: formData.avatar_url,
     };
 
@@ -318,6 +328,35 @@ export const GeneralProfileSettingsForm = observer(function GeneralProfileSettin
                   )}
                 />
                 {errors.last_name && <span className="text-11 text-danger-primary">{errors.last_name.message}</span>}
+              </div>
+              <div className="flex flex-col gap-1">
+                <h4 className="text-13 font-medium text-secondary">{t("calendar.date_of_birth")}</h4>
+                <Controller
+                  control={control}
+                  name="date_of_birth"
+                  rules={{
+                    validate: (value) => isBirthDateInputValid(value) || t("calendar.invalid_date_of_birth"),
+                  }}
+                  render={({ field: { value, onChange, ref } }) => (
+                    <Input
+                      id="date_of_birth"
+                      name="date_of_birth"
+                      type="text"
+                      inputMode="numeric"
+                      value={value}
+                      onChange={(event) => onChange(maskBirthDateInput(event.target.value))}
+                      ref={ref}
+                      hasError={Boolean(errors.date_of_birth)}
+                      placeholder="DD/MM/YYYY"
+                      maxLength={10}
+                      className="w-full rounded-md"
+                    />
+                  )}
+                />
+                {errors.date_of_birth && (
+                  <span className="text-11 text-danger-primary">{errors.date_of_birth.message}</span>
+                )}
+                <span className="text-11 text-tertiary">{t("calendar.date_of_birth_hint")}</span>
               </div>
               <div className="flex flex-col gap-1">
                 <h4 className="text-13 font-medium text-secondary">

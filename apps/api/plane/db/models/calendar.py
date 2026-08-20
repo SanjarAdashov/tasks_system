@@ -4,6 +4,7 @@
 from django.conf import settings
 from django.db import models
 from django.db.models import Q
+from django.utils import timezone
 
 from .base import BaseModel
 
@@ -148,6 +149,45 @@ class WorkspaceHoliday(BaseModel):
             )
         ]
         indexes = [models.Index(fields=["workspace", "date"], name="workspace_holiday_date_idx")]
+
+
+class BirthdayNotificationDelivery(BaseModel):
+    class DeliveryType(models.TextChoices):
+        ADVANCE_IN_APP = "ADVANCE_IN_APP", "Advance in-app notification"
+        ADVANCE_EMAIL = "ADVANCE_EMAIL", "Advance email notification"
+        ADVANCE_TELEGRAM = "ADVANCE_TELEGRAM", "Advance Telegram notification"
+        SELF_EMAIL = "SELF_EMAIL", "Birthday email greeting"
+        SELF_TELEGRAM = "SELF_TELEGRAM", "Birthday Telegram greeting"
+
+    recipient = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="birthday_notifications_received",
+    )
+    birthday_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="birthday_notifications_about",
+    )
+    occurrence_year = models.PositiveSmallIntegerField()
+    delivery_type = models.CharField(max_length=32, choices=DeliveryType.choices)
+    delivered_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "birthday_notification_deliveries"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["recipient", "birthday_user", "occurrence_year", "delivery_type"],
+                condition=Q(deleted_at__isnull=True),
+                name="unique_active_birthday_delivery",
+            )
+        ]
+        indexes = [
+            models.Index(
+                fields=["birthday_user", "occurrence_year"],
+                name="bday_delivery_occurrence_idx",
+            )
+        ]
 
 
 class MeetingType(BaseModel):

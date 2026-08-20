@@ -338,6 +338,33 @@ calendar_config_variables = [
         "category": "CALENDAR",
         "is_encrypted": False,
     },
+    {
+        "key": "BIRTHDAY_GREETING_TEMPLATE_RU",
+        "value": os.environ.get(
+            "BIRTHDAY_GREETING_TEMPLATE_RU",
+            "С днём рождения, {name}! Желаем вдохновения, ярких идей и отличного года впереди!",
+        ),
+        "category": "BIRTHDAY",
+        "is_encrypted": False,
+    },
+    {
+        "key": "BIRTHDAY_GREETING_TEMPLATE_UZ",
+        "value": os.environ.get(
+            "BIRTHDAY_GREETING_TEMPLATE_UZ",
+            "Tug‘ilgan kuningiz bilan, {name}! Sizga ilhom, yorqin g‘oyalar va ajoyib yil tilaymiz!",
+        ),
+        "category": "BIRTHDAY",
+        "is_encrypted": False,
+    },
+    {
+        "key": "BIRTHDAY_GREETING_TEMPLATE_EN",
+        "value": os.environ.get(
+            "BIRTHDAY_GREETING_TEMPLATE_EN",
+            "Happy birthday, {name}! Wishing you inspiration, bright ideas, and a wonderful year ahead!",
+        ),
+        "category": "BIRTHDAY",
+        "is_encrypted": False,
+    },
 ]
 
 core_config_variables = [

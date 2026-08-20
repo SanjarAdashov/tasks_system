@@ -1,5 +1,6 @@
 from datetime import timedelta, timezone as dt_timezone
 import html
+import uuid
 from urllib.parse import quote
 from zoneinfo import ZoneInfo
 
@@ -72,6 +73,7 @@ from plane.utils.issue_access import can_view_issue, is_instance_admin, is_proje
 from plane.utils.holiday_calendar import HolidayCalendarError, sync_workspace_holidays
 from plane.settings.storage import S3Storage
 from plane.utils.attachments import get_attachment_disposition, validate_project_attachment_size
+from plane.utils.birthday import birthday_date_for_year
 from plane.utils.external_calendar import (
     CalendarProviderError,
     build_oauth_authorization_url,
@@ -84,6 +86,7 @@ from plane.utils.external_calendar import (
     save_oauth_connection,
 )
 from plane.utils.host import base_host
+from plane.utils.path_validator import sanitize_filename
 
 
 class WorkspaceCalendarPermission(BasePermission):
@@ -260,12 +263,39 @@ class MeetingViewSet(BaseViewSet):
             date__gte=range_start.date(),
             date__lte=range_end.date(),
         )
+        birthday_events = []
+        birthday_users = User.objects.filter(
+            member_workspace__workspace=self.get_workspace(),
+            member_workspace__is_active=True,
+            is_active=True,
+            blocked_at__isnull=True,
+            date_of_birth__isnull=False,
+            is_bot=False,
+        ).distinct()
+        for birthday_user in birthday_users:
+            for year in range(range_start.year, range_end.year + 1):
+                occurrence_date = birthday_date_for_year(birthday_user.date_of_birth, year)
+                if not occurrence_date or not range_start.date() <= occurrence_date <= range_end.date():
+                    continue
+                birthday_events.append(
+                    {
+                        "id": f"birthday:{birthday_user.id}:{year}",
+                        "date": occurrence_date,
+                        "user": {
+                            "id": str(birthday_user.id),
+                            "first_name": birthday_user.first_name,
+                            "last_name": birthday_user.last_name,
+                            "avatar_url": birthday_user.avatar_url,
+                        },
+                    }
+                )
         return Response(
             {
                 "meetings": self.get_serializer(meetings, many=True).data,
                 "occurrences": occurrences,
                 "external_events": external_payload,
                 "holidays": WorkspaceHolidaySerializer(holidays, many=True).data,
+                "birthday_events": birthday_events,
             }
         )
 
@@ -515,20 +545,29 @@ class MeetingAttachmentViewSet(BaseAPIView):
         uploaded_file = request.FILES.get("asset")
         if not uploaded_file:
             return Response({"asset": "Select a file."}, status=400)
+        file_name = sanitize_filename(uploaded_file.name) or "attachment"
         if meeting.project_id:
             validate_project_attachment_size(
                 project=meeting.project,
                 mime_type=uploaded_file.content_type,
-                filename=uploaded_file.name,
+                filename=file_name,
                 size=uploaded_file.size,
             )
+        asset_key = f"{meeting.workspace_id}/calendar/{meeting.id}/{uuid.uuid4().hex}-{file_name}"
+        storage = S3Storage(request=request)
+        if not storage.upload_file(
+            file_obj=uploaded_file,
+            object_name=asset_key,
+            content_type=uploaded_file.content_type or "application/octet-stream",
+        ):
+            return Response({"asset": "Could not upload the file. Please try again."}, status=502)
         asset = FileAsset.objects.create(
             attributes={
-                "name": uploaded_file.name,
+                "name": file_name,
                 "type": uploaded_file.content_type or "application/octet-stream",
                 "size": uploaded_file.size,
             },
-            asset=uploaded_file,
+            asset=asset_key,
             size=uploaded_file.size,
             workspace=meeting.workspace,
             project=meeting.project,
@@ -548,7 +587,7 @@ class MeetingAttachmentViewSet(BaseAPIView):
             meeting=meeting,
             actor=request.user,
             event="ATTACHMENT_ADDED",
-            details={"attachment_id": str(attachment.id), "name": uploaded_file.name},
+            details={"attachment_id": str(attachment.id), "name": file_name},
         )
         return Response(
             MeetingAttachmentSerializer(attachment, context={"request": request}).data,
@@ -696,6 +735,17 @@ class WorkspaceHolidayViewSet(BaseViewSet):
         data = {**request.data, "source": request.data.get("source") or WorkspaceHoliday.Source.CORPORATE}
         serializer = self.get_serializer(data=data)
         serializer.is_valid(raise_exception=True)
+        if data.get("source") == WorkspaceHoliday.Source.MANUAL:
+            holiday = WorkspaceHoliday.objects.filter(
+                workspace=workspace,
+                date=serializer.validated_data["date"],
+                source=WorkspaceHoliday.Source.MANUAL,
+            ).first()
+            if holiday:
+                update_serializer = self.get_serializer(holiday, data=data, partial=True)
+                update_serializer.is_valid(raise_exception=True)
+                update_serializer.save(source=WorkspaceHoliday.Source.MANUAL, is_override=True)
+                return Response(update_serializer.data, status=200)
         holiday = serializer.save(
             workspace=workspace,
             is_override=data.get("source") == WorkspaceHoliday.Source.MANUAL,

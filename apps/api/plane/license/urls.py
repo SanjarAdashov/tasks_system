@@ -19,6 +19,7 @@ from plane.license.api.views import (
     InstanceWorkSpaceAvailabilityCheckEndpoint,
     InstanceWorkSpaceEndpoint,
     InstanceUserEndpoint,
+    InstanceUserProfileEndpoint,
     InstanceUserBlockEndpoint,
     InstanceUserCreationQuotaEndpoint,
     InstanceProjectUserGroupContextEndpoint,
@@ -83,6 +84,11 @@ urlpatterns = [
     ),
     path("workspaces/", InstanceWorkSpaceEndpoint.as_view(), name="instance-workspace"),
     path("users/", InstanceUserEndpoint.as_view(), name="instance-users"),
+    path(
+        "users/<uuid:user_id>/profile/",
+        InstanceUserProfileEndpoint.as_view(),
+        name="instance-user-profile",
+    ),
     path(
         "users/<uuid:user_id>/block/",
         InstanceUserBlockEndpoint.as_view(),

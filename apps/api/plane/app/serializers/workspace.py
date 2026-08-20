@@ -7,7 +7,7 @@ from rest_framework import serializers
 
 # Module imports
 from .base import BaseSerializer, DynamicBaseSerializer
-from .user import UserLiteSerializer, UserAdminLiteSerializer
+from .user import UserLiteSerializer, UserAdminLiteSerializer, UserWorkspaceMemberLiteSerializer
 
 
 from plane.db.models import (
@@ -108,6 +108,14 @@ class WorkspaceMemberMeSerializer(BaseSerializer):
 
 class WorkspaceMemberAdminSerializer(DynamicBaseSerializer):
     member = UserAdminLiteSerializer(read_only=True)
+
+    class Meta:
+        model = WorkspaceMember
+        fields = "__all__"
+
+
+class WorkspaceMemberPeerSerializer(DynamicBaseSerializer):
+    member = UserWorkspaceMemberLiteSerializer(read_only=True)
 
     class Meta:
         model = WorkspaceMember

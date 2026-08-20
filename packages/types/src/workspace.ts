@@ -92,7 +92,17 @@ export interface IWorkspaceMember {
   display_name?: string;
   last_login_medium?: TLoginMediums;
   is_active?: boolean;
+  /** Available only to workspace administrators. */
+  date_of_birth?: string | null;
 }
+
+export type TWorkspaceMemberUpdate = Partial<IWorkspaceMember> & {
+  user_profile?: {
+    first_name?: string;
+    last_name?: string;
+    date_of_birth?: string | null;
+  };
+};
 
 export interface IWorkspaceMemberMe {
   company_role: string | null;

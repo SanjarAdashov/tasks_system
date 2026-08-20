@@ -410,7 +410,17 @@ def enqueue_telegram_notifications(notifications):
     return created
 
 
-def enqueue_system_telegram_notification(*, user, category, event, context=None, actor=None, allow_inactive=False):
+def enqueue_system_telegram_notification(
+    *,
+    user,
+    category,
+    event,
+    context=None,
+    actor=None,
+    allow_inactive=False,
+    respect_preferences=True,
+    idempotency_key=None,
+):
     if category not in {"role_change", "account_activity"}:
         raise ValueError("Unsupported system Telegram category")
     configuration = telegram_configuration()
@@ -422,7 +432,7 @@ def enqueue_system_telegram_notification(*, user, category, event, context=None,
     if not connection or (actor and actor.id == user.id):
         return None
     preference = preference_for(user)
-    if not preference.enabled or not getattr(preference, category, False):
+    if respect_preferences and (not preference.enabled or not getattr(preference, category, False)):
         return None
     context = context or {}
     payload = {
@@ -442,7 +452,7 @@ def enqueue_system_telegram_notification(*, user, category, event, context=None,
         category=category,
         payload=payload,
         available_at=quiet_hours_available_at(user, preference),
-        idempotency_key=f"system:{signature}",
+        idempotency_key=idempotency_key or f"system:{signature}",
     )
     if delivery.available_at <= timezone.now():
         from plane.bgtasks.telegram_notification_task import deliver_telegram_delivery

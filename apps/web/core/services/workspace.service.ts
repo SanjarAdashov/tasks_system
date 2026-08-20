@@ -9,6 +9,7 @@ import type {
   IWorkspace,
   IWorkspaceMemberMe,
   IWorkspaceMember,
+  TWorkspaceMemberUpdate,
   IWorkspaceMemberInvitation,
   ILastActiveWorkspaceDetails,
   IWorkspaceSearchResults,
@@ -144,7 +145,7 @@ export class WorkspaceService extends APIService {
   async updateWorkspaceMember(
     workspaceSlug: string,
     memberId: string,
-    data: Partial<IWorkspaceMember>
+    data: TWorkspaceMemberUpdate
   ): Promise<IWorkspaceMember> {
     return this.patch(`/api/workspaces/${workspaceSlug}/members/${memberId}/`, data)
       .then((response) => response?.data)

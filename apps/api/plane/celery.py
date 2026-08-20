@@ -55,6 +55,10 @@ app.conf.beat_schedule = {
         "task": "plane.bgtasks.calendar_notification_task.process_due_meeting_reminders",
         "schedule": crontab(minute="*"),
     },
+    "send-birthday-notifications": {
+        "task": "plane.bgtasks.calendar_notification_task.process_birthday_notifications",
+        "schedule": crontab(minute="*"),
+    },
     "push-instance-metrics": {
         "task": "plane.license.bgtasks.telemetry_metrics.push_instance_metrics",
         "schedule": schedule(run_every=timedelta(minutes=METRICS_PUSH_INTERVAL_MINUTES)),

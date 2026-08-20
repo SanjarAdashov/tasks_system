@@ -12,6 +12,7 @@ import { Disclosure } from "@headlessui/react";
 // plane imports
 import { ROLE, EUserPermissions, EUserPermissionsLevel, MEMBER_TRACKER_ELEMENTS } from "@plane/constants";
 import { TrashIcon, SuspendedUserIcon } from "@plane/propel/icons";
+import { Pencil } from "lucide-react";
 import { Pill, EPillVariant, EPillSize } from "@plane/propel/pill";
 import { TOAST_TYPE, setToast } from "@plane/propel/toast";
 import type { IUser, IWorkspaceMember } from "@plane/types";
@@ -23,11 +24,7 @@ import { getFileURL } from "@plane/utils";
 import { useMember } from "@/hooks/store/use-member";
 import { useUser, useUserPermissions } from "@/hooks/store/user";
 
-export interface RowData {
-  member: IWorkspaceMember;
-  role: EUserPermissions;
-  is_active: boolean;
-}
+export type RowData = IWorkspaceMember;
 
 type NameProps = {
   rowData: RowData;
@@ -35,6 +32,7 @@ type NameProps = {
   isAdmin: boolean;
   currentUser: IUser | undefined;
   setRemoveMemberModal: (rowData: RowData) => void;
+  setEditMemberModal: (rowData: RowData) => void;
 };
 
 type AccountTypeProps = {
@@ -43,7 +41,7 @@ type AccountTypeProps = {
 };
 
 export function NameColumn(props: NameProps) {
-  const { rowData, workspaceSlug, isAdmin, currentUser, setRemoveMemberModal } = props;
+  const { rowData, workspaceSlug, isAdmin, currentUser, setRemoveMemberModal, setEditMemberModal } = props;
   // derived values
   const { avatar_url, display_name, email, first_name, id, last_name } = rowData.member;
   const isSuspended = rowData.is_active === false;
@@ -82,25 +80,33 @@ export function NameColumn(props: NameProps) {
 
             {!isSuspended && (isAdmin || id === currentUser?.id) && (
               <PopoverMenu
-                data={[""]}
+                data={isAdmin ? ["edit", "remove"] : ["remove"]}
                 keyExtractor={(item) => item}
                 popoverClassName="justify-end"
                 buttonClassName="outline-none	origin-center rotate-90 size-8 aspect-square flex-shrink-0 grid place-items-center opacity-0 group-hover:opacity-100 transition-opacity"
-                render={() => (
+                render={(item) => (
                   <div
                     role="button"
                     tabIndex={0}
                     className="flex cursor-pointer items-center gap-x-3"
-                    onClick={() => setRemoveMemberModal(rowData)}
+                    onClick={() => (item === "edit" ? setEditMemberModal(rowData) : setRemoveMemberModal(rowData))}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
-                        setRemoveMemberModal(rowData);
+                        item === "edit" ? setEditMemberModal(rowData) : setRemoveMemberModal(rowData);
                       }
                     }}
                     data-ph-element={MEMBER_TRACKER_ELEMENTS.WORKSPACE_MEMBER_TABLE_CONTEXT_MENU}
                   >
-                    <TrashIcon className="size-3.5 align-middle" /> {id === currentUser?.id ? "Leave " : "Remove "}
+                    {item === "edit" ? (
+                      <>
+                        <Pencil className="size-3.5" /> Edit details
+                      </>
+                    ) : (
+                      <>
+                        <TrashIcon className="size-3.5 align-middle" /> {id === currentUser?.id ? "Leave " : "Remove "}
+                      </>
+                    )}
                   </div>
                 )}
               />

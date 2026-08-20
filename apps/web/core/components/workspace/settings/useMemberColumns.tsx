@@ -8,7 +8,7 @@ import { useState } from "react";
 import { useParams } from "next/navigation";
 import { EUserPermissions, EUserPermissionsLevel, LOGIN_MEDIUM_LABELS } from "@plane/constants";
 import { useTranslation } from "@plane/i18n";
-import { renderFormattedDate } from "@plane/utils";
+import { formatBirthDateForInput, renderFormattedDate } from "@plane/utils";
 import { MemberHeaderColumn } from "@/components/project/member-header-column";
 import type { RowData } from "@/components/workspace/settings/member-columns";
 import { AccountTypeColumn, NameColumn } from "@/components/workspace/settings/member-columns";
@@ -19,6 +19,7 @@ import type { IMemberFilters } from "@/store/member/utils";
 export const useMemberColumns = () => {
   // states
   const [removeMemberModal, setRemoveMemberModal] = useState<RowData | null>(null);
+  const [editMemberModal, setEditMemberModal] = useState<RowData | null>(null);
 
   const { workspaceSlug } = useParams();
 
@@ -61,6 +62,7 @@ export const useMemberColumns = () => {
           isAdmin={isAdmin}
           currentUser={currentUser}
           setRemoveMemberModal={setRemoveMemberModal}
+          setEditMemberModal={setEditMemberModal}
         />
       ),
     },
@@ -94,6 +96,15 @@ export const useMemberColumns = () => {
     },
 
     {
+      key: "Birthday",
+      content: t("calendar.birthday"),
+      tdRender: (rowData: RowData) => {
+        const value = rowData.member?.date_of_birth || rowData.member?.birthday;
+        if (!value) return <span className="text-tertiary">—</span>;
+        return <span>{formatBirthDateForInput(value)}</span>;
+      },
+    },
+    {
       key: "Authentication",
       content: t("workspace_settings.settings.members.details.authentication"),
       tdRender: (rowData: RowData) => {
@@ -118,5 +129,12 @@ export const useMemberColumns = () => {
       ),
     },
   ];
-  return { columns, workspaceSlug, removeMemberModal, setRemoveMemberModal };
+  return {
+    columns,
+    workspaceSlug,
+    removeMemberModal,
+    setRemoveMemberModal,
+    editMemberModal,
+    setEditMemberModal,
+  };
 };

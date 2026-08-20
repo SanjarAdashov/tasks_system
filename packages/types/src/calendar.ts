@@ -183,11 +183,23 @@ export interface TCalendarExternalEvent {
   availability: "BUSY" | "FREE" | "MAYBE" | "AWAY";
 }
 
+export interface TCalendarBirthdayEvent {
+  id: string;
+  date: string;
+  user: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    avatar_url?: string | null;
+  };
+}
+
 export interface TCalendarRangeResponse {
   meetings: TMeeting[];
   occurrences: TMeetingOccurrence[];
   external_events: TCalendarExternalEvent[];
   holidays: TWorkspaceHoliday[];
+  birthday_events: TCalendarBirthdayEvent[];
 }
 
 export interface TMeetingPayload {

@@ -45,6 +45,7 @@ from plane.db.models import (
 )
 from plane.license.models import Instance, InstanceAdmin
 from plane.license.services import creation_quota_snapshot
+from plane.utils.birthday import is_birthday_on, render_birthday_greeting, user_local_date
 from plane.utils.paginator import BasePaginator
 from plane.utils.order_queryset import ACTIVITY_ORDER_BY_ALLOWLIST, sanitize_order_by
 from plane.authentication.utils.host import user_ip
@@ -364,6 +365,34 @@ class UserSessionEndpoint(BaseAPIView):
             return Response(data, status=status.HTTP_200_OK)
         else:
             return Response({"is_authenticated": False}, status=status.HTTP_200_OK)
+
+
+class BirthdayGreetingEndpoint(BaseAPIView):
+    def get(self, request):
+        user = request.user
+        today = user_local_date(user)
+        is_birthday = bool(
+            user.is_active
+            and user.blocked_at is None
+            and is_birthday_on(user, today)
+        )
+        should_show = is_birthday and user.birthday_greeting_seen_on != today
+        return Response(
+            {
+                "is_birthday": is_birthday,
+                "should_show": should_show,
+                "date": today.isoformat(),
+                **(render_birthday_greeting(user) if is_birthday else {}),
+            }
+        )
+
+    def post(self, request):
+        user = request.user
+        today = user_local_date(user)
+        if is_birthday_on(user, today):
+            user.birthday_greeting_seen_on = today
+            user.save(update_fields=["birthday_greeting_seen_on", "updated_at"])
+        return Response({"acknowledged": True, "date": today.isoformat()})
 
 
 class UpdateUserOnBoardedEndpoint(BaseAPIView):

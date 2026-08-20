@@ -97,8 +97,8 @@ export function WorkspaceCalendarSettings({ workspaceSlug }: Props) {
       date: newHoliday.date,
       name: newHoliday.name,
       kind: newHoliday.kind,
-      source: "CORPORATE",
-      is_override: false,
+      source: newHoliday.kind === "WORKDAY" ? "MANUAL" : "CORPORATE",
+      is_override: newHoliday.kind === "WORKDAY",
     });
     setNewHoliday({ date: "", name: "", kind: "DAY_OFF" });
     await mutateHolidays();

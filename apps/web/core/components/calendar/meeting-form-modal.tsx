@@ -50,6 +50,7 @@ type Props = {
   workspaceSlug: string;
   isOpen: boolean;
   initialDate: Date;
+  useExactInitialDate?: boolean;
   projects: TPartialProject[];
   workspaceMembers: IWorkspaceMember[];
   meeting?: TMeeting | null;
@@ -111,11 +112,17 @@ const memberName = (member: IWorkspaceMember) => {
 
 const memberEmail = (member: IWorkspaceMember) => member.member?.email || member.email || "";
 
-const initialForm = (initialDate: Date, meeting?: TMeeting | null, prefill?: Props["prefill"]): FormState => {
+const initialForm = (
+  initialDate: Date,
+  meeting?: TMeeting | null,
+  prefill?: Props["prefill"],
+  useExactInitialDate = false
+): FormState => {
   let start = meeting ? new Date(meeting.starts_at) : new Date(initialDate);
   if (!meeting) {
     if (start < new Date()) start = new Date();
-    start = roundToNextQuarterHour(start);
+    if (useExactInitialDate) start.setSeconds(0, 0);
+    else start = roundToNextQuarterHour(start);
   }
   const end = meeting ? new Date(meeting.ends_at) : new Date(start.getTime() + 30 * 60 * 1000);
   const durationMinutes = durationBetween(start, end);
@@ -156,9 +163,20 @@ const inputClass =
   "h-9 w-full rounded-md border border-subtle bg-surface-2 px-3 text-13 text-primary outline-none transition focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/15";
 
 export function MeetingFormModal(props: Props) {
-  const { workspaceSlug, isOpen, initialDate, projects, workspaceMembers, meeting, prefill, onClose, onSaved } = props;
+  const {
+    workspaceSlug,
+    isOpen,
+    initialDate,
+    useExactInitialDate,
+    projects,
+    workspaceMembers,
+    meeting,
+    prefill,
+    onClose,
+    onSaved,
+  } = props;
   const { t } = useTranslation();
-  const [form, setForm] = useState<FormState>(() => initialForm(initialDate, meeting, prefill));
+  const [form, setForm] = useState<FormState>(() => initialForm(initialDate, meeting, prefill, useExactInitialDate));
   const [meetingTypes, setMeetingTypes] = useState<TMeetingType[]>([]);
   const [projectMemberIds, setProjectMemberIds] = useState<Set<string>>(new Set());
   const [participants, setParticipants] = useState<Map<string, "REQUIRED" | "OPTIONAL">>(new Map());
@@ -171,13 +189,13 @@ export function MeetingFormModal(props: Props) {
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [participantQuery, setParticipantQuery] = useState("");
   const [isCustomDuration, setIsCustomDuration] = useState(
-    () => !isPresetDuration(initialForm(initialDate, meeting, prefill).durationMinutes)
+    () => !isPresetDuration(initialForm(initialDate, meeting, prefill, useExactInitialDate).durationMinutes)
   );
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
-    const nextForm = initialForm(initialDate, meeting, prefill);
+    const nextForm = initialForm(initialDate, meeting, prefill, useExactInitialDate);
     setForm(nextForm);
     setIsCustomDuration(!isPresetDuration(nextForm.durationMinutes));
     setExternalGuests(meeting?.participant_details?.filter((item) => !item.user).map((item) => item.email) || []);
@@ -194,7 +212,7 @@ export function MeetingFormModal(props: Props) {
     setPendingFiles([]);
     setParticipantQuery("");
     setSubmitError(null);
-  }, [initialDate, isOpen, meeting, prefill]);
+  }, [initialDate, isOpen, meeting, prefill, useExactInitialDate]);
 
   useEffect(() => {
     if (!isOpen || !form.projectId) {

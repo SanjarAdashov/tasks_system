@@ -6,6 +6,7 @@ from django.urls import path
 
 from plane.app.views import (
     AccountEndpoint,
+    BirthdayGreetingEndpoint,
     ProfileEndpoint,
     UpdateUserOnBoardedEndpoint,
     UpdateUserTourCompletedEndpoint,
@@ -29,6 +30,7 @@ urlpatterns = [
         name="users",
     ),
     path("users/session/", UserSessionEndpoint.as_view(), name="user-session"),
+    path("users/me/birthday-greeting/", BirthdayGreetingEndpoint.as_view(), name="user-birthday-greeting"),
     path(
         "users/me/settings/",
         UserEndpoint.as_view({"get": "retrieve_user_settings"}),

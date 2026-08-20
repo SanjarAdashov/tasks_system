@@ -26,6 +26,7 @@ class InstanceUserSerializer(BaseSerializer):
             "legacy_display_name",
             "first_name",
             "last_name",
+            "date_of_birth",
             "avatar_url",
             "date_joined",
             "last_login_time",

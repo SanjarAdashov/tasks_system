@@ -69,6 +69,8 @@ class User(AbstractBaseUser, PermissionsMixin):
     legacy_display_name = models.CharField(max_length=255, blank=True, default="")
     first_name = models.CharField(max_length=255, blank=True)
     last_name = models.CharField(max_length=255, blank=True)
+    date_of_birth = models.DateField(null=True, blank=True)
+    birthday_greeting_seen_on = models.DateField(null=True, blank=True)
     # avatar
     avatar = models.TextField(blank=True)
     avatar_asset = models.ForeignKey(

@@ -65,6 +65,30 @@ export class UserService extends APIService {
       });
   }
 
+  async birthdayGreeting(): Promise<{
+    is_birthday: boolean;
+    should_show: boolean;
+    date: string;
+    language?: "en" | "ru" | "uz";
+    title?: string;
+    message?: string;
+    name?: string;
+  }> {
+    return this.get("/api/users/me/birthday-greeting/")
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async acknowledgeBirthdayGreeting(): Promise<void> {
+    return this.post("/api/users/me/birthday-greeting/")
+      .then(() => undefined)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
   async getCurrentUserProfile(): Promise<TUserProfile> {
     return this.get("/api/users/me/profile/")
       .then((response) => response?.data)
