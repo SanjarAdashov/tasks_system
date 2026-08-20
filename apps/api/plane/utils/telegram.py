@@ -369,6 +369,9 @@ def _meeting_payload(notification):
         "event": meeting.get("event") or (notification.message or {}).get("event") or "UPDATED",
         "starts_at": meeting.get("starts_at"),
         "ends_at": meeting.get("ends_at"),
+        "changes": meeting.get("changes") or {},
+        "participant_name": meeting.get("participant_name"),
+        "response_status": meeting.get("response_status") or (notification.message or {}).get("response_status"),
         "actor_name": user_name(notification.triggered_by) if notification.triggered_by else "GTS Tasks System",
         "url": application_url(f"{workspace_slug}/calendar?meeting={meeting_id}"),
     }
@@ -551,6 +554,49 @@ TRANSLATIONS = {
         "meeting_CANCELLED": "Meeting cancelled",
         "meeting_REMINDER": "Meeting reminder",
         "meeting_RSVP_CHANGED": "Invitation response",
+        "meeting_changes": "Changes",
+        "meeting_updated": "Updated",
+        "meeting_participant": "Participant",
+        "meeting_response": "Response",
+        "meeting_response_ACCEPTED": "Accepted",
+        "meeting_response_TENTATIVE": "Maybe",
+        "meeting_response_DECLINED": "Declined",
+        "meeting_response_NO_RESPONSE": "No response",
+        "meeting_field_title": "Title",
+        "meeting_field_starts_at": "Start",
+        "meeting_field_ends_at": "End",
+        "meeting_field_all_day": "All day",
+        "meeting_field_location": "Location",
+        "meeting_field_description": "Description",
+        "meeting_field_agenda": "Agenda",
+        "meeting_field_timezone": "Time zone",
+        "meeting_field_attendance_mode": "Format",
+        "meeting_field_meeting_url": "Meeting link",
+        "meeting_field_google_meet_open_access": "Google Meet access",
+        "meeting_field_visibility": "Visibility",
+        "meeting_field_availability": "Availability",
+        "meeting_field_recurrence_rule": "Repeat",
+        "meeting_field_recurrence_timezone": "Repeat time zone",
+        "meeting_field_recurrence_until": "Repeat until",
+        "meeting_field_project": "Project",
+        "meeting_field_issue": "Task",
+        "meeting_field_meeting_type": "Meeting type",
+        "meeting_field_participants": "Participants",
+        "meeting_field_reminders": "Reminders",
+        "meeting_field_organizer": "Organizer",
+        "meeting_field_occurrence": "Occurrence",
+        "meeting_value_ONLINE": "Online",
+        "meeting_value_MIXED": "Online and in person",
+        "meeting_value_OFFLINE": "In person",
+        "meeting_value_PROJECT": "Project",
+        "meeting_value_PERSONAL": "Personal",
+        "meeting_value_PRIVATE": "Private",
+        "meeting_value_BUSY": "Busy",
+        "meeting_value_FREE": "Free",
+        "meeting_value_MAYBE": "Maybe",
+        "meeting_value_AWAY": "Away",
+        "meeting_value_UPDATED": "Updated",
+        "meeting_value_CANCELLED": "Cancelled",
         "when": "When",
         "organizer": "Organizer",
         "field": "Field",
@@ -611,6 +657,49 @@ TRANSLATIONS = {
         "meeting_CANCELLED": "Встреча отменена",
         "meeting_REMINDER": "Напоминание о встрече",
         "meeting_RSVP_CHANGED": "Ответ на приглашение",
+        "meeting_changes": "Что изменилось",
+        "meeting_updated": "Обновлено",
+        "meeting_participant": "Участник",
+        "meeting_response": "Ответ",
+        "meeting_response_ACCEPTED": "Принято",
+        "meeting_response_TENTATIVE": "Возможно",
+        "meeting_response_DECLINED": "Отклонено",
+        "meeting_response_NO_RESPONSE": "Нет ответа",
+        "meeting_field_title": "Название",
+        "meeting_field_starts_at": "Начало",
+        "meeting_field_ends_at": "Окончание",
+        "meeting_field_all_day": "Весь день",
+        "meeting_field_location": "Место",
+        "meeting_field_description": "Описание",
+        "meeting_field_agenda": "Повестка",
+        "meeting_field_timezone": "Часовой пояс",
+        "meeting_field_attendance_mode": "Формат",
+        "meeting_field_meeting_url": "Ссылка на встречу",
+        "meeting_field_google_meet_open_access": "Доступ к Google Meet",
+        "meeting_field_visibility": "Доступ",
+        "meeting_field_availability": "Занятость",
+        "meeting_field_recurrence_rule": "Повтор",
+        "meeting_field_recurrence_timezone": "Часовой пояс повтора",
+        "meeting_field_recurrence_until": "Повторять до",
+        "meeting_field_project": "Проект",
+        "meeting_field_issue": "Задача",
+        "meeting_field_meeting_type": "Тип встречи",
+        "meeting_field_participants": "Участники",
+        "meeting_field_reminders": "Напоминания",
+        "meeting_field_organizer": "Организатор",
+        "meeting_field_occurrence": "Экземпляр встречи",
+        "meeting_value_ONLINE": "Онлайн",
+        "meeting_value_MIXED": "Онлайн и очно",
+        "meeting_value_OFFLINE": "Очно",
+        "meeting_value_PROJECT": "Проектная",
+        "meeting_value_PERSONAL": "Личная",
+        "meeting_value_PRIVATE": "Закрытая",
+        "meeting_value_BUSY": "Занят",
+        "meeting_value_FREE": "Свободен",
+        "meeting_value_MAYBE": "Возможно занят",
+        "meeting_value_AWAY": "Нет на месте",
+        "meeting_value_UPDATED": "Обновлено",
+        "meeting_value_CANCELLED": "Отменено",
         "when": "Когда",
         "organizer": "Организатор",
         "field": "Поле",
@@ -671,6 +760,49 @@ TRANSLATIONS = {
         "meeting_CANCELLED": "Uchrashuv bekor qilindi",
         "meeting_REMINDER": "Uchrashuv eslatmasi",
         "meeting_RSVP_CHANGED": "Taklifga javob",
+        "meeting_changes": "Nima o‘zgardi",
+        "meeting_updated": "Yangilandi",
+        "meeting_participant": "Ishtirokchi",
+        "meeting_response": "Javob",
+        "meeting_response_ACCEPTED": "Qabul qilindi",
+        "meeting_response_TENTATIVE": "Ehtimol",
+        "meeting_response_DECLINED": "Rad etildi",
+        "meeting_response_NO_RESPONSE": "Javob yo‘q",
+        "meeting_field_title": "Nomi",
+        "meeting_field_starts_at": "Boshlanishi",
+        "meeting_field_ends_at": "Tugashi",
+        "meeting_field_all_day": "Kun bo‘yi",
+        "meeting_field_location": "Joy",
+        "meeting_field_description": "Tavsif",
+        "meeting_field_agenda": "Kun tartibi",
+        "meeting_field_timezone": "Vaqt mintaqasi",
+        "meeting_field_attendance_mode": "Format",
+        "meeting_field_meeting_url": "Uchrashuv havolasi",
+        "meeting_field_google_meet_open_access": "Google Meet kirishi",
+        "meeting_field_visibility": "Kirish",
+        "meeting_field_availability": "Bandlik",
+        "meeting_field_recurrence_rule": "Takrorlash",
+        "meeting_field_recurrence_timezone": "Takrorlash vaqt mintaqasi",
+        "meeting_field_recurrence_until": "Takrorlash muddati",
+        "meeting_field_project": "Loyiha",
+        "meeting_field_issue": "Vazifa",
+        "meeting_field_meeting_type": "Uchrashuv turi",
+        "meeting_field_participants": "Ishtirokchilar",
+        "meeting_field_reminders": "Eslatmalar",
+        "meeting_field_organizer": "Tashkilotchi",
+        "meeting_field_occurrence": "Uchrashuv nusxasi",
+        "meeting_value_ONLINE": "Onlayn",
+        "meeting_value_MIXED": "Onlayn va oflayn",
+        "meeting_value_OFFLINE": "Oflayn",
+        "meeting_value_PROJECT": "Loyiha",
+        "meeting_value_PERSONAL": "Shaxsiy",
+        "meeting_value_PRIVATE": "Yopiq",
+        "meeting_value_BUSY": "Band",
+        "meeting_value_FREE": "Bo‘sh",
+        "meeting_value_MAYBE": "Ehtimol band",
+        "meeting_value_AWAY": "Joyida emas",
+        "meeting_value_UPDATED": "Yangilandi",
+        "meeting_value_CANCELLED": "Bekor qilindi",
         "when": "Vaqti",
         "organizer": "Tashkilotchi",
         "field": "Maydon",
@@ -750,6 +882,33 @@ def _meeting_datetime(value, user, language):
     return parsed.strftime("%d.%m.%Y %H:%M")
 
 
+def _meeting_change_value(value, field, user, language, strings):
+    if field in {"starts_at", "ends_at", "recurrence_until", "occurrence"}:
+        formatted = _meeting_datetime(value, user, language)
+        if formatted:
+            return formatted
+    translated = strings.get(f"meeting_value_{str(value)}")
+    if translated:
+        return translated
+    return _activity_value(value, field, language, strings)
+
+
+def _meeting_change_lines(changes, user, language, strings):
+    if not isinstance(changes, dict) or not changes:
+        return []
+    lines = ["", f"<b>{html.escape(strings['meeting_changes'])}:</b>"]
+    opaque_fields = {"project", "issue", "meeting_type", "participants", "reminders"}
+    for field, change in changes.items():
+        label = strings.get(f"meeting_field_{field}") or str(field).replace("_", " ").capitalize()
+        if field in opaque_fields or not isinstance(change, dict):
+            lines.append(f"• {html.escape(label)}: {html.escape(strings['meeting_updated'])}")
+            continue
+        old_value = _meeting_change_value(change.get("from"), field, user, language, strings)
+        new_value = _meeting_change_value(change.get("to"), field, user, language, strings)
+        lines.append(f"• {html.escape(label)}: {html.escape(old_value)} → {html.escape(new_value)}")
+    return lines
+
+
 def _activity_value(value, field, language, strings):
     if value is None or str(value).strip().lower() in TELEGRAM_EMPTY_VALUES:
         return strings["not_set"]
@@ -813,9 +972,21 @@ def render_delivery(delivery):
         starts_at = _meeting_datetime(payload.get("starts_at"), delivery.receiver, language)
         if starts_at:
             lines.append(f"{strings['when']}: {html.escape(starts_at)}")
-        if payload.get("actor_name"):
-            actor_label = strings["changed_by"] if event == "RSVP_CHANGED" else strings["organizer"]
+        if event == "RSVP_CHANGED":
+            participant_name = payload.get("participant_name") or payload.get("actor_name") or ""
+            response_status = payload.get("response_status") or "NO_RESPONSE"
+            response_label = strings.get(f"meeting_response_{response_status}", str(response_status))
+            lines.extend(
+                [
+                    f"{strings['meeting_participant']}: {html.escape(str(participant_name))}",
+                    f"{strings['meeting_response']}: {html.escape(str(response_label))}",
+                ]
+            )
+        elif payload.get("actor_name"):
+            actor_label = strings["changed_by"] if event == "UPDATED" else strings["organizer"]
             lines.append(f"{actor_label}: {html.escape(str(payload['actor_name']))}")
+        if event == "UPDATED":
+            lines.extend(_meeting_change_lines(payload.get("changes"), delivery.receiver, language, strings))
         text = "\n".join(lines)
         url = payload.get("url") or application_url("")
         button = strings["open_calendar"]

@@ -2,7 +2,9 @@ from datetime import timedelta, timezone as dt_timezone
 from unittest.mock import patch
 
 import pytest
+from django.core import mail
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.mail import get_connection
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APIClient
@@ -377,6 +379,47 @@ class TestMeetings:
         assert [item["id"] for item in listed.data] == [notification.id]
         assert unread.status_code == status.HTTP_200_OK
         assert unread.data["total_unread_notifications_count"] == 1
+
+    def test_external_guest_receives_calendar_email(
+        self,
+        monkeypatch,
+        session_client,
+        workspace,
+        project,
+    ):
+        guest_email = "external-guest@example.net"
+        created = session_client.post(
+            meeting_url(workspace),
+            meeting_payload(
+                project,
+                participants=[
+                    {
+                        "email": guest_email,
+                        "name": "External Guest",
+                        "role": "REQUIRED",
+                        "source": "EXPLICIT",
+                    }
+                ],
+            ),
+            format="json",
+        )
+        assert created.status_code == status.HTTP_201_CREATED
+        participant = MeetingParticipant.objects.get(meeting_id=created.data["id"], email=guest_email)
+        assert participant.user_id is None
+        assert participant.notify_by_email is True
+
+        mail.outbox.clear()
+        monkeypatch.setattr(
+            "plane.bgtasks.calendar_notification_task._smtp_connection",
+            lambda: (get_connection("django.core.mail.backends.locmem.EmailBackend"), "tasks@example.com"),
+        )
+
+        result = send_meeting_notifications(str(created.data["id"]), "CREATED")
+
+        assert result["sent"] >= 1
+        assert any(message.to == [guest_email] for message in mail.outbox)
+        guest_message = next(message for message in mail.outbox if message.to == [guest_email])
+        assert any(attachment.get_filename() == "meeting.ics" for attachment in guest_message.attachments)
 
     def test_public_response_page_uses_browser_language(self, session_client, workspace, project, member):
         created = session_client.post(

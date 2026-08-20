@@ -15,6 +15,7 @@ from rest_framework.test import APIClient
 from plane.db.models import (
     Notification,
     Meeting,
+    MeetingParticipant,
     Profile,
     Project,
     TelegramDelivery,
@@ -22,6 +23,10 @@ from plane.db.models import (
     TelegramUserConnection,
     User,
     Workspace,
+)
+from plane.bgtasks.calendar_notification_task import (
+    send_meeting_notifications,
+    send_meeting_response_notification,
 )
 from plane.license.models import Instance, InstanceAdmin, InstanceConfiguration
 from plane.app.views.project.invite import notify_project_joined
@@ -285,6 +290,90 @@ class TestTelegramNotifications:
         assert "Приглашение на встречу" in rendered["text"]
         assert meeting.title in rendered["text"]
         assert rendered["reply_markup"]["inline_keyboard"][0][0]["text"] == "Открыть календарь"
+
+    def test_meeting_update_and_rsvp_telegram_messages_include_details(self, monkeypatch):
+        organizer = create_user("meeting-organizer")
+        participant_user = create_user("meeting-participant")
+        organizer.profile.language = "ru"
+        organizer.profile.save(update_fields=["language", "updated_at"])
+        participant_user.profile.language = "ru"
+        participant_user.profile.save(update_fields=["language", "updated_at"])
+        configure_bot()
+        organizer_connection = TelegramUserConnection.objects.create(
+            user=organizer,
+            telegram_user_id=551,
+            chat_id=651,
+            bot_id=12345,
+        )
+        participant_connection = TelegramUserConnection.objects.create(
+            user=participant_user,
+            telegram_user_id=552,
+            chat_id=652,
+            bot_id=12345,
+        )
+        workspace = Workspace.objects.create(
+            name="Meeting details workspace",
+            slug=f"meeting-details-{uuid.uuid4().hex[:8]}",
+            owner=organizer,
+        )
+        project = Project.objects.create(
+            name="Meeting details project",
+            identifier="MDT",
+            workspace=workspace,
+            created_by=organizer,
+        )
+        starts_at = timezone.now() + timezone.timedelta(days=1)
+        meeting = Meeting.objects.create(
+            workspace=workspace,
+            project=project,
+            organizer=organizer,
+            title="Supplier review",
+            starts_at=starts_at,
+            ends_at=starts_at + timezone.timedelta(minutes=30),
+            timezone="Asia/Tashkent",
+        )
+        participant = MeetingParticipant.objects.create(
+            meeting=meeting,
+            user=participant_user,
+            email=participant_user.email,
+            name=participant_user.full_name,
+            response_token_hash=uuid.uuid4().hex,
+            response_status="TENTATIVE",
+        )
+        monkeypatch.setattr(
+            "plane.bgtasks.calendar_notification_task._smtp_connection",
+            lambda: (None, "tasks@example.com"),
+        )
+        monkeypatch.setattr(
+            "plane.bgtasks.telegram_notification_task.deliver_telegram_delivery.delay",
+            lambda _delivery_id: None,
+        )
+
+        send_meeting_notifications(
+            str(meeting.id),
+            "UPDATED",
+            changes={
+                "starts_at": {
+                    "from": starts_at.isoformat(),
+                    "to": (starts_at + timezone.timedelta(hours=1)).isoformat(),
+                },
+                "participants": True,
+            },
+            actor_id=str(organizer.id),
+        )
+        updated_delivery = TelegramDelivery.objects.get(connection=participant_connection)
+        updated_text = render_delivery(updated_delivery)["text"]
+        assert "Что изменилось" in updated_text
+        assert "Начало" in updated_text
+        assert "Участники: Обновлено" in updated_text
+
+        send_meeting_response_notification(str(participant.id))
+        response_delivery = TelegramDelivery.objects.get(connection=organizer_connection)
+        assert response_delivery.payload["participant_name"] == participant_user.full_name
+        assert response_delivery.payload["response_status"] == "TENTATIVE"
+        response_text = render_delivery(response_delivery)["text"]
+        assert f"Участник: {participant_user.full_name}" in response_text
+        assert "Ответ: Возможно" in response_text
 
     def test_bulk_created_mention_with_string_receiver_id_creates_delivery(self, monkeypatch):
         actor = create_user("mention-actor")

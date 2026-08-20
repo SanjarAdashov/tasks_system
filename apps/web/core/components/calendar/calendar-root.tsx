@@ -3,7 +3,10 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
+/* oxlint-disable jsx-a11y/prefer-tag-over-role -- Month cells contain a nested create action and cannot be buttons. */
+
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useSearchParams } from "next/navigation";
 import useSWR from "swr";
 import { orderBy } from "lodash-es";
@@ -176,7 +179,7 @@ type TimelineItem = {
 type PositionedTimelineItem = TimelineItem & { column: number; columns: number };
 
 const layoutTimelineItems = (items: TimelineItem[]): PositionedTimelineItem[] => {
-  const sorted = [...items].sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
+  const sorted = items.toSorted((a, b) => a.startsAt.getTime() - b.startsAt.getTime());
   const result: PositionedTimelineItem[] = [];
   let cluster: TimelineItem[] = [];
   let clusterEnd = 0;
@@ -191,7 +194,7 @@ const layoutTimelineItems = (items: TimelineItem[]): PositionedTimelineItem[] =>
       return { item, column };
     });
     const columns = Math.max(1, columnEnds.length);
-    result.push(...assigned.map(({ item, column }) => ({ ...item, column, columns })));
+    assigned.forEach(({ item, column }) => result.push({ ...item, column, columns }));
     cluster = [];
     clusterEnd = 0;
   };
@@ -508,6 +511,9 @@ function WeekTimeline({
                   <MeetingChip key={meeting.occurrenceId} meeting={meeting} onClick={() => onMeetingClick(meeting)} />
                 ))}
                 {day.allDayExternal.map((event) => (
+                  // The calendar cell contains its own create button, so the
+                  // interactive container cannot be a semantic button element.
+                  // eslint-disable-next-line jsx-a11y/prefer-tag-over-role
                   <div
                     key={event.id}
                     className="bg-blue-500/10 text-blue-500 flex min-h-7 items-center gap-1 rounded-md px-2 py-1 text-9"
@@ -773,10 +779,12 @@ function MeetingDetails({
       setIsWorking(false);
     }
   };
-  return (
+  if (typeof document === "undefined") return null;
+
+  return createPortal(
     <div
       role="presentation"
-      className="fixed inset-0 z-[70] flex justify-end bg-backdrop/60 backdrop-blur-[2px]"
+      className="fixed inset-0 z-[100] flex justify-end bg-backdrop/60 backdrop-blur-[2px]"
       onMouseDown={onClose}
     >
       <aside
@@ -876,7 +884,15 @@ function MeetingDetails({
                       </div>
                       <div className="truncate text-10 text-secondary">{participant.email}</div>
                     </div>
-                    <div className="text-9 font-semibold text-tertiary uppercase">{participant.response_status}</div>
+                    <div className="text-9 font-semibold text-tertiary">
+                      {participant.response_status === "ACCEPTED"
+                        ? t("calendar.accepted")
+                        : participant.response_status === "TENTATIVE"
+                          ? t("calendar.tentative")
+                          : participant.response_status === "DECLINED"
+                            ? t("calendar.declined")
+                            : t("calendar.no_response")}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -1082,7 +1098,8 @@ function MeetingDetails({
           )}
         </div>
       </aside>
-    </div>
+    </div>,
+    document.body
   );
 }
 

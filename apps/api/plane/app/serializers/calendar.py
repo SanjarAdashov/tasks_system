@@ -497,7 +497,12 @@ class MeetingSerializer(BaseSerializer):
 
             transaction.on_commit(
                 lambda: (
-                    send_meeting_notifications.delay(str(instance.id), "UPDATED"),
+                    send_meeting_notifications.delay(
+                        str(instance.id),
+                        "UPDATED",
+                        changes=changed,
+                        actor_id=str(request.user.id),
+                    ),
                     sync_meeting_to_external_calendars.delay(str(instance.id)),
                 )
             )

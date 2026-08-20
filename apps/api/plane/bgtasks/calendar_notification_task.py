@@ -398,6 +398,8 @@ def send_meeting_notifications(
     occurrence_starts_at=None,
     occurrence_ends_at=None,
     include_deleted=False,
+    changes=None,
+    actor_id=None,
 ):
     manager = Meeting.all_objects if include_deleted else Meeting.objects
     meeting = (
@@ -408,6 +410,9 @@ def send_meeting_notifications(
     )
     if not meeting:
         return {"skipped": True}
+    actor = meeting.organizer
+    if actor_id:
+        actor = User.objects.filter(pk=actor_id).first() or actor
     rendered_meeting = meeting
     occurrence_start = parse_datetime(occurrence_starts_at or "")
     occurrence_end = parse_datetime(occurrence_ends_at or "")
@@ -461,6 +466,7 @@ def send_meeting_notifications(
                         "starts_at": rendered_meeting.starts_at.isoformat(),
                         "ends_at": rendered_meeting.ends_at.isoformat(),
                         "event": event,
+                        "changes": changes or {},
                     }
                 },
                 entity_identifier=meeting.id,
@@ -469,7 +475,7 @@ def send_meeting_notifications(
                 message={"event": event},
                 message_stripped=f"{COPY[_language(item.user)].get(event, event)}: {meeting.title}",
                 sender="in_app:calendar:meeting",
-                triggered_by=meeting.organizer,
+                triggered_by=actor,
                 receiver=item.user,
             )
             for item in internal
@@ -512,14 +518,22 @@ def send_meeting_response_notification(participant_id):
         notification = Notification.objects.create(
             workspace=meeting.workspace,
             project=meeting.project,
-            data={"meeting": {"id": str(meeting.id), "title": meeting.title, "event": "RSVP_CHANGED"}},
+            data={
+                "meeting": {
+                    "id": str(meeting.id),
+                    "title": meeting.title,
+                    "event": "RSVP_CHANGED",
+                    "participant_name": participant_name,
+                    "response_status": participant.response_status,
+                }
+            },
             entity_identifier=meeting.id,
             entity_name="meeting",
             title=meeting.title,
             message={"event": "RSVP_CHANGED", "response_status": participant.response_status},
             message_stripped=f"{participant_name} {response_label}: {meeting.title}",
             sender="in_app:calendar:rsvp",
-            triggered_by=participant.user or organizer,
+            triggered_by=participant.user,
             receiver=organizer,
         )
         enqueue_telegram_notifications([notification])

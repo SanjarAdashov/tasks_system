@@ -362,7 +362,12 @@ export function MeetingFormModal(props: Props) {
         role: participants.get(member.member.id) || "REQUIRED",
         source: "EXPLICIT",
       })) satisfies TMeetingParticipant[];
-    const external = externalGuests.map(
+    const pendingGuest = guestEmail.trim().toLowerCase();
+    const guestEmails = [
+      ...externalGuests,
+      ...(/^\S+@\S+\.\S+$/.test(pendingGuest) && !externalGuests.includes(pendingGuest) ? [pendingGuest] : []),
+    ];
+    const external = guestEmails.map(
       (email) =>
         ({ email, name: email.split("@")[0], role: "REQUIRED", source: "EXPLICIT" }) satisfies TMeetingParticipant
     );
@@ -410,6 +415,7 @@ export function MeetingFormModal(props: Props) {
   const submit = async () => {
     setSubmitError(null);
     const startsAt = new Date(form.startsAt);
+    const pendingGuest = guestEmail.trim();
     if (
       !form.title.trim() ||
       !form.startsAt ||
@@ -419,6 +425,12 @@ export function MeetingFormModal(props: Props) {
       (!meeting && !form.allDay && startsAt < new Date())
     ) {
       const message = t("calendar.saving_error");
+      setSubmitError(message);
+      setToast({ type: TOAST_TYPE.ERROR, title: t("toast.error"), message });
+      return;
+    }
+    if (pendingGuest && !/^\S+@\S+\.\S+$/.test(pendingGuest)) {
+      const message = t("calendar.invalid_email");
       setSubmitError(message);
       setToast({ type: TOAST_TYPE.ERROR, title: t("toast.error"), message });
       return;

@@ -384,7 +384,12 @@ class MeetingViewSet(BaseViewSet):
 
         transaction.on_commit(
             lambda: (
-                send_meeting_notifications.delay(str(meeting.id), "UPDATED"),
+                send_meeting_notifications.delay(
+                    str(meeting.id),
+                    "UPDATED",
+                    changes={"organizer": {"from": str(previous_id), "to": str(target.id)}},
+                    actor_id=str(request.user.id),
+                ),
                 sync_meeting_to_external_calendars.delay(str(meeting.id)),
             )
         )
@@ -441,7 +446,17 @@ class MeetingViewSet(BaseViewSet):
 
         transaction.on_commit(
             lambda: (
-                send_meeting_notifications.delay(str(meeting.id), "UPDATED"),
+                send_meeting_notifications.delay(
+                    str(meeting.id),
+                    "UPDATED",
+                    changes={
+                        "occurrence": {
+                            "from": original_starts_at.isoformat(),
+                            "to": exception.action,
+                        }
+                    },
+                    actor_id=str(request.user.id),
+                ),
                 sync_meeting_to_external_calendars.delay(str(meeting.id)),
             )
         )
