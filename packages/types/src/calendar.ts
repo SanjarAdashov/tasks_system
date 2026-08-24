@@ -243,6 +243,9 @@ export interface TCalendarConnection {
   account_label: string;
   status: "CONNECTED" | "PARTIAL" | "PAUSED" | "ERROR";
   selected_calendars: string[];
+  is_gts_target: boolean;
+  gts_calendar_id: string;
+  gts_calendar_last_error?: string;
   sync_mode: "FULL" | "INBOUND_BUSY" | "OUTBOUND_GTS" | "DISABLED";
   last_synced_at?: string | null;
   last_error_at?: string | null;

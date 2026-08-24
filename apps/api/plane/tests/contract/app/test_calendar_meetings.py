@@ -17,6 +17,7 @@ from plane.db.models import (
     IssueAssignee,
     IssueSubscriber,
     Meeting,
+    MeetingExternalEvent,
     MeetingParticipant,
     Notification,
     Project,
@@ -25,7 +26,7 @@ from plane.db.models import (
     WorkspaceMember,
 )
 from plane.utils.calendar import read_signed_calendar_token, sign_participant_token
-from plane.utils.external_calendar import CalendarProviderError
+from plane.utils.external_calendar import CalendarProviderError, migrate_future_meetings_for_user, sync_meeting
 
 
 def make_user(email, first_name):
@@ -181,6 +182,74 @@ class TestCalendarConnections:
         assert response.data["queued_at"] is not None
         sync_delay.assert_called_once_with(str(connection.id))
 
+    @patch("plane.bgtasks.calendar_task.migrate_user_gts_calendar.delay")
+    @patch("plane.app.views.calendar.ensure_gts_calendar")
+    def test_user_selects_one_connection_for_gts_meetings(
+        self,
+        ensure_calendar,
+        migrate_delay,
+        session_client,
+        create_user,
+        django_capture_on_commit_callbacks,
+    ):
+        previous = CalendarConnection.objects.create(
+            user=create_user,
+            provider="GOOGLE",
+            account_email="first@example.com",
+            is_gts_target=True,
+            gts_calendar_id="first-gts",
+        )
+        selected = CalendarConnection.objects.create(
+            user=create_user,
+            provider="MICROSOFT",
+            account_email="second@example.com",
+            selected_calendars=["existing-work-calendar"],
+            sync_mode="INBOUND_BUSY",
+        )
+        ensure_calendar.return_value = ("second-gts", True)
+        selected.gts_calendar_id = "second-gts"
+
+        with django_capture_on_commit_callbacks(execute=True):
+            response = session_client.post(f"/api/users/me/calendar/connections/{selected.id}/gts-target/")
+
+        assert response.status_code == status.HTTP_200_OK
+        previous.refresh_from_db()
+        selected.refresh_from_db()
+        assert previous.is_gts_target is False
+        assert selected.is_gts_target is True
+        assert selected.selected_calendars == ["existing-work-calendar"]
+        assert selected.sync_mode == "INBOUND_BUSY"
+        assert response.data["migration_queued"] is True
+        ensure_calendar.assert_called_once()
+        migrate_delay.assert_called_once_with(str(create_user.id), str(selected.id))
+
+    @patch("plane.app.views.calendar.ensure_gts_calendar")
+    def test_gts_target_is_not_changed_when_provider_cannot_create_calendar(
+        self, ensure_calendar, session_client, create_user
+    ):
+        previous = CalendarConnection.objects.create(
+            user=create_user,
+            provider="GOOGLE",
+            account_email="first@example.com",
+            is_gts_target=True,
+            gts_calendar_id="first-gts",
+        )
+        selected = CalendarConnection.objects.create(
+            user=create_user,
+            provider="ICLOUD",
+            account_email="second@example.com",
+        )
+        ensure_calendar.side_effect = CalendarProviderError("Calendar creation is not allowed.")
+
+        response = session_client.post(f"/api/users/me/calendar/connections/{selected.id}/gts-target/")
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        previous.refresh_from_db()
+        selected.refresh_from_db()
+        assert previous.is_gts_target is True
+        assert selected.is_gts_target is False
+        assert response.data["error"] == "gts_calendar_creation_failed"
+
 
 @pytest.mark.contract
 @pytest.mark.django_db
@@ -225,6 +294,118 @@ class TestMeetings:
         organizer_participant = meeting.participants.get(user=create_user, removed_at__isnull=True)
         assert organizer_participant.response_status == "ACCEPTED"
         assert sorted(meeting.reminders.values_list("minutes_before", flat=True)) == [10, 30]
+
+    @patch("plane.utils.external_calendar.sync_meeting_to_connection")
+    def test_meeting_exports_only_to_each_users_selected_gts_target(
+        self, sync_to_connection, session_client, create_user, workspace, project, member
+    ):
+        created = session_client.post(
+            meeting_url(workspace),
+            meeting_payload(project, participants=[{"user_id": str(member.id)}]),
+            format="json",
+        )
+        meeting = Meeting.objects.get(id=created.data["id"])
+        CalendarConnection.objects.create(
+            user=create_user,
+            provider="GOOGLE",
+            account_email="unused@example.com",
+            sync_mode="FULL",
+            is_gts_target=False,
+        )
+        organizer_target = CalendarConnection.objects.create(
+            user=create_user,
+            provider="MICROSOFT",
+            account_email="organizer-target@example.com",
+            sync_mode="FULL",
+            is_gts_target=True,
+            gts_calendar_id="organizer-gts",
+        )
+        member_target = CalendarConnection.objects.create(
+            user=member,
+            provider="ICLOUD",
+            account_email="member-target@example.com",
+            sync_mode="OUTBOUND_GTS",
+            is_gts_target=True,
+            gts_calendar_id="member-gts",
+        )
+
+        result = sync_meeting(meeting)
+
+        called_connection_ids = {call.args[1].id for call in sync_to_connection.call_args_list}
+        assert called_connection_ids == {organizer_target.id, member_target.id}
+        assert len(result) == 2
+
+    @patch("plane.utils.external_calendar.sync_meeting_to_connection")
+    @patch("plane.utils.external_calendar.delete_external_event")
+    @patch("plane.utils.external_calendar.ensure_gts_calendar")
+    def test_target_migration_moves_only_future_meetings(
+        self,
+        ensure_calendar,
+        delete_external,
+        sync_to_connection,
+        create_user,
+        workspace,
+        project,
+    ):
+        now = timezone.now()
+        past = Meeting.objects.create(
+            workspace=workspace,
+            project=project,
+            organizer=create_user,
+            title="Past meeting",
+            starts_at=now - timedelta(days=2),
+            ends_at=now - timedelta(days=1),
+        )
+        future = Meeting.objects.create(
+            workspace=workspace,
+            project=project,
+            organizer=create_user,
+            title="Future meeting",
+            starts_at=now + timedelta(days=1),
+            ends_at=now + timedelta(days=1, hours=1),
+        )
+        old_connection = CalendarConnection.objects.create(
+            user=create_user,
+            provider="GOOGLE",
+            account_email="old-target@example.com",
+            sync_mode="FULL",
+        )
+        target = CalendarConnection.objects.create(
+            user=create_user,
+            provider="MICROSOFT",
+            account_email="new-target@example.com",
+            sync_mode="FULL",
+            is_gts_target=True,
+            gts_calendar_id="managed-gts",
+        )
+        past_event = MeetingExternalEvent.objects.create(
+            meeting=past,
+            connection=old_connection,
+            provider_event_id="past-provider-event",
+            provider_calendar_id="old-calendar",
+            title=past.title,
+            starts_at=past.starts_at,
+            ends_at=past.ends_at,
+        )
+        future_event = MeetingExternalEvent.objects.create(
+            meeting=future,
+            connection=old_connection,
+            provider_event_id="future-provider-event",
+            provider_calendar_id="old-calendar",
+            title=future.title,
+            starts_at=future.starts_at,
+            ends_at=future.ends_at,
+        )
+        ensure_calendar.return_value = ("managed-gts", False)
+
+        result = migrate_future_meetings_for_user(create_user.id, target.id)
+
+        assert result == {"removed": 1, "synced": 1, "failures": []}
+        delete_external.assert_called_once()
+        assert delete_external.call_args.args[0].id == future_event.id
+        sync_to_connection.assert_called_once_with(future, target)
+        assert MeetingExternalEvent.objects.filter(pk=past_event.id, deleted_at__isnull=True).exists()
+        assert not MeetingExternalEvent.objects.filter(pk=future_event.id, deleted_at__isnull=True).exists()
 
     def test_attachment_can_be_uploaded_immediately_after_meeting_creation(
         self, session_client, create_user, workspace, project
@@ -288,15 +469,30 @@ class TestMeetings:
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    def test_normal_meeting_redacts_details_for_non_participant(self, session_client, workspace, project, observer):
+    def test_meeting_is_hidden_from_non_participant(self, session_client, workspace, project, observer):
         created = session_client.post(meeting_url(workspace), meeting_payload(project), format="json")
         observer_client = APIClient()
         observer_client.force_authenticate(user=observer)
-        response = observer_client.get(meeting_url(workspace, created.data["id"]))
-        assert response.status_code == status.HTTP_200_OK
-        assert response.data["detail_access"] is False
-        assert "description" not in response.data
-        assert "participant_details" not in response.data
+        detail = observer_client.get(meeting_url(workspace, created.data["id"]))
+        calendar = observer_client.get(meeting_url(workspace))
+
+        assert detail.status_code == status.HTTP_404_NOT_FOUND
+        assert calendar.status_code == status.HTTP_200_OK
+        assert created.data["id"] not in {meeting["id"] for meeting in calendar.data["meetings"]}
+
+    def test_project_admin_cannot_see_meeting_without_invitation(
+        self, session_client, workspace, project, observer
+    ):
+        ProjectMember.objects.filter(project=project, member=observer).update(role=20)
+        created = session_client.post(meeting_url(workspace), meeting_payload(project), format="json")
+        observer_client = APIClient()
+        observer_client.force_authenticate(user=observer)
+
+        detail = observer_client.get(meeting_url(workspace, created.data["id"]))
+        calendar = observer_client.get(meeting_url(workspace))
+
+        assert detail.status_code == status.HTTP_404_NOT_FOUND
+        assert created.data["id"] not in {meeting["id"] for meeting in calendar.data["meetings"]}
 
     def test_restricted_meeting_is_hidden_from_non_participant(self, session_client, workspace, project, observer):
         created = session_client.post(
@@ -333,6 +529,31 @@ class TestMeetings:
         )
         assert response.status_code == status.HTTP_200_OK
         assert response.data["response_status"] == "ACCEPTED"
+
+    def test_active_participant_can_see_meeting_and_removed_participant_loses_access_immediately(
+        self, session_client, workspace, project, member
+    ):
+        created = session_client.post(
+            meeting_url(workspace),
+            meeting_payload(project, participants=[{"user_id": str(member.id)}]),
+            format="json",
+        )
+        member_client = APIClient()
+        member_client.force_authenticate(user=member)
+
+        detail = member_client.get(meeting_url(workspace, created.data["id"]))
+        calendar = member_client.get(meeting_url(workspace))
+        assert detail.status_code == status.HTTP_200_OK
+        assert created.data["id"] in {meeting["id"] for meeting in calendar.data["meetings"]}
+
+        MeetingParticipant.objects.filter(meeting_id=created.data["id"], user=member).update(
+            removed_at=timezone.now()
+        )
+
+        detail = member_client.get(meeting_url(workspace, created.data["id"]))
+        calendar = member_client.get(meeting_url(workspace))
+        assert detail.status_code == status.HTTP_404_NOT_FOUND
+        assert created.data["id"] not in {meeting["id"] for meeting in calendar.data["meetings"]}
 
     def test_created_meeting_is_visible_in_app_and_enqueued_for_telegram_when_email_is_disabled(
         self,

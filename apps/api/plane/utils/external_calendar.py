@@ -47,6 +47,7 @@ from plane.license.utils.instance_value import get_calendar_configuration
 
 HTTP_TIMEOUT = (10, 45)
 OAUTH_STATE_SALT = "gts-calendar-oauth-v1"
+GTS_CALENDAR_NAME = "GTS Tasks System"
 GOOGLE_SCOPES = [
     "openid",
     "email",
@@ -250,8 +251,7 @@ def _caldav_propfind(url, *, credentials, body, depth="0"):
     return ElementTree.fromstring(response.content)
 
 
-def _discover_caldav_calendars(*, server_url, credentials, account_label="", account_email=""):
-    """Resolve a CalDAV account root to VEVENT collections."""
+def _caldav_home_url(*, server_url, credentials):
     discovery_body = """<?xml version="1.0" encoding="utf-8" ?>
 <d:propfind xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
   <d:prop><d:current-user-principal/><c:calendar-home-set/><d:displayname/><d:resourcetype/></d:prop>
@@ -263,7 +263,12 @@ def _discover_caldav_calendars(*, server_url, credentials, account_label="", acc
         principal_url = urljoin(server_url, principal)
         principal_root = _caldav_propfind(principal_url, credentials=credentials, body=discovery_body)
         home = principal_root.findtext(".//{urn:ietf:params:xml:ns:caldav}calendar-home-set/{DAV:}href")
-    home_url = urljoin(server_url, home) if home else server_url
+    return urljoin(server_url, home) if home else server_url
+
+
+def _discover_caldav_calendars(*, server_url, credentials, account_label="", account_email=""):
+    """Resolve a CalDAV account root to VEVENT collections."""
+    home_url = _caldav_home_url(server_url=server_url, credentials=credentials)
     list_body = """<?xml version="1.0" encoding="utf-8" ?>
 <d:propfind xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
   <d:prop><d:displayname/><d:resourcetype/><c:supported-calendar-component-set/></d:prop>
@@ -362,6 +367,100 @@ def list_provider_calendars(connection):
             for item in response.json().get("value", [])
         ]
     return discover_caldav_calendars(connection)
+
+
+def _create_gts_calendar(connection):
+    if connection.provider == CalendarProvider.GOOGLE:
+        response = _authorized_request(
+            connection,
+            "POST",
+            "https://www.googleapis.com/calendar/v3/calendars",
+            json={"summary": GTS_CALENDAR_NAME, "description": "Meetings managed by GTS Tasks System."},
+        )
+        if not response.ok:
+            raise CalendarProviderError(
+                f"Google Calendar returned HTTP {response.status_code} while creating the GTS calendar."
+            )
+        return str(response.json()["id"])
+    if connection.provider == CalendarProvider.MICROSOFT:
+        response = _authorized_request(
+            connection,
+            "POST",
+            "https://graph.microsoft.com/v1.0/me/calendars",
+            json={"name": GTS_CALENDAR_NAME},
+        )
+        if not response.ok:
+            raise CalendarProviderError(
+                f"Microsoft Calendar returned HTTP {response.status_code} while creating the GTS calendar."
+            )
+        return str(response.json()["id"])
+
+    credentials = _json_credentials(connection)
+    home_url = _caldav_home_url(server_url=_server_url(connection), credentials=credentials).rstrip("/") + "/"
+    calendar_url = urljoin(home_url, f"gts-tasks-system-{uuid.uuid4().hex[:10]}/")
+    body = f"""<?xml version="1.0" encoding="utf-8" ?>
+<c:mkcalendar xmlns:d="DAV:" xmlns:c="urn:ietf:params:xml:ns:caldav">
+  <d:set><d:prop>
+    <d:displayname>{GTS_CALENDAR_NAME}</d:displayname>
+    <c:supported-calendar-component-set><c:comp name="VEVENT"/></c:supported-calendar-component-set>
+  </d:prop></d:set>
+</c:mkcalendar>"""
+    response = requests.request(
+        "MKCALENDAR",
+        calendar_url,
+        headers={"Content-Type": "application/xml; charset=utf-8"},
+        data=body.encode(),
+        auth=(credentials.get("username", ""), credentials.get("app_password", "")),
+        timeout=HTTP_TIMEOUT,
+    )
+    if response.status_code not in (200, 201, 204):
+        raise CalendarProviderError(
+            f"The CalDAV provider could not create a separate '{GTS_CALENDAR_NAME}' calendar "
+            f"(HTTP {response.status_code}). Check that this account allows creating calendars."
+        )
+    return calendar_url
+
+
+def ensure_gts_calendar(connection):
+    """Return the managed calendar id, recreating it if it was removed at the provider."""
+    try:
+        calendars = list_provider_calendars(connection)
+        calendar_by_id = {str(item["id"]): item for item in calendars}
+        if connection.gts_calendar_id and connection.gts_calendar_id in calendar_by_id:
+            if connection.gts_calendar_last_error:
+                CalendarConnection.objects.filter(pk=connection.pk).update(gts_calendar_last_error="")
+                connection.gts_calendar_last_error = ""
+            return connection.gts_calendar_id, False
+
+        # On first setup always create a dedicated collection instead of
+        # adopting an unrelated user calendar with the same display name. If
+        # our stored collection was removed, reusing an exact-name replacement
+        # avoids creating duplicates during concurrent recovery attempts.
+        existing = (
+            next((item for item in calendars if item.get("name") == GTS_CALENDAR_NAME), None)
+            if connection.gts_calendar_id
+            else None
+        )
+        calendar_id = str(existing["id"]) if existing else _create_gts_calendar(connection)
+        changed = calendar_id != connection.gts_calendar_id
+        CalendarConnection.objects.filter(pk=connection.pk).update(
+            gts_calendar_id=calendar_id,
+            gts_calendar_last_error="",
+        )
+        connection.gts_calendar_id = calendar_id
+        connection.gts_calendar_last_error = ""
+        return calendar_id, changed
+    except Exception as exc:
+        error = (
+            exc
+            if isinstance(exc, CalendarProviderError)
+            else CalendarProviderError("The calendar provider could not create or verify the GTS calendar.")
+        )
+        CalendarConnection.objects.filter(pk=connection.pk).update(gts_calendar_last_error=str(error)[:2000])
+        connection.gts_calendar_last_error = str(error)[:2000]
+        if error is exc:
+            raise
+        raise error from exc
 
 
 def save_oauth_connection(*, user, provider, token_payload):
@@ -463,7 +562,9 @@ def _upsert_event(connection, event):
 
 
 def pull_google(connection, *, range_start, range_end):
-    calendar_ids = connection.selected_calendars or ["primary"]
+    calendar_ids = [
+        item for item in (connection.selected_calendars or ["primary"]) if item != connection.gts_calendar_id
+    ]
     count = 0
     for calendar_id in calendar_ids:
         page_token = None
@@ -529,7 +630,9 @@ def pull_google(connection, *, range_start, range_end):
 
 def pull_microsoft(connection, *, range_start, range_end):
     count = 0
-    calendar_ids = connection.selected_calendars or ["primary"]
+    calendar_ids = [
+        item for item in (connection.selected_calendars or ["primary"]) if item != connection.gts_calendar_id
+    ]
     for calendar_id in calendar_ids:
         params = {
             "startDateTime": range_start.astimezone(dt_timezone.utc).isoformat(),
@@ -854,8 +957,10 @@ def _expand_ical_events(blocks, *, calendar_id, href, range_start, range_end):
 
 def pull_caldav(connection, *, range_start, range_end):
     credentials = _json_credentials(connection)
-    calendar_urls = connection.selected_calendars or [
-        item["id"] for item in discover_caldav_calendars(connection) if item["primary"]
+    calendar_urls = [item for item in (connection.selected_calendars or []) if item != connection.gts_calendar_id] or [
+        item["id"]
+        for item in discover_caldav_calendars(connection)
+        if item["primary"] and item["id"] != connection.gts_calendar_id
     ]
     headers = {"Depth": "1", "Content-Type": "application/xml; charset=utf-8"}
     body = f"""<?xml version="1.0" encoding="utf-8" ?>
@@ -933,21 +1038,36 @@ def pull_caldav(connection, *, range_start, range_end):
 
 
 def sync_connection(connection, *, range_start=None, range_end=None):
-    if connection.sync_mode in (CalendarSyncMode.DISABLED, CalendarSyncMode.OUTBOUND_GTS):
-        return 0
     range_start = range_start or timezone.now() - timedelta(days=90)
     range_end = range_end or timezone.now() + timedelta(days=730)
     try:
+        managed_calendar_changed = False
+        if connection.is_gts_target:
+            _, managed_calendar_changed = ensure_gts_calendar(connection)
+        if connection.sync_mode in (CalendarSyncMode.DISABLED, CalendarSyncMode.OUTBOUND_GTS):
+            if managed_calendar_changed and connection.sync_mode == CalendarSyncMode.OUTBOUND_GTS:
+                migration = migrate_future_meetings_for_user(connection.user_id, connection.id)
+                if migration.get("failures"):
+                    raise CalendarProviderError("Some future meetings could not be restored in the GTS calendar.")
+            CalendarConnection.objects.filter(pk=connection.pk).update(
+                status=CalendarConnectionStatus.CONNECTED,
+                last_synced_at=timezone.now(),
+                last_error="",
+                last_error_at=None,
+            )
+            return 0
         if connection.provider == CalendarProvider.GOOGLE:
             count = pull_google(connection, range_start=range_start, range_end=range_end)
         elif connection.provider == CalendarProvider.MICROSOFT:
             count = pull_microsoft(connection, range_start=range_start, range_end=range_end)
         else:
             calendars = discover_caldav_calendars(connection)
-            valid_ids = [str(item["id"]) for item in calendars]
+            valid_ids = [str(item["id"]) for item in calendars if str(item["id"]) != connection.gts_calendar_id]
             selected_ids = [item for item in (connection.selected_calendars or []) if item in valid_ids]
             if not selected_ids and valid_ids:
-                selected_ids = [str(item["id"]) for item in calendars if item.get("primary")] or [valid_ids[0]]
+                selected_ids = [
+                    str(item["id"]) for item in calendars if item.get("primary") and str(item["id"]) in valid_ids
+                ] or [valid_ids[0]]
             if selected_ids != (connection.selected_calendars or []):
                 connection.selected_calendars = selected_ids
                 CalendarConnection.objects.filter(pk=connection.pk).update(selected_calendars=selected_ids)
@@ -971,7 +1091,15 @@ def sync_connection(connection, *, range_start=None, range_end=None):
                     last_error=" ".join(warning_parts)[:2000],
                     last_error_at=timezone.now(),
                 )
+                if managed_calendar_changed and connection.sync_mode == CalendarSyncMode.FULL:
+                    migration = migrate_future_meetings_for_user(connection.user_id, connection.id)
+                    if migration.get("failures"):
+                        raise CalendarProviderError("Some future meetings could not be restored in the GTS calendar.")
                 return count
+        if managed_calendar_changed and connection.sync_mode == CalendarSyncMode.FULL:
+            migration = migrate_future_meetings_for_user(connection.user_id, connection.id)
+            if migration.get("failures"):
+                raise CalendarProviderError("Some future meetings could not be restored in the GTS calendar.")
         CalendarConnection.objects.filter(pk=connection.pk).update(
             status=CalendarConnectionStatus.CONNECTED,
             last_synced_at=timezone.now(),
@@ -980,10 +1108,15 @@ def sync_connection(connection, *, range_start=None, range_end=None):
         )
         return count
     except Exception as exc:
+        updates = {
+            "status": CalendarConnectionStatus.ERROR,
+            "last_error": str(exc)[:2000],
+            "last_error_at": timezone.now(),
+        }
+        if connection.is_gts_target:
+            updates["gts_calendar_last_error"] = str(exc)[:2000]
         CalendarConnection.objects.filter(pk=connection.pk).update(
-            status=CalendarConnectionStatus.ERROR,
-            last_error=str(exc)[:2000],
-            last_error_at=timezone.now(),
+            **updates,
         )
         raise
 
@@ -1093,9 +1226,51 @@ def _microsoft_recurrence(meeting):
     return {"pattern": pattern, "range": recurrence_range}
 
 
+def delete_external_event(event):
+    """Remove one GTS-managed provider copy. Missing provider records are already deleted."""
+    connection = event.connection
+    calendar_id = event.provider_calendar_id
+    event_id = event.provider_event_id
+    if connection.provider == CalendarProvider.GOOGLE:
+        response = _authorized_request(
+            connection,
+            "DELETE",
+            f"https://www.googleapis.com/calendar/v3/calendars/{quote(str(calendar_id), safe='')}/events/{quote(event_id, safe='')}",
+        )
+        if response.status_code not in (204, 404, 410):
+            raise CalendarProviderError(
+                f"Google Calendar returned HTTP {response.status_code} while deleting an event."
+            )
+    elif connection.provider == CalendarProvider.MICROSOFT:
+        events_base = (
+            "https://graph.microsoft.com/v1.0/me/events"
+            if calendar_id == "primary"
+            else f"https://graph.microsoft.com/v1.0/me/calendars/{quote(str(calendar_id), safe='')}/events"
+        )
+        response = _authorized_request(
+            connection,
+            "DELETE",
+            f"{events_base}/{quote(event_id, safe='')}",
+        )
+        if response.status_code not in (204, 404, 410):
+            raise CalendarProviderError(
+                f"Microsoft Calendar returned HTTP {response.status_code} while deleting an event."
+            )
+    else:
+        credentials = _json_credentials(connection)
+        target = urljoin(str(calendar_id).rstrip("/") + "/", f"{quote(event_id, safe='')}.ics")
+        response = requests.delete(
+            target,
+            auth=(credentials.get("username", ""), credentials.get("app_password", "")),
+            timeout=HTTP_TIMEOUT,
+        )
+        if response.status_code not in (200, 204, 404, 410):
+            raise CalendarProviderError(f"CalDAV server returned HTTP {response.status_code} while deleting an event.")
+
+
 def _upsert_google_meeting(connection, meeting, existing):
     payload = _meeting_payload(meeting)
-    calendar_id = (connection.selected_calendars or ["primary"])[0]
+    calendar_id = connection.gts_calendar_id
     if payload["all_day"]:
         local_start = payload["starts_at"].astimezone(ZoneInfo(meeting.timezone))
         local_end = payload["ends_at"].astimezone(ZoneInfo(meeting.timezone))
@@ -1153,7 +1328,7 @@ def _upsert_microsoft_meeting(connection, meeting, existing):
     recurrence = _microsoft_recurrence(meeting)
     if recurrence:
         event["recurrence"] = recurrence
-    calendar_id = (connection.selected_calendars or ["primary"])[0]
+    calendar_id = connection.gts_calendar_id
     events_base = (
         "https://graph.microsoft.com/v1.0/me/events"
         if calendar_id == "primary"
@@ -1184,7 +1359,7 @@ def _ical_escape(value):
 def _upsert_caldav_meeting(connection, meeting, existing):
     payload = _meeting_payload(meeting)
     credentials = _json_credentials(connection)
-    server_url = ((connection.selected_calendars or [_server_url(connection)])[0]).rstrip("/") + "/"
+    server_url = connection.gts_calendar_id.rstrip("/") + "/"
     event_id = existing.provider_event_id if existing else f"gts-{meeting.id}"
     target = urljoin(server_url, f"{quote(event_id, safe='')}.ics")
     status = "CANCELLED" if payload["cancelled"] else "CONFIRMED"
@@ -1236,20 +1411,34 @@ def _upsert_caldav_meeting(connection, meeting, existing):
 
 @transaction.atomic
 def sync_meeting_to_connection(meeting, connection):
-    if connection.status == CalendarConnectionStatus.PAUSED or connection.sync_mode not in (
-        CalendarSyncMode.FULL,
-        CalendarSyncMode.OUTBOUND_GTS,
+    if (
+        not connection.is_gts_target
+        or connection.status == CalendarConnectionStatus.PAUSED
+        or connection.sync_mode
+        not in (
+            CalendarSyncMode.FULL,
+            CalendarSyncMode.OUTBOUND_GTS,
+        )
     ):
         return None
+    calendar_id, _ = ensure_gts_calendar(connection)
     existing = MeetingExternalEvent.objects.filter(meeting=meeting, connection=connection).first()
     if meeting.status == MeetingStatus.CANCELLED and existing is None:
         return None
+    provider_existing = existing
+    if existing and existing.provider_calendar_id != calendar_id:
+        delete_external_event(existing)
+        provider_existing = None
+        if meeting.status == MeetingStatus.CANCELLED:
+            existing.is_deleted_at_provider = True
+            existing.save(update_fields=["is_deleted_at_provider", "updated_at"])
+            return existing
     if connection.provider == CalendarProvider.GOOGLE:
-        event_id, calendar_id, raw = _upsert_google_meeting(connection, meeting, existing)
+        event_id, calendar_id, raw = _upsert_google_meeting(connection, meeting, provider_existing)
     elif connection.provider == CalendarProvider.MICROSOFT:
-        event_id, calendar_id, raw = _upsert_microsoft_meeting(connection, meeting, existing)
+        event_id, calendar_id, raw = _upsert_microsoft_meeting(connection, meeting, provider_existing)
     else:
-        event_id, calendar_id, raw = _upsert_caldav_meeting(connection, meeting, existing)
+        event_id, calendar_id, raw = _upsert_caldav_meeting(connection, meeting, provider_existing)
     if not event_id:
         return existing
     defaults = {
@@ -1278,6 +1467,7 @@ def sync_meeting(meeting):
     user_ids.add(meeting.organizer_id)
     connections = CalendarConnection.objects.filter(
         user_id__in=user_ids,
+        is_gts_target=True,
         status__in=[
             CalendarConnectionStatus.CONNECTED,
             CalendarConnectionStatus.PARTIAL,
@@ -1304,6 +1494,54 @@ def sync_meeting(meeting):
             )
             results.append({"connection_id": str(connection.id), "ok": False, "error": str(exc)})
     return results
+
+
+def migrate_future_meetings_for_user(user_id, target_connection_id):
+    """Move only upcoming GTS-owned provider copies to the selected account/calendar."""
+    target = CalendarConnection.objects.filter(
+        pk=target_connection_id,
+        user_id=user_id,
+        is_gts_target=True,
+    ).first()
+    if not target:
+        return {"skipped": True, "reason": "target_not_found"}
+
+    now = timezone.now()
+    future_meetings = (
+        Meeting.objects.filter(ends_at__gte=now)
+        .filter(Q(organizer_id=user_id) | Q(participants__user_id=user_id, participants__removed_at__isnull=True))
+        .distinct()
+    )
+    meeting_ids = list(future_meetings.values_list("id", flat=True))
+    calendar_id, _ = ensure_gts_calendar(target)
+    stale_events = MeetingExternalEvent.objects.filter(
+        meeting_id__in=meeting_ids,
+        connection__user_id=user_id,
+    ).exclude(connection=target, provider_calendar_id=calendar_id)
+
+    removed = 0
+    failures = []
+    blocked_meeting_ids = set()
+    for event in stale_events.select_related("connection"):
+        try:
+            delete_external_event(event)
+            event.delete()
+            removed += 1
+        except Exception as exc:
+            blocked_meeting_ids.add(event.meeting_id)
+            failures.append({"event_id": str(event.id), "error": str(exc)})
+
+    synced = 0
+    if target.sync_mode in (CalendarSyncMode.FULL, CalendarSyncMode.OUTBOUND_GTS):
+        for meeting in future_meetings.iterator(chunk_size=100):
+            if meeting.id in blocked_meeting_ids:
+                continue
+            try:
+                sync_meeting_to_connection(meeting, target)
+                synced += 1
+            except Exception as exc:
+                failures.append({"meeting_id": str(meeting.id), "error": str(exc)})
+    return {"removed": removed, "synced": synced, "failures": failures}
 
 
 def safe_return_url(value, request):

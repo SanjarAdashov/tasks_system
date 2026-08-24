@@ -11,6 +11,7 @@ from plane.utils.external_calendar import (
     _discover_caldav_calendars,
     _expand_ical_events,
     _microsoft_recurrence,
+    ensure_gts_calendar,
     sync_connection,
 )
 
@@ -185,6 +186,8 @@ def test_caldav_sync_sanitizes_sources_and_keeps_partial_results(monkeypatch):
         pk="connection-id",
         provider="ICLOUD",
         sync_mode="FULL",
+        is_gts_target=False,
+        gts_calendar_id="",
         selected_calendars=[
             "https://caldav.example.test/account/",
             "https://caldav.example.test/work/",
@@ -225,6 +228,8 @@ def test_caldav_sync_marks_error_only_when_every_source_fails(monkeypatch):
         pk="connection-id",
         provider="ICLOUD",
         sync_mode="FULL",
+        is_gts_target=False,
+        gts_calendar_id="",
         selected_calendars=["https://caldav.example.test/work/"],
     )
 
@@ -236,3 +241,130 @@ def test_caldav_sync_marks_error_only_when_every_source_fails(monkeypatch):
         )
 
     assert manager.updates[-1]["status"] == "ERROR"
+
+
+def test_gts_calendar_recovery_reuses_existing_named_calendar(monkeypatch):
+    manager = _FakeCalendarConnectionManager()
+    monkeypatch.setattr(external_calendar, "CalendarConnection", SimpleNamespace(objects=manager))
+    monkeypatch.setattr(
+        external_calendar,
+        "list_provider_calendars",
+        lambda connection: [
+            {"id": "personal", "name": "Personal", "primary": True},
+            {"id": "gts-managed", "name": "GTS Tasks System", "primary": False},
+        ],
+    )
+    monkeypatch.setattr(
+        external_calendar,
+        "_create_gts_calendar",
+        lambda connection: pytest.fail("an existing managed calendar must be reused"),
+    )
+    connection = SimpleNamespace(pk="connection-id", gts_calendar_id="deleted-gts", gts_calendar_last_error="")
+
+    calendar_id, changed = ensure_gts_calendar(connection)
+
+    assert calendar_id == "gts-managed"
+    assert changed is True
+    assert connection.gts_calendar_id == "gts-managed"
+    assert manager.updates[-1] == {"gts_calendar_id": "gts-managed", "gts_calendar_last_error": ""}
+
+
+def test_gts_calendar_first_setup_creates_a_dedicated_calendar(monkeypatch):
+    manager = _FakeCalendarConnectionManager()
+    monkeypatch.setattr(external_calendar, "CalendarConnection", SimpleNamespace(objects=manager))
+    monkeypatch.setattr(
+        external_calendar,
+        "list_provider_calendars",
+        lambda connection: [
+            {"id": "same-name-user-calendar", "name": "GTS Tasks System", "primary": False},
+        ],
+    )
+    monkeypatch.setattr(external_calendar, "_create_gts_calendar", lambda connection: "new-managed-calendar")
+    connection = SimpleNamespace(pk="connection-id", gts_calendar_id="", gts_calendar_last_error="")
+
+    calendar_id, changed = ensure_gts_calendar(connection)
+
+    assert calendar_id == "new-managed-calendar"
+    assert changed is True
+
+
+@pytest.mark.parametrize(
+    ("provider", "expected_url", "response_payload", "expected_body"),
+    [
+        (
+            "GOOGLE",
+            "https://www.googleapis.com/calendar/v3/calendars",
+            {"id": "google-gts-calendar"},
+            {"summary": "GTS Tasks System", "description": "Meetings managed by GTS Tasks System."},
+        ),
+        (
+            "MICROSOFT",
+            "https://graph.microsoft.com/v1.0/me/calendars",
+            {"id": "microsoft-gts-calendar"},
+            {"name": "GTS Tasks System"},
+        ),
+    ],
+)
+def test_google_and_microsoft_create_a_separate_gts_calendar(
+    monkeypatch,
+    provider,
+    expected_url,
+    response_payload,
+    expected_body,
+):
+    requests = []
+
+    def authorized_request(connection, method, url, **kwargs):
+        requests.append((method, url, kwargs))
+        return SimpleNamespace(ok=True, json=lambda: response_payload)
+
+    monkeypatch.setattr(external_calendar, "_authorized_request", authorized_request)
+    connection = SimpleNamespace(provider=provider)
+
+    calendar_id = external_calendar._create_gts_calendar(connection)
+
+    assert calendar_id == response_payload["id"]
+    assert requests == [("POST", expected_url, {"json": expected_body})]
+
+
+def test_caldav_creates_a_separate_gts_calendar_collection(monkeypatch):
+    captured = {}
+
+    def request(method, url, **kwargs):
+        captured.update({"method": method, "url": url, **kwargs})
+        return SimpleNamespace(status_code=201)
+
+    monkeypatch.setattr(external_calendar, "_json_credentials", lambda connection: {"username": "user"})
+    monkeypatch.setattr(external_calendar, "_server_url", lambda connection: "https://caldav.example.test/")
+    monkeypatch.setattr(
+        external_calendar,
+        "_caldav_home_url",
+        lambda **kwargs: "https://caldav.example.test/home/",
+    )
+    monkeypatch.setattr(external_calendar.requests, "request", request)
+    connection = SimpleNamespace(provider="ICLOUD")
+
+    calendar_id = external_calendar._create_gts_calendar(connection)
+
+    assert captured["method"] == "MKCALENDAR"
+    assert captured["url"] == calendar_id
+    assert calendar_id.startswith("https://caldav.example.test/home/gts-tasks-system-")
+    assert b"<d:displayname>GTS Tasks System</d:displayname>" in captured["data"]
+
+
+def test_caldav_calendar_creation_failure_is_explicit(monkeypatch):
+    monkeypatch.setattr(external_calendar, "_json_credentials", lambda connection: {"username": "user"})
+    monkeypatch.setattr(external_calendar, "_server_url", lambda connection: "https://caldav.example.test/")
+    monkeypatch.setattr(
+        external_calendar,
+        "_caldav_home_url",
+        lambda **kwargs: "https://caldav.example.test/home/",
+    )
+    monkeypatch.setattr(
+        external_calendar.requests,
+        "request",
+        lambda *args, **kwargs: SimpleNamespace(status_code=403),
+    )
+
+    with pytest.raises(CalendarProviderError, match="could not create a separate"):
+        external_calendar._create_gts_calendar(SimpleNamespace(provider="CALDAV"))

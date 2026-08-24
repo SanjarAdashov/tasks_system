@@ -78,6 +78,7 @@ from plane.utils.external_calendar import (
     CalendarProviderError,
     build_oauth_authorization_url,
     discover_caldav_calendars_with_credentials,
+    ensure_gts_calendar,
     exchange_oauth_code,
     list_provider_calendars,
     oauth_account_profile,
@@ -839,9 +840,19 @@ class CalendarConnectionViewSet(BaseViewSet):
         return Response(self.get_serializer(connection).data, status=201)
 
     def partial_update(self, request, pk):
-        serializer = self.get_serializer(self.get_object(), data=request.data, partial=True)
+        connection = self.get_object()
+        previous_sync_mode = connection.sync_mode
+        serializer = self.get_serializer(connection, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        connection = serializer.save()
+        if (
+            connection.is_gts_target
+            and previous_sync_mode != connection.sync_mode
+            and connection.sync_mode in ("FULL", "OUTBOUND_GTS")
+        ):
+            from plane.bgtasks.calendar_task import migrate_user_gts_calendar
+
+            transaction.on_commit(lambda: migrate_user_gts_calendar.delay(str(connection.user_id), str(connection.id)))
         return Response(serializer.data)
 
     def destroy(self, request, pk):
@@ -868,7 +879,41 @@ class CalendarConnectionViewSet(BaseViewSet):
         selected = set(connection.selected_calendars or [])
         if not selected:
             selected = {str(item["id"]) for item in calendars if item.get("primary")}
-        return Response([{**item, "selected": str(item["id"]) in selected} for item in calendars])
+        return Response(
+            [
+                {
+                    **item,
+                    "selected": str(item["id"]) in selected,
+                    "managed_by_gts": str(item["id"]) == connection.gts_calendar_id,
+                }
+                for item in calendars
+            ]
+        )
+
+    def set_gts_target(self, request, pk):
+        connection = self.get_object()
+        try:
+            ensure_gts_calendar(connection)
+        except CalendarProviderError as exc:
+            return Response(
+                {
+                    "error": "gts_calendar_creation_failed",
+                    "detail": str(exc),
+                },
+                status=400,
+            )
+
+        with transaction.atomic():
+            CalendarConnection.objects.filter(user=request.user, is_gts_target=True).exclude(pk=connection.pk).update(
+                is_gts_target=False
+            )
+            connection.is_gts_target = True
+            connection.save(update_fields=["is_gts_target", "updated_at"])
+
+        from plane.bgtasks.calendar_task import migrate_user_gts_calendar
+
+        transaction.on_commit(lambda: migrate_user_gts_calendar.delay(str(request.user.id), str(connection.id)))
+        return Response({**self.get_serializer(connection).data, "migration_queued": True})
 
 
 class CalendarOAuthStartEndpoint(BaseAPIView):

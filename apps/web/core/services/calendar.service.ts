@@ -189,7 +189,14 @@ export class CalendarService extends APIService {
 
   async getConnectionCalendars(connectionId: string) {
     return this.get(`/api/users/me/calendar/connections/${connectionId}/calendars/`).then(
-      (response) => response.data as Array<{ id: string; name: string; primary: boolean; selected: boolean }>
+      (response) =>
+        response.data as Array<{
+          id: string;
+          name: string;
+          primary: boolean;
+          selected: boolean;
+          managed_by_gts: boolean;
+        }>
     );
   }
 
@@ -285,6 +292,14 @@ export class CalendarService extends APIService {
     return this.patch(`/api/users/me/calendar/connections/${connectionId}/`, payload).then(
       (response) => response.data as TCalendarConnection
     );
+  }
+
+  async setGtsCalendarTarget(connectionId: string): Promise<TCalendarConnection & { migration_queued: boolean }> {
+    return this.post(`/api/users/me/calendar/connections/${connectionId}/gts-target/`)
+      .then((response) => response.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
   }
 
   async getOAuthAuthorizationUrl(provider: "GOOGLE" | "MICROSOFT", returnUrl: string) {

@@ -791,7 +791,7 @@ function MeetingDetails({
         className="shadow-2xl h-full w-full max-w-[520px] overflow-y-auto border-l border-subtle bg-surface-1"
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-subtle bg-surface-1 px-5 py-4">
+        <div className="gts-glass-sticky-surface sticky top-0 z-10 flex items-center justify-between border-b border-subtle bg-surface-1 px-5 py-4">
           <div className="text-11 font-semibold tracking-wide text-secondary uppercase">
             {t("calendar.meeting_details")}
           </div>
@@ -1059,7 +1059,7 @@ function MeetingDetails({
                     placeholder={t("calendar.transfer_organizer")}
                     className="min-w-52 flex-1"
                     buttonClassName="bg-surface-2 text-11"
-                    optionsClassName="min-w-72"
+                    optionsClassName="z-[110] min-w-72"
                     options={(meeting.participant_details || [])
                       .filter((participant) => participant.user && participant.user.id !== meeting.organizer.id)
                       .map((participant) => ({
@@ -1071,7 +1071,12 @@ function MeetingDetails({
                         icon: <UserRound className="size-3.5" />,
                       }))}
                   />
-                  <Button variant="secondary" disabled={!newOrganizerId || isWorking} onClick={transferMeeting}>
+                  <Button
+                    variant="secondary"
+                    className="h-9 px-3 text-11"
+                    disabled={!newOrganizerId || isWorking}
+                    onClick={transferMeeting}
+                  >
                     {t("calendar.transfer")}
                   </Button>
                 </div>

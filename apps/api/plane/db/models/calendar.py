@@ -508,6 +508,9 @@ class CalendarConnection(BaseModel):
     credentials_encrypted = models.TextField(blank=True, default="")
     server_url_encrypted = models.TextField(blank=True, default="")
     selected_calendars = models.JSONField(default=list, blank=True)
+    is_gts_target = models.BooleanField(default=False)
+    gts_calendar_id = models.CharField(max_length=512, blank=True, default="")
+    gts_calendar_last_error = models.TextField(blank=True, default="")
     sync_mode = models.CharField(
         max_length=24,
         choices=CalendarSyncMode.choices,
@@ -528,7 +531,12 @@ class CalendarConnection(BaseModel):
                 fields=["user", "provider", "account_email"],
                 condition=Q(deleted_at__isnull=True),
                 name="unique_active_user_calendar_connection",
-            )
+            ),
+            models.UniqueConstraint(
+                fields=["user"],
+                condition=Q(is_gts_target=True, deleted_at__isnull=True),
+                name="unique_active_user_gts_calendar_target",
+            ),
         ]
 
 

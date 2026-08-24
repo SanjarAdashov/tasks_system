@@ -468,6 +468,12 @@
   box-shadow: -20px 0 56px rgb(0 8 18 / 0.38);
 }
 
+[data-theme="gts-glass-dark"] .gts-glass-sticky-surface {
+  background: rgb(var(--gts-glass-deep-rgb) / 0.99) !important;
+  -webkit-backdrop-filter: blur(32px) saturate(1.04);
+  backdrop-filter: blur(32px) saturate(1.04);
+}
+
 @supports not ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
   [data-theme="gts-glass-dark"] {
     --bg-surface-1: rgb(var(--gts-glass-surface-rgb) / 0.92);
@@ -494,6 +500,10 @@
 
   [data-theme="gts-glass-dark"] .gts-glass-modal-surface {
     background: rgb(var(--gts-glass-deep-rgb) / 0.99) !important;
+  }
+
+  [data-theme="gts-glass-dark"] .gts-glass-sticky-surface {
+    background: rgb(var(--gts-glass-deep-rgb) / 1) !important;
   }
 }
 
@@ -523,6 +533,10 @@
 
   [data-theme="gts-glass-dark"] .gts-glass-modal-surface {
     background: rgb(var(--gts-glass-deep-rgb) / 0.99) !important;
+  }
+
+  [data-theme="gts-glass-dark"] .gts-glass-sticky-surface {
+    background: rgb(var(--gts-glass-deep-rgb) / 1) !important;
   }
 }
 

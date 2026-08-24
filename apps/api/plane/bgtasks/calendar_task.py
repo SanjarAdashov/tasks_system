@@ -4,7 +4,7 @@
 from celery import shared_task
 
 from plane.db.models import CalendarConnection, CalendarConnectionStatus, Meeting
-from plane.utils.external_calendar import sync_connection, sync_meeting
+from plane.utils.external_calendar import migrate_future_meetings_for_user, sync_connection, sync_meeting
 from plane.utils.holiday_calendar import sync_enabled_workspaces
 
 
@@ -43,6 +43,20 @@ def sync_all_calendar_connections():
 def sync_meeting_to_external_calendars(meeting_id):
     meeting = Meeting.objects.filter(pk=meeting_id).first()
     return sync_meeting(meeting) if meeting else {"skipped": True}
+
+
+@shared_task
+def migrate_user_gts_calendar(user_id, connection_id):
+    result = migrate_future_meetings_for_user(user_id, connection_id)
+    connection = CalendarConnection.objects.filter(pk=connection_id, user_id=user_id).first()
+    if connection and result.get("failures"):
+        CalendarConnection.objects.filter(pk=connection.pk).update(
+            status=CalendarConnectionStatus.ERROR,
+            gts_calendar_last_error="Some future meetings could not be moved to the GTS calendar.",
+        )
+    elif connection:
+        CalendarConnection.objects.filter(pk=connection.pk).update(gts_calendar_last_error="")
+    return result
 
 
 @shared_task(bind=True, autoretry_for=(Exception,), retry_backoff=True, retry_kwargs={"max_retries": 5})

@@ -18,17 +18,14 @@ from plane.db.models import (
     MeetingParticipant,
     MeetingParticipantSource,
     MeetingStatus,
-    MeetingVisibility,
     ProjectMember,
     User,
     WorkspaceHoliday,
     WorkspaceMember,
 )
-from plane.db.models.project import ROLE
 from plane.utils.issue_access import (
     is_instance_admin,
     is_project_admin,
-    is_workspace_admin,
     member_property_user_ids,
 )
 
@@ -96,13 +93,9 @@ def active_project_member(user, project_id):
 def meeting_detail_access(user, meeting):
     if not user or not getattr(user, "is_authenticated", False):
         return False
-    if is_instance_admin(user) or meeting.organizer_id == user.id:
+    if meeting.organizer_id == user.id:
         return True
     if meeting.participants.filter(user_id=user.id, removed_at__isnull=True).exists():
-        return True
-    if meeting.project_id and is_project_admin(user, meeting.project_id):
-        return True
-    if meeting.workspace_id and is_workspace_admin(user, meeting.workspace_id):
         return True
     return False
 
@@ -122,32 +115,9 @@ def meeting_manage_access(user, meeting):
 def meetings_visible_to(queryset, user, workspace=None):
     if not user or not getattr(user, "is_authenticated", False):
         return queryset.none()
-    if is_instance_admin(user):
-        return queryset.distinct()
-
-    project_ids = ProjectMember.objects.filter(
-        member_id=user.id,
-        is_active=True,
-        member__is_active=True,
-        member__blocked_at__isnull=True,
-    ).values("project_id")
-    workspace_ids = WorkspaceMember.objects.filter(
-        member_id=user.id,
-        role=ROLE.ADMIN.value,
-        is_active=True,
-    ).values("workspace_id")
-    project_admin_ids = ProjectMember.objects.filter(
-        member_id=user.id,
-        role=ROLE.ADMIN.value,
-        is_active=True,
-    ).values("project_id")
-
     visible = queryset.filter(
         Q(organizer_id=user.id)
         | Q(participants__user_id=user.id, participants__removed_at__isnull=True)
-        | Q(visibility=MeetingVisibility.PROJECT, project_id__in=project_ids)
-        | Q(project_id__in=project_admin_ids)
-        | Q(workspace_id__in=workspace_ids)
     )
     if workspace is not None:
         visible = visible.filter(workspace=workspace)

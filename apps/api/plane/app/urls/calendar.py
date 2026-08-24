@@ -148,6 +148,11 @@ urlpatterns = [
         name="calendar-connection-calendars",
     ),
     path(
+        "users/me/calendar/connections/<uuid:pk>/gts-target/",
+        CalendarConnectionViewSet.as_view({"post": "set_gts_target"}),
+        name="calendar-connection-gts-target",
+    ),
+    path(
         "calendar/public/respond/<str:token>/",
         PublicMeetingResponseEndpoint.as_view(),
         name="calendar-public-response",

@@ -101,9 +101,12 @@ function ConnectionCalendars({
               <input
                 type="checkbox"
                 checked={calendar.selected}
+                disabled={calendar.managed_by_gts}
                 onChange={async (event) => {
                   const selected = calendars
-                    .filter((item) => (item.id === calendar.id ? event.target.checked : item.selected))
+                    .filter(
+                      (item) => !item.managed_by_gts && (item.id === calendar.id ? event.target.checked : item.selected)
+                    )
                     .map((item) => item.id);
                   if (selected.length === 0) return;
                   await calendarService.updateConnection(connection.id, { selected_calendars: selected });
@@ -117,6 +120,9 @@ function ConnectionCalendars({
               <span className="truncate">{calendar.name}</span>
               {calendar.primary && (
                 <span className="ml-auto text-9 text-tertiary">{t("profile.calendars.primary")}</span>
+              )}
+              {calendar.managed_by_gts && (
+                <span className="ml-auto text-9 text-accent-primary">{t("profile.calendars.gts_managed")}</span>
               )}
             </label>
           ))}
@@ -141,6 +147,7 @@ export function CalendarsProfileSettings() {
   const [connectionError, setConnectionError] = useState<string | null>(null);
   const [showAdvancedICloud, setShowAdvancedICloud] = useState(false);
   const [syncingConnectionIds, setSyncingConnectionIds] = useState<string[]>([]);
+  const [settingTargetIds, setSettingTargetIds] = useState<string[]>([]);
   const [workingHoursDraft, setWorkingHoursDraft] = useState<TCalendarPreference["working_hours"] | null>(null);
   const weekdays = useMemo(
     () =>
@@ -279,6 +286,28 @@ export function CalendarsProfileSettings() {
       });
     } finally {
       setSyncingConnectionIds((current) => current.filter((id) => id !== connectionId));
+    }
+  };
+
+  const setGtsTarget = async (connection: TCalendarConnection) => {
+    if (!window.confirm(t("profile.calendars.gts_target_confirm"))) return;
+    setSettingTargetIds((current) => [...current, connection.id]);
+    try {
+      await calendarService.setGtsCalendarTarget(connection.id);
+      await mutate();
+      setToast({
+        type: TOAST_TYPE.SUCCESS,
+        title: t("common.success"),
+        message: t("profile.calendars.gts_target_success"),
+      });
+    } catch (error) {
+      const message =
+        typeof error === "object" && error && "detail" in error
+          ? String((error as { detail?: string }).detail || t("profile.calendars.gts_target_error"))
+          : t("profile.calendars.gts_target_error");
+      setToast({ type: TOAST_TYPE.ERROR, title: t("toast.error"), message });
+    } finally {
+      setSettingTargetIds((current) => current.filter((id) => id !== connection.id));
     }
   };
 
@@ -471,6 +500,43 @@ export function CalendarsProfileSettings() {
                   {connection.status === "PARTIAL" ? t("profile.calendars.sync_partial_hint") : connection.last_error}
                 </div>
               )}
+            </div>
+            <div className="basis-full rounded-lg border border-subtle bg-surface-2 px-3 py-2.5 sm:order-last">
+              <div className="flex flex-wrap items-center gap-3">
+                <div className="grid size-8 shrink-0 place-items-center rounded-lg bg-accent-primary/10 text-accent-primary">
+                  <CalendarDays className="size-4" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-11 font-semibold text-primary">
+                    {connection.is_gts_target
+                      ? t("profile.calendars.gts_target_active")
+                      : t("profile.calendars.gts_target_title")}
+                  </div>
+                  <div className="mt-0.5 text-10 text-secondary">
+                    {connection.is_gts_target
+                      ? t("profile.calendars.gts_target_active_hint")
+                      : t("profile.calendars.gts_target_hint")}
+                  </div>
+                  {connection.gts_calendar_last_error && (
+                    <div className="mt-1 text-10 text-danger-primary">{connection.gts_calendar_last_error}</div>
+                  )}
+                </div>
+                {connection.is_gts_target ? (
+                  <div className="flex items-center gap-1.5 rounded-full bg-success-primary/10 px-2.5 py-1 text-10 font-semibold text-success-primary">
+                    <CheckCircle2 className="size-3.5" />
+                    {t("profile.calendars.gts_target_selected")}
+                  </div>
+                ) : (
+                  <Button
+                    variant="secondary"
+                    loading={settingTargetIds.includes(connection.id)}
+                    disabled={settingTargetIds.includes(connection.id)}
+                    onClick={() => setGtsTarget(connection)}
+                  >
+                    {t("profile.calendars.gts_target_action")}
+                  </Button>
+                )}
+              </div>
             </div>
             <CalendarSelect
               value={connection.sync_mode}
