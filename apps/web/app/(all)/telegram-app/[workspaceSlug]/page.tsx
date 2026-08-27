@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: AGPL-3.0-only
  */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { observer } from "mobx-react";
 import { useParams } from "next/navigation";
 import {
@@ -23,7 +23,6 @@ import { CreateUpdateIssueModal } from "@/components/issues/issue-modal/modal";
 import { useMember } from "@/hooks/store/use-member";
 import { useProject } from "@/hooks/store/use-project";
 import { useProjectState } from "@/hooks/store/use-project-state";
-import { useWorkspace } from "@/hooks/store/use-workspace";
 import { useUser, useUserProfile } from "@/hooks/store/user";
 import { WorkspaceService } from "@/services/workspace.service";
 import gtsSphereLogo from "@/app/assets/logos/gts-sphere.svg?url";
@@ -46,7 +45,8 @@ const translations = {
     comments: "комм.",
     attachments: "файлов",
     noStatus: "Без статуса",
-    workspace: "Рабочее пространство",
+    project: "Проект",
+    allProjects: "Все проекты",
     back: "Назад к задачам",
     description: "Описание",
     properties: "Свойства",
@@ -89,7 +89,8 @@ const translations = {
     comments: "comments",
     attachments: "files",
     noStatus: "No status",
-    workspace: "Workspace",
+    project: "Project",
+    allProjects: "All projects",
     back: "Back to tasks",
     description: "Description",
     properties: "Properties",
@@ -132,7 +133,8 @@ const translations = {
     comments: "izoh",
     attachments: "fayl",
     noStatus: "Statussiz",
-    workspace: "Ish maydoni",
+    project: "Loyiha",
+    allProjects: "Barcha loyihalar",
     back: "Vazifalarga qaytish",
     description: "Tavsif",
     properties: "Xususiyatlar",
@@ -251,23 +253,37 @@ const TelegramMiniAppPage = observer(function TelegramMiniAppPage() {
   const { workspaceSlug } = useParams();
   const { data: currentUser, projectsWithCreatePermissions } = useUser();
   const { data: userProfile } = useUserProfile();
-  const { workspaces } = useWorkspace();
+  const { workspaceProjectIds, getProjectById } = useProject();
   const labels = translations[languageKey(userProfile?.language)];
   const currentSlug = workspaceSlug?.toString() ?? "";
-  const workspaceList = Object.values(workspaces ?? {});
-  const currentWorkspace = workspaceList.find((workspace) => workspace.slug === currentSlug);
-  const allowedProjectIds = Object.keys(projectsWithCreatePermissions ?? {});
+  const projectList = (workspaceProjectIds ?? []).flatMap((projectId) => {
+    const project = getProjectById(projectId);
+    return project && !project.archived_at ? [project] : [];
+  });
+  const workspaceProjectIdSet = new Set(projectList.map((project) => project.id));
+  const allowedProjectIds = Object.keys(projectsWithCreatePermissions ?? {}).filter((projectId) =>
+    workspaceProjectIdSet.has(projectId)
+  );
 
   const [activeTab, setActiveTab] = useState<TTaskTab>("assigned");
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
   const [issues, setIssues] = useState<TIssue[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false);
+  const [projectMenuOpen, setProjectMenuOpen] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [selectedIssue, setSelectedIssue] = useState<TIssue | null>(null);
+  const projectPickerRef = useRef<HTMLDivElement>(null);
+  const requestSequenceRef = useRef(0);
+
+  const selectedProject = selectedProjectId ? getProjectById(selectedProjectId) : undefined;
+  const canCreateIssue = selectedProjectId
+    ? allowedProjectIds.includes(selectedProjectId)
+    : allowedProjectIds.length > 0;
+  const createProjectId = selectedProjectId && canCreateIssue ? selectedProjectId : allowedProjectIds[0];
 
   const tabItems = useMemo(
     () => [
@@ -281,6 +297,7 @@ const TelegramMiniAppPage = observer(function TelegramMiniAppPage() {
   const loadIssues = useCallback(
     async (cursor?: string) => {
       if (!currentSlug || !currentUser?.id) return;
+      const requestSequence = ++requestSequenceRef.current;
       if (cursor) setIsLoadingMore(true);
       else setIsLoading(true);
       setError(false);
@@ -291,19 +308,26 @@ const TelegramMiniAppPage = observer(function TelegramMiniAppPage() {
       };
       if (activeTab === "assigned") params.assignees = currentUser.id;
       if (activeTab === "created") params.created_by = currentUser.id;
+      if (selectedProjectId) params.project = selectedProjectId;
       try {
         const response = await workspaceService.getViewIssues(currentSlug, params);
+        if (requestSequence !== requestSequenceRef.current) return;
         const pageIssues = flattenIssues(response.results);
-        setIssues((current) => (cursor ? [...current, ...pageIssues] : pageIssues));
+        setIssues((current) => {
+          const nextIssues = cursor ? [...current, ...pageIssues] : pageIssues;
+          return Array.from(new Map(nextIssues.map((issue) => [issue.id, issue])).values());
+        });
         setNextCursor(response.next_page_results ? response.next_cursor : null);
       } catch {
-        setError(true);
+        if (requestSequence === requestSequenceRef.current) setError(true);
       } finally {
-        setIsLoading(false);
-        setIsLoadingMore(false);
+        if (requestSequence === requestSequenceRef.current) {
+          setIsLoading(false);
+          setIsLoadingMore(false);
+        }
       }
     },
-    [activeTab, currentSlug, currentUser?.id]
+    [activeTab, currentSlug, currentUser?.id, selectedProjectId]
   );
 
   useEffect(() => {
@@ -312,10 +336,14 @@ const TelegramMiniAppPage = observer(function TelegramMiniAppPage() {
     loadIssues();
   }, [loadIssues, refreshKey]);
 
-  const switchWorkspace = (slug: string) => {
-    if (slug === currentSlug) return setWorkspaceMenuOpen(false);
-    window.location.assign(`/telegram-app/${encodeURIComponent(slug)}`);
-  };
+  useEffect(() => {
+    if (!projectMenuOpen) return;
+    const closeProjectMenu = (event: PointerEvent) => {
+      if (!projectPickerRef.current?.contains(event.target as Node)) setProjectMenuOpen(false);
+    };
+    document.addEventListener("pointerdown", closeProjectMenu);
+    return () => document.removeEventListener("pointerdown", closeProjectMenu);
+  }, [projectMenuOpen]);
 
   if (selectedIssue)
     return (
@@ -337,7 +365,7 @@ const TelegramMiniAppPage = observer(function TelegramMiniAppPage() {
         storeType={EIssuesStoreType.PROJECT}
         withDraftIssueWrapper={false}
         allowedProjectIds={allowedProjectIds}
-        data={allowedProjectIds[0] ? { project_id: allowedProjectIds[0] } : undefined}
+        data={createProjectId ? { project_id: createProjectId } : undefined}
         moveToIssue={false}
       />
       <header className="tg-app-header">
@@ -352,7 +380,7 @@ const TelegramMiniAppPage = observer(function TelegramMiniAppPage() {
           className="tg-create-button"
           type="button"
           onClick={() => setCreateModalOpen(true)}
-          disabled={allowedProjectIds.length === 0}
+          disabled={!canCreateIssue}
           aria-label={labels.newTask}
         >
           <Plus size={20} aria-hidden="true" />
@@ -360,30 +388,49 @@ const TelegramMiniAppPage = observer(function TelegramMiniAppPage() {
         </button>
       </header>
 
-      <div className="tg-workspace-picker">
+      <div ref={projectPickerRef} className="tg-project-picker">
         <button
-          className="tg-workspace-picker__trigger"
+          className="tg-project-picker__trigger"
           type="button"
-          onClick={() => setWorkspaceMenuOpen((value) => !value)}
-          aria-expanded={workspaceMenuOpen}
+          onClick={() => setProjectMenuOpen((value) => !value)}
+          aria-expanded={projectMenuOpen}
+          aria-haspopup="listbox"
         >
           <span>
-            <small>{labels.workspace}</small>
-            <strong>{currentWorkspace?.name || currentSlug}</strong>
+            <small>{labels.project}</small>
+            <strong>{selectedProject?.name || labels.allProjects}</strong>
           </span>
           <ChevronDown size={17} aria-hidden="true" />
         </button>
-        {workspaceMenuOpen && (
-          <div className="tg-workspace-menu">
-            {workspaceList.map((workspace) => (
+        {projectMenuOpen && (
+          <div className="tg-project-menu" role="listbox" aria-label={labels.project}>
+            <button
+              type="button"
+              role="option"
+              aria-selected={!selectedProjectId}
+              className={!selectedProjectId ? "is-active" : undefined}
+              onClick={() => {
+                setSelectedProjectId(null);
+                setProjectMenuOpen(false);
+              }}
+            >
+              <span>★</span>
+              {labels.allProjects}
+            </button>
+            {projectList.map((project) => (
               <button
-                key={workspace.id}
+                key={project.id}
                 type="button"
-                className={workspace.slug === currentSlug ? "is-active" : undefined}
-                onClick={() => switchWorkspace(workspace.slug)}
+                role="option"
+                aria-selected={project.id === selectedProjectId}
+                className={project.id === selectedProjectId ? "is-active" : undefined}
+                onClick={() => {
+                  setSelectedProjectId(project.id);
+                  setProjectMenuOpen(false);
+                }}
               >
-                <span>{workspace.name.slice(0, 1).toUpperCase()}</span>
-                {workspace.name}
+                <span>{(project.identifier || project.name).slice(0, 1).toUpperCase()}</span>
+                {project.name}
               </button>
             ))}
           </div>

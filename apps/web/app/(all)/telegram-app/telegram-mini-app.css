@@ -140,8 +140,17 @@
 
 .tg-tasks-page,
 .tg-detail-page {
-  min-height: 100dvh;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  max-height: 100dvh;
+  overflow-x: hidden;
+  overflow-y: auto;
   padding: var(--tg-safe-top) 12px var(--tg-safe-bottom);
+  overscroll-behavior-y: contain;
+  scrollbar-width: thin;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
 }
 
 .tg-app-header,
@@ -220,13 +229,13 @@
   cursor: not-allowed;
 }
 
-.tg-workspace-picker {
+.tg-project-picker {
   position: relative;
   z-index: 15;
   margin-top: 13px;
 }
 
-.tg-workspace-picker__trigger {
+.tg-project-picker__trigger {
   width: 100%;
   min-height: 53px;
   display: flex;
@@ -241,39 +250,44 @@
   text-align: left;
 }
 
-.tg-workspace-picker__trigger span {
+.tg-project-picker__trigger span {
   display: grid;
   min-width: 0;
   gap: 1px;
 }
 
-.tg-workspace-picker__trigger small {
+.tg-project-picker__trigger small {
   color: var(--tg-app-muted);
   font-size: 10px;
 }
 
-.tg-workspace-picker__trigger strong {
+.tg-project-picker__trigger strong {
   overflow: hidden;
   font-size: 14px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.tg-workspace-menu {
+.tg-project-menu {
   position: absolute;
   top: calc(100% + 7px);
   right: 0;
   left: 0;
   display: grid;
+  max-height: min(45dvh, 360px);
+  overflow-x: hidden;
+  overflow-y: auto;
   gap: 3px;
   padding: 7px;
   border: 1px solid var(--tg-app-border);
   border-radius: 16px;
   background: var(--tg-app-surface-strong);
   box-shadow: 0 18px 50px rgb(0 0 0 / 32%);
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
-.tg-workspace-menu button {
+.tg-project-menu button {
   min-height: 44px;
   display: flex;
   align-items: center;
@@ -288,7 +302,7 @@
   text-align: left;
 }
 
-.tg-workspace-menu button > span {
+.tg-project-menu button > span {
   width: 29px;
   height: 29px;
   display: grid;
@@ -299,7 +313,7 @@
   color: var(--tg-app-accent);
 }
 
-.tg-workspace-menu button.is-active {
+.tg-project-menu button.is-active {
   background: color-mix(in srgb, var(--tg-app-accent) 13%, transparent);
 }
 
@@ -365,7 +379,7 @@
 }
 
 .tg-task-card:focus-visible,
-.tg-workspace-picker button:focus-visible,
+.tg-project-picker button:focus-visible,
 .tg-tab-list button:focus-visible,
 .tg-detail-page button:focus-visible,
 .tg-detail-page a:focus-visible {
@@ -420,6 +434,7 @@
   display: flex;
   align-items: center;
   gap: 7px;
+  flex-wrap: wrap;
   margin-top: auto;
   color: var(--tg-app-muted);
 }
@@ -677,6 +692,7 @@
   font-weight: 650;
   line-height: 1.35;
   text-overflow: ellipsis;
+  overflow-wrap: anywhere;
 }
 
 .tg-property-grid dd {

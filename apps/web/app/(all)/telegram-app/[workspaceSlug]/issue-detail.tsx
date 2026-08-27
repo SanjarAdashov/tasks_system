@@ -218,7 +218,10 @@ const TelegramIssueDetailComponent = observer(function TelegramIssueDetailCompon
       .filter((result): result is PromiseFulfilledResult<TIssueAttachment> => result.status === "fulfilled")
       .map((result) => result.value);
     setAttachments((current) => [...current, ...uploaded]);
-    setIssue((current) => ({ ...current, attachment_count: current.attachment_count + uploaded.length }));
+    setIssue((current) => ({
+      ...current,
+      attachment_count: (current.attachment_count ?? 0) + uploaded.length,
+    }));
     if (results.some((result) => result.status === "rejected")) setError(labels.uploadError);
     if (fileInputRef.current) fileInputRef.current.value = "";
     setIsUploading(false);

@@ -81,7 +81,7 @@ export const ProjectRoot = observer(function ProjectRoot() {
   return (
     <>
       <PageHead title={pageTitle} />
-      <div className="flex h-full w-full flex-col">
+      <div className="gts-glass-page-surface flex h-full w-full flex-col">
         {(calculateTotalFilters(currentWorkspaceFilters ?? {}) !== 0 || allowedDisplayFilters.length > 0) && (
           <ProjectAppliedFiltersList
             appliedFilters={currentWorkspaceFilters ?? {}}

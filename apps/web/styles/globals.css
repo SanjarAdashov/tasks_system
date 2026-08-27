@@ -359,6 +359,12 @@
   backdrop-filter: blur(28px) saturate(1.08);
 }
 
+[data-theme="gts-glass-dark"] .gts-glass-page-surface {
+  background: rgb(var(--gts-glass-deep-rgb) / 0.94) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(1.04);
+  backdrop-filter: blur(28px) saturate(1.04);
+}
+
 [data-theme="gts-glass-dark"] .gts-glass-kanban-surface {
   background: rgb(var(--gts-glass-surface-rgb) / var(--gts-glass-kanban-surface-opacity)) !important;
 }
