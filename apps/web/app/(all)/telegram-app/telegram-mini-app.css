@@ -1,0 +1,991 @@
+:root {
+  --tg-app-bg: var(--tg-theme-bg-color, #0d1726);
+  --tg-app-surface: var(--tg-theme-secondary-bg-color, #162337);
+  --tg-app-surface-strong: color-mix(in srgb, var(--tg-app-surface) 86%, #fff 14%);
+  --tg-app-text: var(--tg-theme-text-color, #f6f8fb);
+  --tg-app-muted: var(--tg-theme-hint-color, #91a0b5);
+  --tg-app-link: var(--tg-theme-link-color, #18aeea);
+  --tg-app-accent: var(--tg-theme-button-color, #10aee0);
+  --tg-app-accent-text: var(--tg-theme-button-text-color, #fff);
+  --tg-app-border: color-mix(in srgb, var(--tg-app-text) 13%, transparent);
+  --tg-app-danger: #ff6b71;
+  --tg-app-success: #40c78a;
+  --tg-safe-top: max(12px, var(--tg-safe-area-inset-top, 0px));
+  --tg-safe-bottom: max(14px, var(--tg-safe-area-inset-bottom, 0px));
+}
+
+.tg-mini-app {
+  min-height: 100dvh;
+  background:
+    radial-gradient(circle at 92% -8%, color-mix(in srgb, var(--tg-app-accent) 24%, transparent), transparent 38%),
+    var(--tg-app-bg);
+  color: var(--tg-app-text);
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+.tg-mini-app--centered {
+  display: grid;
+  place-items: center;
+  padding: var(--tg-safe-top) 18px var(--tg-safe-bottom);
+}
+
+.tg-bootstrap-card {
+  width: min(100%, 390px);
+  display: grid;
+  gap: 18px;
+  padding: 26px;
+  border: 1px solid var(--tg-app-border);
+  border-radius: 24px;
+  background: color-mix(in srgb, var(--tg-app-surface) 94%, transparent);
+  box-shadow: 0 24px 80px rgb(0 0 0 / 25%);
+}
+
+.tg-brand-mark {
+  display: grid;
+  width: 54px;
+  height: 54px;
+  place-items: center;
+  border: 1px solid var(--tg-app-border);
+  border-radius: 17px;
+  background: color-mix(in srgb, var(--tg-app-surface-strong) 88%, transparent);
+}
+
+.tg-brand-mark img {
+  width: 34px;
+  height: 34px;
+}
+
+.tg-eyebrow {
+  margin: 0 0 5px;
+  color: var(--tg-app-accent);
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.tg-bootstrap-card h1 {
+  margin: 0;
+  font-size: 27px;
+  line-height: 1.15;
+  letter-spacing: -0.035em;
+}
+
+.tg-bootstrap-loading,
+.tg-bootstrap-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-height: 48px;
+  padding: 13px 14px;
+  border-radius: 15px;
+  background: color-mix(in srgb, var(--tg-app-bg) 55%, transparent);
+  color: var(--tg-app-muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.tg-bootstrap-loading p,
+.tg-bootstrap-error p {
+  margin: 0;
+}
+
+.tg-bootstrap-error {
+  color: var(--tg-app-danger);
+}
+
+.tg-spin {
+  flex: 0 0 auto;
+  animation: tg-spin 0.9s linear infinite;
+}
+
+.tg-primary-button {
+  min-height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--tg-app-accent);
+  color: var(--tg-app-accent-text);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.tg-primary-button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--tg-app-accent) 42%, transparent);
+  outline-offset: 2px;
+}
+
+@keyframes tg-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tg-spin {
+    animation-duration: 2s;
+  }
+}
+
+.tg-tasks-page,
+.tg-detail-page {
+  min-height: 100dvh;
+  padding: var(--tg-safe-top) 12px var(--tg-safe-bottom);
+}
+
+.tg-app-header,
+.tg-detail-header {
+  position: sticky;
+  z-index: 20;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 58px;
+  margin: calc(var(--tg-safe-top) * -1) -12px 0;
+  padding: var(--tg-safe-top) 14px 9px;
+  border-bottom: 1px solid var(--tg-app-border);
+  background: color-mix(in srgb, var(--tg-app-bg) 94%, transparent);
+  backdrop-filter: blur(18px);
+}
+
+.tg-app-header__brand {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 9px;
+}
+
+.tg-app-header__brand img {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+}
+
+.tg-app-header__brand div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.tg-app-header__brand span,
+.tg-detail-header span {
+  color: var(--tg-app-muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.tg-app-header__brand strong,
+.tg-detail-header strong {
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tg-create-button {
+  min-height: 38px;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 13px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--tg-app-accent);
+  color: var(--tg-app-accent-text);
+  font-size: 13px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.tg-create-button:disabled {
+  opacity: 0.48;
+  cursor: not-allowed;
+}
+
+.tg-workspace-picker {
+  position: relative;
+  z-index: 15;
+  margin-top: 13px;
+}
+
+.tg-workspace-picker__trigger {
+  width: 100%;
+  min-height: 53px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 13px;
+  border: 1px solid var(--tg-app-border);
+  border-radius: 15px;
+  background: color-mix(in srgb, var(--tg-app-surface) 92%, transparent);
+  color: var(--tg-app-text);
+  text-align: left;
+}
+
+.tg-workspace-picker__trigger span {
+  display: grid;
+  min-width: 0;
+  gap: 1px;
+}
+
+.tg-workspace-picker__trigger small {
+  color: var(--tg-app-muted);
+  font-size: 10px;
+}
+
+.tg-workspace-picker__trigger strong {
+  overflow: hidden;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tg-workspace-menu {
+  position: absolute;
+  top: calc(100% + 7px);
+  right: 0;
+  left: 0;
+  display: grid;
+  gap: 3px;
+  padding: 7px;
+  border: 1px solid var(--tg-app-border);
+  border-radius: 16px;
+  background: var(--tg-app-surface-strong);
+  box-shadow: 0 18px 50px rgb(0 0 0 / 32%);
+}
+
+.tg-workspace-menu button {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 9px;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: var(--tg-app-text);
+  font-size: 13px;
+  font-weight: 650;
+  text-align: left;
+}
+
+.tg-workspace-menu button > span {
+  width: 29px;
+  height: 29px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--tg-app-accent) 18%, var(--tg-app-bg));
+  color: var(--tg-app-accent);
+}
+
+.tg-workspace-menu button.is-active {
+  background: color-mix(in srgb, var(--tg-app-accent) 13%, transparent);
+}
+
+.tg-tab-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 3px;
+  margin: 10px 0 13px;
+  padding: 3px;
+  border: 1px solid var(--tg-app-border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--tg-app-surface) 82%, transparent);
+}
+
+.tg-tab-list button {
+  min-height: 38px;
+  padding: 5px 7px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--tg-app-muted);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.tg-tab-list button.is-active {
+  background: var(--tg-app-surface-strong);
+  color: var(--tg-app-text);
+  box-shadow: 0 3px 12px rgb(0 0 0 / 12%);
+}
+
+.tg-task-list {
+  display: grid;
+  gap: 8px;
+  padding-bottom: 6px;
+}
+
+.tg-task-card {
+  position: relative;
+  width: 100%;
+  min-height: 117px;
+  display: flex;
+  overflow: hidden;
+  flex-direction: column;
+  gap: 8px;
+  padding: 13px 13px 11px 17px;
+  border: 1px solid var(--tg-app-border);
+  border-radius: 17px;
+  background: linear-gradient(
+    120deg,
+    color-mix(in srgb, var(--tg-app-surface-strong) 94%, transparent),
+    var(--tg-app-surface)
+  );
+  color: var(--tg-app-text);
+  text-align: left;
+  box-shadow: 0 8px 28px rgb(0 0 0 / 10%);
+  cursor: pointer;
+}
+
+.tg-task-card:active {
+  transform: scale(0.992);
+}
+
+.tg-task-card:focus-visible,
+.tg-workspace-picker button:focus-visible,
+.tg-tab-list button:focus-visible,
+.tg-detail-page button:focus-visible,
+.tg-detail-page a:focus-visible {
+  outline: 2px solid var(--tg-app-accent);
+  outline-offset: 2px;
+}
+
+.tg-task-card__rail {
+  position: absolute;
+  top: 13px;
+  bottom: 13px;
+  left: 6px;
+  width: 3px;
+  border-radius: 999px;
+}
+
+.tg-task-card__topline {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 7px;
+}
+
+.tg-task-key {
+  flex: 0 0 auto;
+  color: var(--tg-app-accent);
+  font-family: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.tg-task-project {
+  overflow: hidden;
+  color: var(--tg-app-muted);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tg-task-title {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--tg-app-text);
+  font-size: 15px;
+  line-height: 1.28;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.tg-task-card__meta {
+  min-height: 24px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: auto;
+  color: var(--tg-app-muted);
+}
+
+.tg-state-pill,
+.tg-meta-item {
+  min-height: 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 7px;
+  border: 1px solid var(--tg-app-border);
+  border-radius: 999px;
+  color: var(--tg-app-muted);
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.tg-state-pill {
+  max-width: 132px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tg-state-pill > span {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+}
+
+.tg-meta-item {
+  padding-inline: 5px;
+}
+
+.tg-task-assignees {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  padding-left: 7px;
+}
+
+.tg-avatar {
+  width: 25px;
+  height: 25px;
+  display: grid;
+  overflow: hidden;
+  place-items: center;
+  border: 2px solid var(--tg-app-surface);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--tg-app-accent) 30%, var(--tg-app-bg));
+  color: var(--tg-app-text);
+  font-size: 9px;
+  font-weight: 750;
+}
+
+.tg-avatar + .tg-avatar {
+  margin-left: -6px;
+}
+
+.tg-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tg-avatar--more {
+  color: var(--tg-app-muted);
+}
+
+.tg-list-state {
+  min-height: 48vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 9px;
+  color: var(--tg-app-muted);
+  text-align: center;
+}
+
+.tg-list-state strong {
+  color: var(--tg-app-text);
+  font-size: 14px;
+}
+
+.tg-list-state p {
+  max-width: 260px;
+  margin: -3px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.tg-list-state button,
+.tg-load-more {
+  min-height: 39px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 13px;
+  border: 1px solid var(--tg-app-border);
+  border-radius: 11px;
+  background: var(--tg-app-surface);
+  color: var(--tg-app-text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.tg-list-state--empty > svg {
+  width: 42px;
+  height: 42px;
+  padding: 10px;
+  border: 1px solid var(--tg-app-border);
+  border-radius: 14px;
+  color: var(--tg-app-accent);
+}
+
+.tg-load-more {
+  width: 100%;
+  margin: 4px 0 8px;
+}
+
+.tg-detail-page {
+  padding-top: 0;
+}
+
+.tg-detail-header {
+  justify-content: flex-start;
+  margin-top: 0;
+}
+
+.tg-detail-header > button {
+  width: 39px;
+  height: 39px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid var(--tg-app-border);
+  border-radius: 12px;
+  background: var(--tg-app-surface);
+  color: var(--tg-app-text);
+}
+
+.tg-detail-header > div {
+  display: grid;
+  min-width: 0;
+}
+
+.tg-detail-content {
+  display: grid;
+  gap: 9px;
+  padding-top: 12px;
+}
+
+.tg-detail-hero,
+.tg-detail-section {
+  border: 1px solid var(--tg-app-border);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--tg-app-surface) 93%, transparent);
+}
+
+.tg-detail-hero {
+  position: relative;
+  overflow: hidden;
+  padding: 17px;
+}
+
+.tg-detail-hero::after {
+  position: absolute;
+  top: -70px;
+  right: -60px;
+  width: 155px;
+  height: 155px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--tg-app-accent) 15%, transparent);
+  content: "";
+  filter: blur(2px);
+  pointer-events: none;
+}
+
+.tg-detail-hero h1 {
+  position: relative;
+  z-index: 1;
+  margin: 12px 0 0;
+  font-size: clamp(21px, 6vw, 29px);
+  line-height: 1.16;
+  letter-spacing: -0.035em;
+}
+
+.tg-detail-hero > p {
+  position: relative;
+  z-index: 1;
+  margin: 13px 0 0;
+  color: color-mix(in srgb, var(--tg-app-text) 76%, var(--tg-app-muted));
+  font-size: 13px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.tg-detail-section {
+  padding: 15px;
+}
+
+.tg-detail-section h2,
+.tg-section-heading h2 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 12px;
+  color: var(--tg-app-text);
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.tg-property-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  margin: 0;
+  border-radius: 13px;
+  background: var(--tg-app-border);
+}
+
+.tg-property-grid > div {
+  min-height: 66px;
+  display: flex;
+  min-width: 0;
+  justify-content: center;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px;
+  background: var(--tg-app-bg);
+}
+
+.tg-property-grid > .tg-property-grid__wide {
+  grid-column: 1 / -1;
+  min-height: 54px;
+}
+
+.tg-property-grid dt,
+.tg-custom-properties dt {
+  color: var(--tg-app-muted);
+  font-size: 10px;
+}
+
+.tg-property-grid dd,
+.tg-custom-properties dd {
+  overflow: hidden;
+  margin: 0;
+  color: var(--tg-app-text);
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+}
+
+.tg-property-grid dd {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tg-custom-properties {
+  display: grid;
+  gap: 0;
+  margin: 0;
+}
+
+.tg-custom-properties > div {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+  align-items: baseline;
+  gap: 12px;
+  padding: 10px 1px;
+  border-bottom: 1px solid var(--tg-app-border);
+}
+
+.tg-custom-properties > div:last-child {
+  border-bottom: 0;
+}
+
+.tg-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 11px;
+}
+
+.tg-section-heading h2 {
+  margin: 0;
+}
+
+.tg-section-heading > button,
+.tg-comment-composer > button {
+  min-height: 35px;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 10px;
+  border: 1px solid var(--tg-app-border);
+  border-radius: 10px;
+  background: var(--tg-app-bg);
+  color: var(--tg-app-text);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.tg-attachment-list {
+  display: grid;
+  gap: 6px;
+}
+
+.tg-attachment-list > button,
+.tg-attachment-list > a {
+  min-height: 55px;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--tg-app-border);
+  border-radius: 12px;
+  background: var(--tg-app-bg);
+  color: var(--tg-app-text);
+  text-align: left;
+  text-decoration: none;
+}
+
+.tg-attachment-list > button > svg:first-child,
+.tg-attachment-list > a > svg:first-child {
+  width: 31px;
+  height: 31px;
+  flex: 0 0 auto;
+  padding: 7px;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--tg-app-accent) 14%, transparent);
+  color: var(--tg-app-accent);
+}
+
+.tg-attachment-list > button > span:first-of-type,
+.tg-attachment-list > a > span:first-of-type {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 2px;
+}
+
+.tg-attachment-list strong {
+  overflow: hidden;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tg-attachment-list small,
+.tg-attachment-list > button > span:last-child {
+  color: var(--tg-app-muted);
+  font-size: 9px;
+}
+
+.tg-comment-list {
+  display: grid;
+  gap: 7px;
+}
+
+.tg-comment-list article {
+  padding: 10px 11px;
+  border: 1px solid var(--tg-app-border);
+  border-radius: 12px;
+  background: var(--tg-app-bg);
+}
+
+.tg-comment-list article header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 9px;
+}
+
+.tg-comment-list article strong {
+  overflow: hidden;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tg-comment-list article time {
+  flex: 0 0 auto;
+  color: var(--tg-app-muted);
+  font-size: 8px;
+}
+
+.tg-comment-list article p {
+  margin: 7px 0 0;
+  color: color-mix(in srgb, var(--tg-app-text) 82%, var(--tg-app-muted));
+  font-size: 12px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+
+.tg-empty-copy {
+  margin: 0;
+  padding: 8px 0 12px;
+  color: var(--tg-app-muted);
+  font-size: 11px;
+  text-align: center;
+}
+
+.tg-comment-composer {
+  display: grid;
+  justify-items: end;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.tg-comment-composer textarea {
+  width: 100%;
+  min-height: 82px;
+  resize: vertical;
+  padding: 11px 12px;
+  border: 1px solid var(--tg-app-border);
+  border-radius: 12px;
+  outline: 0;
+  background: var(--tg-app-bg);
+  color: var(--tg-app-text);
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.tg-comment-composer textarea:focus {
+  border-color: var(--tg-app-accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--tg-app-accent) 15%, transparent);
+}
+
+.tg-comment-composer > button {
+  min-width: 102px;
+  border-color: transparent;
+  background: var(--tg-app-accent);
+  color: var(--tg-app-accent-text);
+}
+
+.tg-comment-composer > button:disabled,
+.tg-section-heading > button:disabled {
+  opacity: 0.45;
+}
+
+.tg-inline-error {
+  margin: 8px 0 0;
+  color: var(--tg-app-danger);
+  font-size: 10px;
+  text-align: right;
+}
+
+.tg-preview {
+  position: fixed;
+  z-index: 9999;
+  inset: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 9px;
+  padding: var(--tg-safe-top) 10px var(--tg-safe-bottom);
+  background: color-mix(in srgb, var(--tg-app-bg) 97%, transparent);
+}
+
+.tg-preview > header {
+  min-height: 45px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.tg-preview > header strong {
+  overflow: hidden;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tg-preview > header button {
+  width: 39px;
+  height: 39px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid var(--tg-app-border);
+  border-radius: 12px;
+  background: var(--tg-app-surface);
+  color: var(--tg-app-text);
+}
+
+.tg-preview__content {
+  min-height: 0;
+  display: grid;
+  overflow: hidden;
+  place-items: center;
+  border: 1px solid var(--tg-app-border);
+  border-radius: 16px;
+  background: #080c12;
+}
+
+.tg-preview__content img,
+.tg-preview__content video {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.tg-preview__content audio {
+  width: calc(100% - 24px);
+}
+
+.tg-preview__content iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.tg-preview > a {
+  min-height: 43px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border-radius: 12px;
+  background: var(--tg-app-accent);
+  color: var(--tg-app-accent-text);
+  font-size: 12px;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+@media (max-width: 359px) {
+  .tg-create-button span {
+    display: none;
+  }
+
+  .tg-create-button {
+    width: 39px;
+    padding: 0;
+  }
+
+  .tg-tab-list button {
+    font-size: 10px;
+  }
+}
+
+@media (min-width: 700px) {
+  .tg-tasks-page,
+  .tg-detail-page {
+    width: min(100%, 620px);
+    margin: 0 auto;
+    border-right: 1px solid var(--tg-app-border);
+    border-left: 1px solid var(--tg-app-border);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tg-task-card:active {
+    transform: none;
+  }
+}
