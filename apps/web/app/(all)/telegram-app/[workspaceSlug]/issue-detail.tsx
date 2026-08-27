@@ -49,6 +49,132 @@ function htmlToText(value?: string) {
   return (element.textContent || "").replace(/\n{3,}/g, "\n\n").trim();
 }
 
+const DESCRIPTION_ALLOWED_TAGS = new Set([
+  "a",
+  "b",
+  "blockquote",
+  "br",
+  "code",
+  "del",
+  "div",
+  "em",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "hr",
+  "i",
+  "img",
+  "li",
+  "mark",
+  "ol",
+  "p",
+  "pre",
+  "s",
+  "span",
+  "strong",
+  "sub",
+  "sup",
+  "table",
+  "tbody",
+  "td",
+  "th",
+  "thead",
+  "tr",
+  "u",
+  "ul",
+]);
+
+const DESCRIPTION_REMOVED_TAGS = new Set([
+  "button",
+  "embed",
+  "form",
+  "iframe",
+  "input",
+  "link",
+  "meta",
+  "object",
+  "script",
+  "style",
+  "svg",
+  "textarea",
+]);
+
+function isSafeDescriptionUrl(value: string, allowedProtocols: string[]) {
+  const normalized = value.trim();
+  if (!normalized) return false;
+  if (normalized.startsWith("/") || normalized.startsWith("#")) return true;
+  try {
+    return allowedProtocols.includes(new URL(normalized, window.location.origin).protocol);
+  } catch {
+    return false;
+  }
+}
+
+function sanitizeDescriptionHtml(value: string | undefined, resolveUserName: (userId: string) => string | undefined) {
+  if (!value || typeof document === "undefined") return "";
+
+  const template = document.createElement("template");
+  template.innerHTML = value;
+
+  template.content
+    .querySelectorAll(Array.from(DESCRIPTION_REMOVED_TAGS).join(","))
+    .forEach((element) => element.remove());
+  template.content.querySelectorAll("mention-component").forEach((mention) => {
+    const userId = mention.getAttribute("entity_identifier") || "";
+    const label = resolveUserName(userId) || "user";
+    const replacement = document.createElement("span");
+    replacement.dataset.gtsMention = "true";
+    replacement.textContent = `@${label}`;
+    mention.replaceWith(replacement);
+  });
+
+  template.content.querySelectorAll("*").forEach((element) => {
+    const tagName = element.tagName.toLowerCase();
+    if (!DESCRIPTION_ALLOWED_TAGS.has(tagName)) {
+      element.replaceWith(...Array.from(element.childNodes));
+      return;
+    }
+
+    const href = element.getAttribute("href") || "";
+    const src = element.getAttribute("src") || "";
+    const alt = element.getAttribute("alt") || "";
+    const title = element.getAttribute("title") || "";
+    const colSpan = element.getAttribute("colspan") || "";
+    const rowSpan = element.getAttribute("rowspan") || "";
+    const listStart = element.getAttribute("start") || "";
+    const listValue = element.getAttribute("value") || "";
+    const isMention = element.getAttribute("data-gts-mention") === "true";
+
+    element.getAttributeNames().forEach((attribute) => element.removeAttribute(attribute));
+
+    if (isMention) element.setAttribute("data-gts-mention", "true");
+    if (title) element.setAttribute("title", title);
+
+    if (tagName === "a" && isSafeDescriptionUrl(href, ["http:", "https:", "mailto:", "tel:"])) {
+      element.setAttribute("href", href);
+      element.setAttribute("target", "_blank");
+      element.setAttribute("rel", "noopener noreferrer");
+    }
+    if (tagName === "img" && isSafeDescriptionUrl(src, ["http:", "https:"])) {
+      element.setAttribute("src", src);
+      element.setAttribute("alt", alt);
+      element.setAttribute("loading", "lazy");
+    }
+    if ((tagName === "td" || tagName === "th") && /^\d{1,2}$/.test(colSpan)) element.setAttribute("colspan", colSpan);
+    if ((tagName === "td" || tagName === "th") && /^\d{1,2}$/.test(rowSpan)) element.setAttribute("rowspan", rowSpan);
+    if (tagName === "ol" && /^\d{1,6}$/.test(listStart)) element.setAttribute("start", listStart);
+    if (tagName === "li" && /^\d{1,6}$/.test(listValue)) element.setAttribute("value", listValue);
+  });
+
+  const wrapper = document.createElement("div");
+  wrapper.append(template.content.cloneNode(true));
+  const hasVisibleContent = Boolean(wrapper.textContent?.trim() || wrapper.querySelector("img, table, hr"));
+  return hasVisibleContent ? wrapper.innerHTML.trim() : "";
+}
+
 function escapeHtml(value: string) {
   return value
     .replaceAll("&", "&amp;")
@@ -120,6 +246,15 @@ const TelegramIssueDetailComponent = observer(function TelegramIssueDetailCompon
       );
     },
     [getUserDetails, labels.noValue]
+  );
+
+  const descriptionHtml = useMemo(
+    () =>
+      sanitizeDescriptionHtml(issue.description_html, (userId) => {
+        const member = getUserDetails(userId);
+        return [member?.first_name, member?.last_name].filter(Boolean).join(" ") || member?.display_name;
+      }),
+    [getUserDetails, issue.description_html]
   );
 
   const loadDetail = useCallback(async () => {
@@ -277,7 +412,9 @@ const TelegramIssueDetailComponent = observer(function TelegramIssueDetailCompon
             {state?.name || labels.noStatus}
           </span>
           <h1>{issue.name}</h1>
-          {htmlToText(issue.description_html) && <p>{htmlToText(issue.description_html)}</p>}
+          {descriptionHtml && (
+            <div className="tg-rich-description" dangerouslySetInnerHTML={{ __html: descriptionHtml }} />
+          )}
         </section>
 
         <section className="tg-detail-section">

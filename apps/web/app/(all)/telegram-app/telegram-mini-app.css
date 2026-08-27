@@ -626,14 +626,182 @@
   letter-spacing: -0.035em;
 }
 
-.tg-detail-hero > p {
+.tg-rich-description {
   position: relative;
   z-index: 1;
-  margin: 13px 0 0;
+  overflow-wrap: anywhere;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--tg-app-border);
   color: color-mix(in srgb, var(--tg-app-text) 76%, var(--tg-app-muted));
   font-size: 13px;
   line-height: 1.55;
-  white-space: pre-wrap;
+}
+
+.tg-rich-description > :first-child {
+  margin-top: 0;
+}
+
+.tg-rich-description > :last-child {
+  margin-bottom: 0;
+}
+
+.tg-rich-description p,
+.tg-rich-description ul,
+.tg-rich-description ol,
+.tg-rich-description blockquote,
+.tg-rich-description pre,
+.tg-rich-description table {
+  margin: 0 0 11px;
+}
+
+.tg-rich-description h1,
+.tg-rich-description h2,
+.tg-rich-description h3,
+.tg-rich-description h4,
+.tg-rich-description h5,
+.tg-rich-description h6 {
+  margin: 16px 0 7px;
+  color: var(--tg-app-text);
+  font-weight: 760;
+  line-height: 1.28;
+  letter-spacing: -0.015em;
+}
+
+.tg-rich-description h1,
+.tg-rich-description h2 {
+  font-size: 16px;
+}
+
+.tg-rich-description h3,
+.tg-rich-description h4,
+.tg-rich-description h5,
+.tg-rich-description h6 {
+  font-size: 14px;
+}
+
+.tg-rich-description ul,
+.tg-rich-description ol {
+  display: grid;
+  gap: 5px;
+  padding-inline-start: 21px;
+}
+
+.tg-rich-description li::marker {
+  color: var(--tg-app-accent);
+  font-weight: 750;
+}
+
+.tg-rich-description strong,
+.tg-rich-description b {
+  color: var(--tg-app-text);
+  font-weight: 760;
+}
+
+.tg-rich-description a {
+  color: var(--tg-app-accent);
+  font-weight: 650;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--tg-app-accent) 48%, transparent);
+  text-underline-offset: 3px;
+}
+
+.tg-rich-description blockquote {
+  padding: 9px 11px;
+  border-inline-start: 3px solid var(--tg-app-accent);
+  border-radius: 0 10px 10px 0;
+  background: color-mix(in srgb, var(--tg-app-accent) 8%, transparent);
+  color: color-mix(in srgb, var(--tg-app-text) 84%, var(--tg-app-muted));
+}
+
+.tg-rich-description code {
+  padding: 2px 5px;
+  border: 1px solid var(--tg-app-border);
+  border-radius: 6px;
+  background: var(--tg-app-bg);
+  color: var(--tg-app-text);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.9em;
+}
+
+.tg-rich-description pre {
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 11px;
+  border: 1px solid var(--tg-app-border);
+  border-radius: 11px;
+  background: var(--tg-app-bg);
+  white-space: pre;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tg-rich-description pre code {
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.tg-rich-description table {
+  width: max-content;
+  min-width: 100%;
+  max-width: 100%;
+  display: block;
+  overflow-x: auto;
+  border: 1px solid var(--tg-app-border);
+  border-radius: 11px;
+  border-spacing: 0;
+  border-collapse: separate;
+  font-size: 11px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tg-rich-description th,
+.tg-rich-description td {
+  min-width: 88px;
+  padding: 7px 9px;
+  border-right: 1px solid var(--tg-app-border);
+  border-bottom: 1px solid var(--tg-app-border);
+  text-align: start;
+  vertical-align: top;
+}
+
+.tg-rich-description th {
+  background: color-mix(in srgb, var(--tg-app-accent) 9%, var(--tg-app-bg));
+  color: var(--tg-app-text);
+  font-weight: 750;
+}
+
+.tg-rich-description tr:last-child > * {
+  border-bottom: 0;
+}
+
+.tg-rich-description tr > :last-child {
+  border-right: 0;
+}
+
+.tg-rich-description img {
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 10px 0;
+  border: 1px solid var(--tg-app-border);
+  border-radius: 12px;
+}
+
+.tg-rich-description hr {
+  height: 1px;
+  margin: 14px 0;
+  border: 0;
+  background: var(--tg-app-border);
+}
+
+.tg-rich-description [data-gts-mention="true"] {
+  padding: 1px 5px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--tg-app-accent) 13%, transparent);
+  color: var(--tg-app-accent);
+  font-weight: 700;
 }
 
 .tg-detail-section {

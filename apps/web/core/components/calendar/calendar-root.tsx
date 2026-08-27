@@ -1127,6 +1127,7 @@ export function CalendarRoot({ workspaceSlug }: Props) {
   const [showCancelled, setShowCancelled] = useState(false);
   const [showExternal, setShowExternal] = useState(true);
   const hasAppliedPreference = useRef(false);
+  const viewPreferenceUpdateQueue = useRef<Promise<void>>(Promise.resolve());
   const range = useMemo(() => rangeForView(view, cursor), [cursor, view]);
   const dateLocale = localeCode(currentLocale);
   const rangeKey = `${range.start.toISOString()}:${range.end.toISOString()}`;
@@ -1146,9 +1147,38 @@ export function CalendarRoot({ workspaceSlug }: Props) {
     () => workspaceService.fetchWorkspaceMembers(workspaceSlug),
     { revalidateOnFocus: false }
   );
-  const { data: preferences } = useSWR("MY_CALENDAR_PREFERENCES", () => calendarService.getPreferences(), {
-    revalidateOnFocus: false,
-  });
+  const { data: preferences, mutate: mutatePreferences } = useSWR(
+    "MY_CALENDAR_PREFERENCES",
+    () => calendarService.getPreferences(),
+    {
+      revalidateOnFocus: false,
+    }
+  );
+
+  const handleViewChange = (nextView: TCalendarView) => {
+    if (nextView === view) return;
+
+    hasAppliedPreference.current = true;
+    setView(nextView);
+    if (preferences) {
+      void mutatePreferences({ ...preferences, default_view: nextView }, { revalidate: false });
+    }
+
+    viewPreferenceUpdateQueue.current = viewPreferenceUpdateQueue.current
+      .catch(() => undefined)
+      .then(async () => {
+        const updatedPreferences = await calendarService.updatePreferences({ default_view: nextView });
+        await mutatePreferences(updatedPreferences, { revalidate: false });
+        return undefined;
+      })
+      .catch(() => {
+        setToast({
+          type: TOAST_TYPE.ERROR,
+          title: t("toast.error"),
+          message: t("calendar.saving_error"),
+        });
+      });
+  };
 
   useEffect(() => {
     if (!preferences || hasAppliedPreference.current) return;
@@ -1332,7 +1362,7 @@ export function CalendarRoot({ workspaceSlug }: Props) {
               <button
                 type="button"
                 key={item}
-                onClick={() => setView(item)}
+                onClick={() => handleViewChange(item)}
                 className={cn(
                   "rounded-md px-2.5 py-1.5 text-11 font-semibold transition",
                   view === item ? "shadow-xs bg-surface-1 text-primary" : "text-secondary hover:text-primary"
@@ -1491,13 +1521,13 @@ export function CalendarRoot({ workspaceSlug }: Props) {
                     tabIndex={0}
                     onClick={() => {
                       setCursor(date);
-                      setView("DAY");
+                      handleViewChange("DAY");
                     }}
                     onKeyDown={(event) => {
                       if (event.key !== "Enter" && event.key !== " ") return;
                       event.preventDefault();
                       setCursor(date);
-                      setView("DAY");
+                      handleViewChange("DAY");
                     }}
                     className={cn(
                       "group focus-visible:outline-accent-primary min-h-[132px] cursor-pointer border-r border-b border-subtle p-2 text-left align-top transition hover:bg-layer-transparent-hover focus-visible:outline-2 focus-visible:outline-offset-[-2px]",
@@ -1583,7 +1613,7 @@ export function CalendarRoot({ workspaceSlug }: Props) {
             onSlotCreate={(date) => openCreate(date, true)}
             onDayOpen={(date) => {
               setCursor(date);
-              setView("DAY");
+              handleViewChange("DAY");
             }}
           />
         ) : (

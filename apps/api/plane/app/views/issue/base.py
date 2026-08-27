@@ -1451,5 +1451,5 @@ class IssueDetailIdentifierEndpoint(BaseAPIView):
         )
 
         # Serialize the issue
-        serializer = IssueDetailSerializer(issue, expand=self.expand)
+        serializer = IssueDetailSerializer(issue, expand=self.expand, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)

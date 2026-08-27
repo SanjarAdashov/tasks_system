@@ -4,17 +4,19 @@
  * See the LICENSE file for details.
  */
 
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { observer } from "mobx-react";
 import { createPortal } from "react-dom";
 // plane imports
 import type { EditorRefApi } from "@plane/editor";
+import { useLocalStorage } from "@plane/hooks";
 import type { TNameDescriptionLoader } from "@plane/types";
 import { EIssueServiceType } from "@plane/types";
 import { cn } from "@plane/utils";
 import { TaskMeetings } from "@/components/calendar/task-meetings";
 // hooks
 import { useIssueDetail } from "@/hooks/store/use-issue-detail";
+import { useUser } from "@/hooks/store/user";
 import useKeypress from "@/hooks/use-keypress";
 import usePeekOverviewOutsideClickDetector from "@/hooks/use-peek-overview-outside-click";
 // local imports
@@ -41,6 +43,12 @@ interface IIssueView {
   issueOperations: TIssueOperations;
 }
 
+const ISSUE_PEEK_MODE_STORAGE_KEY = "issue_peek_modes_by_user";
+const DEFAULT_PEEK_MODE: TPeekModes = "side-peek";
+const PEEK_MODES = new Set<TPeekModes>(["side-peek", "modal", "full-screen"]);
+
+const isPeekMode = (value: unknown): value is TPeekModes => PEEK_MODES.has(value as TPeekModes);
+
 export const IssueView = observer(function IssueView(props: IIssueView) {
   const {
     workspaceSlug,
@@ -55,7 +63,6 @@ export const IssueView = observer(function IssueView(props: IIssueView) {
     issueOperations,
   } = props;
   // states
-  const [peekMode, setPeekMode] = useState<TPeekModes>("side-peek");
   const [isSubmitting, setIsSubmitting] = useState<TNameDescriptionLoader>("saved");
   const [isDeleteIssueModalOpen, setIsDeleteIssueModalOpen] = useState(false);
   const [isArchiveIssueModalOpen, setIsArchiveIssueModalOpen] = useState(false);
@@ -72,7 +79,30 @@ export const IssueView = observer(function IssueView(props: IIssueView) {
     issue: { getIssueById },
   } = useIssueDetail();
   const { isAnyModalOpen: isAnyEpicModalOpen } = useIssueDetail(EIssueServiceType.EPICS);
+  const { data: currentUser } = useUser();
+  const { storedValue: storedPeekModes, setValue: setStoredPeekModes } = useLocalStorage<Record<string, TPeekModes>>(
+    ISSUE_PEEK_MODE_STORAGE_KEY,
+    {}
+  );
   const issue = getIssueById(issueId);
+  const currentUserKey = currentUser?.id || "anonymous";
+  const preferredPeekMode = storedPeekModes?.[currentUserKey];
+  const peekMode = embedIssue
+    ? DEFAULT_PEEK_MODE
+    : isPeekMode(preferredPeekMode)
+      ? preferredPeekMode
+      : DEFAULT_PEEK_MODE;
+
+  const handlePeekModeChange = useCallback(
+    (value: TPeekModes) => {
+      if (!isPeekMode(value) || embedIssue) return;
+      setStoredPeekModes({
+        ...storedPeekModes,
+        [currentUserKey]: value,
+      });
+    },
+    [currentUserKey, embedIssue, setStoredPeekModes, storedPeekModes]
+  );
   // remove peek id
   const removeRoutePeekId = () => {
     setPeekIssue(undefined);
@@ -168,7 +198,7 @@ export const IssueView = observer(function IssueView(props: IIssueView) {
               {/* header */}
               <IssuePeekOverviewHeader
                 peekMode={peekMode}
-                setPeekMode={(value) => setPeekMode(value)}
+                setPeekMode={handlePeekModeChange}
                 removeRoutePeekId={removeRoutePeekId}
                 toggleDeleteIssueModal={toggleDeleteIssueModal}
                 toggleArchiveIssueModal={toggleArchiveIssueModal}

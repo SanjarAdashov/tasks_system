@@ -36,6 +36,10 @@ def issue_url(workspace, project, issue_id=None):
     return f"{base}{issue_id}/" if issue_id else base
 
 
+def issue_identifier_url(workspace, project, sequence_id):
+    return f"/api/workspaces/{workspace.slug}/work-items/{project.identifier}-{sequence_id}/"
+
+
 def client_for(user):
     client = APIClient()
     client.force_authenticate(user)
@@ -88,6 +92,31 @@ def restricted_project(workspace, create_user):
 @pytest.mark.contract
 @pytest.mark.django_db
 class TestRestrictedIssues:
+    def test_manager_can_edit_access_from_existing_issue_detail_routes(
+        self,
+        session_client,
+        workspace,
+        restricted_project,
+    ):
+        created = session_client.post(
+            issue_url(workspace, restricted_project),
+            {"name": "Existing task access controls"},
+            format="json",
+        )
+        assert created.status_code == status.HTTP_201_CREATED, created.data
+
+        detail_response = session_client.get(issue_url(workspace, restricted_project, created.data["id"]))
+        identifier_response = session_client.get(
+            issue_identifier_url(workspace, restricted_project, created.data["sequence_id"])
+        )
+
+        assert detail_response.status_code == status.HTTP_200_OK, detail_response.data
+        assert identifier_response.status_code == status.HTTP_200_OK, identifier_response.data
+        assert detail_response.data["visibility"] == IssueVisibility.PROJECT
+        assert identifier_response.data["visibility"] == IssueVisibility.PROJECT
+        assert detail_response.data["can_manage_access"] is True
+        assert identifier_response.data["can_manage_access"] is True
+
     def test_grouped_issue_list_counts_multiple_visible_sub_issues(
         self,
         session_client,

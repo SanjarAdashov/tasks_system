@@ -250,7 +250,7 @@ class IssueArchiveViewSet(BaseViewSet):
                 {"error": "The required object does not exist."},
                 status=status.HTTP_404_NOT_FOUND,
             )
-        serializer = IssueDetailSerializer(issue, expand=self.expand)
+        serializer = IssueDetailSerializer(issue, expand=self.expand, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER])

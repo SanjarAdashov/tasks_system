@@ -532,7 +532,7 @@ export const IssueFormRoot = observer(function IssueFormRoot(props: IssueFormPro
                 <div className="flex items-center gap-x-1">
                   <IssueProjectSelect
                     control={control}
-                    disabled={!!data?.id || !!data?.sourceIssueId || isProjectSelectionDisabled}
+                    disabled={!!data?.id || isProjectSelectionDisabled}
                     handleFormChange={handleFormChange}
                   />
                 </div>

@@ -103,6 +103,7 @@ export class IssueStore implements IIssueStore {
     if (issue && issue?.parent && issue?.parent?.id && issue?.parent?.project_id) {
       this.issueService.retrieve(workspaceSlug, issue.parent.project_id, issue?.parent?.id).then((res) => {
         this.rootIssueDetailStore.rootIssueStore.issues.addIssue([res]);
+        return res;
       });
     }
     // assignees
@@ -171,6 +172,12 @@ export class IssueStore implements IIssueStore {
       is_subscribed: issue?.is_subscribed,
       is_epic: issue?.is_epic,
       property_values: issue?.property_values,
+      visibility: issue?.visibility,
+      inherit_parent_access: issue?.inherit_parent_access,
+      access_source_id: issue?.access_source_id,
+      access_group_ids: issue?.access_group_ids,
+      access_summary: issue?.access_summary,
+      can_manage_access: issue?.can_manage_access,
     };
 
     this.rootIssueDetailStore.rootIssueStore.issues.addIssue([issuePayload]);
@@ -289,6 +296,7 @@ export class IssueStore implements IIssueStore {
     if (issue?.parent && issue?.parent?.id && issue?.parent?.project_id) {
       this.issueService.retrieve(workspaceSlug, issue.parent.project_id, issue.parent.id).then((res) => {
         this.rootIssueDetailStore.rootIssueStore.issues.addIssue([res]);
+        return res;
       });
     }
 
