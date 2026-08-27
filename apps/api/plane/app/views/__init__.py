@@ -79,6 +79,8 @@ from .base import BaseAPIView, BaseViewSet
 from .telegram import (
     TelegramDisconnectEndpoint,
     TelegramLinkEndpoint,
+    TelegramMiniAppAccessEndpoint,
+    TelegramMiniAppSessionEndpoint,
     TelegramNotificationPreferenceEndpoint,
     TelegramWebhookEndpoint,
 )

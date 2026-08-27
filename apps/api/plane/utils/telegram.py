@@ -2,11 +2,14 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 import hashlib
+import hmac
 import html
+import json
 import re
+import time as system_time
 from datetime import datetime, time, timedelta
 from pathlib import PurePosixPath
-from urllib.parse import unquote, urlsplit
+from urllib.parse import parse_qsl, unquote, urlsplit
 from zoneinfo import ZoneInfo
 
 import requests
@@ -42,6 +45,7 @@ TELEGRAM_CONFIGURATION_KEYS = TELEGRAM_SECRET_CONFIGURATION_KEYS | {
 }
 TELEGRAM_PROXY_SCHEMES = {"http", "https", "socks5", "socks5h"}
 TELEGRAM_STANDARD_API_ENDPOINT = "https://api.telegram.org"
+TELEGRAM_WEB_APP_DATA_MAX_AGE_SECONDS = 300
 
 PREFERENCE_FIELDS = {
     "task_assignment",
@@ -77,6 +81,58 @@ class TelegramAPIError(Exception):
         super().__init__(message)
         self.error_code = error_code
         self.retry_after = retry_after
+
+
+class TelegramWebAppDataError(Exception):
+    pass
+
+
+def validate_telegram_web_app_init_data(
+    init_data,
+    *,
+    token=None,
+    max_age=TELEGRAM_WEB_APP_DATA_MAX_AGE_SECONDS,
+    now=None,
+):
+    """Validate and decode Telegram Mini App init data without exposing the bot token."""
+    configuration = telegram_configuration()
+    bot_token = token or configuration["token"]
+    if not bot_token:
+        raise TelegramWebAppDataError("Telegram bot is not configured")
+    if not isinstance(init_data, str) or not init_data.strip():
+        raise TelegramWebAppDataError("Telegram authorization data is missing")
+
+    try:
+        fields = dict(parse_qsl(init_data, keep_blank_values=True, strict_parsing=True))
+    except ValueError as exc:
+        raise TelegramWebAppDataError("Telegram authorization data is invalid") from exc
+
+    supplied_hash = fields.pop("hash", "")
+    if not supplied_hash:
+        raise TelegramWebAppDataError("Telegram authorization signature is missing")
+    data_check_string = "\n".join(f"{key}={fields[key]}" for key in sorted(fields))
+    secret_key = hmac.new(b"WebAppData", bot_token.encode(), hashlib.sha256).digest()
+    expected_hash = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(expected_hash, supplied_hash):
+        raise TelegramWebAppDataError("Telegram authorization signature is invalid")
+
+    try:
+        auth_date = int(fields.get("auth_date", ""))
+    except (TypeError, ValueError) as exc:
+        raise TelegramWebAppDataError("Telegram authorization date is invalid") from exc
+    current_timestamp = int(system_time.time() if now is None else now)
+    if auth_date > current_timestamp + 30 or current_timestamp - auth_date > max_age:
+        raise TelegramWebAppDataError("Telegram authorization data has expired")
+
+    try:
+        user = json.loads(fields.get("user", ""))
+        telegram_user_id = int(user["id"])
+    except (KeyError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        raise TelegramWebAppDataError("Telegram user data is invalid") from exc
+    if telegram_user_id <= 0:
+        raise TelegramWebAppDataError("Telegram user data is invalid")
+
+    return {**fields, "auth_date": auth_date, "user": user, "telegram_user_id": telegram_user_id}
 
 
 def _config_value(key, default=""):

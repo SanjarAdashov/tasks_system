@@ -39,7 +39,7 @@ const TOUR_STEPS: {
     key: "work-items",
     title: "Plan with work items",
     description:
-      "The work item is the building block of the Plane. Most concepts in Plane are either associated with work items and their properties.",
+      "The work item is the building block of GTS Task System. Most concepts in GTS Task System are either associated with work items and their properties.",
     image: IssuesTour,
     nextStep: "cycles",
   },
@@ -92,18 +92,18 @@ export const TourRoot = observer(function TourRoot(props: TOnboardingTourProps) 
   return (
     <>
       {step === "welcome" ? (
-        <div className="w-4/5 overflow-hidden rounded-[10px] bg-surface-1 md:w-1/2 lg:w-2/5">
+        <div className="gts-glass-onboarding-surface w-4/5 overflow-hidden rounded-[10px] bg-surface-1 shadow-raised-200 md:w-1/2 lg:w-2/5">
           <div className="h-full overflow-hidden">
             <div className="grid h-64 place-items-center bg-accent-primary">
               <PlaneLockup className="h-10 w-auto text-on-color" />
             </div>
             <div className="flex flex-col overflow-y-auto p-6">
               <h3 className="font-semibold sm:text-18">
-                Welcome to Plane, {currentUser?.first_name} {currentUser?.last_name}
+                Welcome to GTS Task System, {currentUser?.first_name} {currentUser?.last_name}
               </h3>
               <p className="mt-3 text-13 text-secondary">
-                We{"'"}re glad that you decided to try out Plane. You can now manage your projects with ease. Get
-                started by creating a project.
+                We{"'"}re glad that you decided to try out GTS Task System. You can now manage your projects with ease.
+                Get started by creating a project.
               </p>
               <div className="flex h-full items-end">
                 <div className="mt-12 flex items-center gap-6">
@@ -130,7 +130,7 @@ export const TourRoot = observer(function TourRoot(props: TOnboardingTourProps) 
           </div>
         </div>
       ) : (
-        <div className="relative grid h-3/5 w-4/5 grid-cols-10 overflow-hidden rounded-[10px] bg-surface-1 sm:h-3/4 md:w-1/2 lg:w-3/5">
+        <div className="gts-glass-onboarding-surface relative grid h-3/5 w-4/5 grid-cols-10 overflow-hidden rounded-[10px] bg-surface-1 shadow-raised-200 sm:h-3/4 md:w-1/2 lg:w-3/5">
           <button
             type="button"
             className="fixed top-[19%] right-[9%] z-10 translate-x-1/2 -translate-y-1/2 cursor-pointer rounded-full border border-strong bg-surface-1 p-1 sm:top-[11.5%] md:right-[24%] lg:right-[19%]"

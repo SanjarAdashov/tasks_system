@@ -273,6 +273,7 @@ class IssueViewSet(BaseViewSet):
             .annotate(
                 sub_issues_count=Subquery(
                     Issue.issue_objects.filter(parent=OuterRef("id"))
+                    .order_by()
                     .values("parent")
                     .annotate(count=Count("id"))
                     .values("count")

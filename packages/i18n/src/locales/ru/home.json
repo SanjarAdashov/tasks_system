@@ -5,7 +5,7 @@
       "not_right_now": "Не сейчас",
       "create_project": {
         "title": "Создать проект",
-        "description": "Большинство вещей начинаются с проекта в Plane.",
+        "description": "Большинство вещей начинаются с проекта в GTS Task System.",
         "cta": "Начать"
       },
       "invite_team": {
@@ -19,7 +19,7 @@
         "cta": "Настроить"
       },
       "personalize_account": {
-        "title": "Персонализируйте Plane",
+        "title": "Персонализируйте GTS Task System",
         "description": "Выберите изображение, цвета и другие параметры.",
         "cta": "Настроить сейчас"
       },

@@ -5,7 +5,7 @@
       "not_right_now": "Hozir emas",
       "create_project": {
         "title": "Loyiha yarating",
-        "description": "Aksariyat ishlar Plane’dagi loyihadan boshlanadi.",
+        "description": "Aksariyat ishlar GTS Task System’dagi loyihadan boshlanadi.",
         "cta": "Boshlash"
       },
       "invite_team": {
@@ -19,7 +19,7 @@
         "cta": "Ushbu ish maydonini sozlang"
       },
       "personalize_account": {
-        "title": "Plane ni sizniki qiling.",
+        "title": "GTS Task System ni sizniki qiling.",
         "description": "Rasm, ranglar va boshqalarni tanlang.",
         "cta": "Hozir shaxsiylashtiring"
       },

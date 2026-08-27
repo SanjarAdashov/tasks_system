@@ -88,6 +88,45 @@ def restricted_project(workspace, create_user):
 @pytest.mark.contract
 @pytest.mark.django_db
 class TestRestrictedIssues:
+    def test_grouped_issue_list_counts_multiple_visible_sub_issues(
+        self,
+        session_client,
+        workspace,
+        restricted_project,
+    ):
+        parent = session_client.post(
+            issue_url(workspace, restricted_project),
+            {"name": "Parent with visible sub-issues"},
+            format="json",
+        )
+        assert parent.status_code == status.HTTP_201_CREATED, parent.data
+
+        for index in range(2):
+            child = session_client.post(
+                issue_url(workspace, restricted_project),
+                {
+                    "name": f"Visible sub-issue {index + 1}",
+                    "parent_id": parent.data["id"],
+                },
+                format="json",
+            )
+            assert child.status_code == status.HTTP_201_CREATED, child.data
+
+        response = session_client.get(
+            issue_url(workspace, restricted_project),
+            {
+                "group_by": "state_id",
+                "order_by": "-priority",
+                "sub_issue": "false",
+                "filters": "{}",
+                "layout": "kanban",
+                "cursor": "30:0:0",
+                "per_page": 30,
+            },
+        )
+
+        assert response.status_code == status.HTTP_200_OK, response.data
+
     def test_workspace_and_instance_admins_can_retrieve_without_project_membership(
         self,
         session_client,

@@ -468,6 +468,12 @@
   box-shadow: -20px 0 56px rgb(0 8 18 / 0.38);
 }
 
+[data-theme="gts-glass-dark"] .gts-glass-onboarding-surface {
+  background: rgb(var(--gts-glass-deep-rgb)) !important;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
 [data-theme="gts-glass-dark"] .gts-glass-sticky-surface {
   background: rgb(var(--gts-glass-deep-rgb) / 0.99) !important;
   -webkit-backdrop-filter: blur(32px) saturate(1.04);

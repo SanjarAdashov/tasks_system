@@ -12,6 +12,7 @@ from plane.db.models import TelegramDelivery, TelegramLinkToken, TelegramUserCon
 from plane.utils.telegram import (
     TelegramAPIError,
     api_url,
+    application_url,
     clear_telegram_configuration,
     save_telegram_configuration,
     telegram_api_call,
@@ -120,6 +121,35 @@ class InstanceTelegramEndpoint(BaseAPIView):
                     "secret_token": webhook_secret,
                     "allowed_updates": ["message"],
                     "drop_pending_updates": True,
+                },
+                token=token,
+                proxy_url=proxy_url,
+                api_endpoint=api_endpoint,
+            )
+            telegram_api_call(
+                "setChatMenuButton",
+                {
+                    "menu_button": {
+                        "type": "web_app",
+                        "text": "Задачи",
+                        "web_app": {"url": application_url("telegram-app/")},
+                    }
+                },
+                token=token,
+                proxy_url=proxy_url,
+                api_endpoint=api_endpoint,
+            )
+            telegram_api_call(
+                "setMyCommands",
+                {
+                    "commands": [
+                        {"command": "tasks", "description": "Открыть задачи"},
+                        {"command": "status", "description": "Статус подключения"},
+                        {"command": "pause", "description": "Приостановить уведомления"},
+                        {"command": "resume", "description": "Возобновить уведомления"},
+                        {"command": "settings", "description": "Настройки уведомлений"},
+                        {"command": "disconnect", "description": "Отключить Telegram"},
+                    ]
                 },
                 token=token,
                 proxy_url=proxy_url,

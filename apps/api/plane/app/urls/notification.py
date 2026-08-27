@@ -12,6 +12,8 @@ from plane.app.views import (
     UserNotificationPreferenceEndpoint,
     TelegramDisconnectEndpoint,
     TelegramLinkEndpoint,
+    TelegramMiniAppAccessEndpoint,
+    TelegramMiniAppSessionEndpoint,
     TelegramNotificationPreferenceEndpoint,
     TelegramWebhookEndpoint,
     ProjectAnnouncementAttachmentEndpoint,
@@ -81,6 +83,16 @@ urlpatterns = [
         "users/me/telegram/disconnect/",
         TelegramDisconnectEndpoint.as_view(),
         name="telegram-disconnect",
+    ),
+    path(
+        "telegram/mini-app/session/",
+        TelegramMiniAppSessionEndpoint.as_view(),
+        name="telegram-mini-app-session",
+    ),
+    path(
+        "telegram/mini-app/access/",
+        TelegramMiniAppAccessEndpoint.as_view(),
+        name="telegram-mini-app-access",
     ),
     path("telegram/webhook/", TelegramWebhookEndpoint.as_view(), name="telegram-webhook"),
 ]

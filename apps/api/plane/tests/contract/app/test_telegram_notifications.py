@@ -2,9 +2,13 @@
 # SPDX-License-Identifier: AGPL-3.0-only
 
 import hashlib
+import hmac
+import json
+import time
 import uuid
 from datetime import datetime
 from types import SimpleNamespace
+from urllib.parse import urlencode
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -23,6 +27,7 @@ from plane.db.models import (
     TelegramUserConnection,
     User,
     Workspace,
+    WorkspaceMember,
 )
 from plane.bgtasks.calendar_notification_task import (
     send_meeting_notifications,
@@ -32,6 +37,7 @@ from plane.license.models import Instance, InstanceAdmin, InstanceConfiguration
 from plane.app.views.project.invite import notify_project_joined
 from plane.app.views.workspace.invite import notify_workspace_joined
 from plane.utils.telegram import (
+    TelegramWebAppDataError,
     enqueue_telegram_notifications,
     may_deliver,
     preference_for,
@@ -41,6 +47,7 @@ from plane.utils.telegram import (
     telegram_api_call,
     telegram_configuration,
     telegram_plain_text,
+    validate_telegram_web_app_init_data,
     validate_telegram_api_endpoint,
     validate_telegram_proxy_url,
 )
@@ -69,9 +76,85 @@ def configure_bot(proxy_url="", api_endpoint=""):
     )
 
 
+def signed_web_app_init_data(telegram_user_id, token="test-token", auth_date=None):
+    fields = {
+        "auth_date": str(auth_date or int(time.time())),
+        "query_id": "AAExampleQuery",
+        "user": json.dumps({"id": telegram_user_id, "first_name": "Test"}, separators=(",", ":")),
+    }
+    data_check_string = "\n".join(f"{key}={fields[key]}" for key in sorted(fields))
+    secret_key = hmac.new(b"WebAppData", token.encode(), hashlib.sha256).digest()
+    fields["hash"] = hmac.new(secret_key, data_check_string.encode(), hashlib.sha256).hexdigest()
+    return urlencode(fields)
+
+
 @pytest.mark.contract
 @pytest.mark.django_db
 class TestTelegramNotifications:
+    def test_web_app_init_data_validation_rejects_tampering_and_expiry(self):
+        init_data = signed_web_app_init_data(4321, auth_date=1_700_000_000)
+        validated = validate_telegram_web_app_init_data(
+            init_data,
+            token="test-token",
+            now=1_700_000_100,
+        )
+        assert validated["telegram_user_id"] == 4321
+
+        with pytest.raises(TelegramWebAppDataError, match="signature is invalid"):
+            validate_telegram_web_app_init_data(
+                init_data.replace("Test", "Changed"),
+                token="test-token",
+                now=1_700_000_100,
+            )
+        with pytest.raises(TelegramWebAppDataError, match="expired"):
+            validate_telegram_web_app_init_data(
+                init_data,
+                token="test-token",
+                now=1_700_001_000,
+            )
+
+    def test_mini_app_session_requires_connected_telegram_user(self):
+        user = create_user("mini-app")
+        configure_bot()
+        connection = TelegramUserConnection.objects.create(
+            user=user,
+            telegram_user_id=654321,
+            chat_id=7654321,
+            bot_id=12345,
+        )
+        workspace = Workspace.objects.create(
+            name="Mini App workspace",
+            slug=f"mini-app-{uuid.uuid4().hex[:8]}",
+            owner=user,
+        )
+        WorkspaceMember.objects.create(workspace=workspace, member=user)
+        client = APIClient()
+
+        response = client.post(
+            "/api/telegram/mini-app/session/",
+            {"init_data": signed_web_app_init_data(connection.telegram_user_id)},
+            format="json",
+        )
+
+        assert response.status_code == status.HTTP_200_OK
+        assert response.data["workspace_slug"] == workspace.slug
+        assert response.data["csrf_token"]
+        access_response = client.get("/api/telegram/mini-app/access/")
+        assert access_response.status_code == status.HTTP_200_OK
+        assert access_response.data["allowed"] is True
+
+    def test_mini_app_session_rejects_unlinked_telegram_user(self):
+        configure_bot()
+        client = APIClient()
+
+        response = client.post(
+            "/api/telegram/mini-app/session/",
+            {"init_data": signed_web_app_init_data(999999)},
+            format="json",
+        )
+
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
     def test_preferences_and_one_time_deep_link(self):
         user = create_user("telegram")
         configure_bot()
@@ -148,6 +231,17 @@ class TestTelegramNotifications:
         )
         assert status_response.status_code == status.HTTP_200_OK
         assert sent[-1]["text"].startswith("Notifications are paused")
+
+        tasks_response = client.post(
+            "/api/telegram/webhook/",
+            {"message": {"text": "/tasks", "chat": {"id": 777, "type": "private"}, "from": {"id": 888}}},
+            format="json",
+            HTTP_X_TELEGRAM_BOT_API_SECRET_TOKEN="test-secret",
+        )
+        assert tasks_response.status_code == status.HTTP_200_OK
+        tasks_button = sent[-1]["reply_markup"]["inline_keyboard"][0][0]
+        assert tasks_button["text"] == "Tasks"
+        assert tasks_button["web_app"]["url"].endswith("/telegram-app/")
 
     def test_invalid_connection_uses_telegram_language_and_queues_response(self, monkeypatch):
         configure_bot()
@@ -770,7 +864,12 @@ class TestTelegramNotifications:
         assert response.data["proxy_configured"] is True
         assert response.data["proxy_scheme"] == "https"
         assert "proxy_url" not in response.data
-        assert calls == [("getMe", proxy_url), ("setWebhook", proxy_url)]
+        assert calls == [
+            ("getMe", proxy_url),
+            ("setWebhook", proxy_url),
+            ("setChatMenuButton", proxy_url),
+            ("setMyCommands", proxy_url),
+        ]
         stored = InstanceConfiguration.objects.get(key="TELEGRAM_PROXY_URL")
         assert stored.is_encrypted is True
         assert stored.value != proxy_url
@@ -814,7 +913,12 @@ class TestTelegramNotifications:
         assert response.data["custom_api_endpoint_configured"] is True
         assert response.data["api_endpoint_host"] == "telegram-proxy.example.com"
         assert "api_endpoint" not in response.data
-        assert calls == [("getMe", api_endpoint), ("setWebhook", api_endpoint)]
+        assert calls == [
+            ("getMe", api_endpoint),
+            ("setWebhook", api_endpoint),
+            ("setChatMenuButton", api_endpoint),
+            ("setMyCommands", api_endpoint),
+        ]
         stored = InstanceConfiguration.objects.get(key="TELEGRAM_API_ENDPOINT")
         assert stored.is_encrypted is True
         assert stored.value != api_endpoint
@@ -831,5 +935,10 @@ class TestTelegramNotifications:
         assert response.data["api_endpoint_mode"] == "standard"
         assert response.data["custom_api_endpoint_configured"] is False
         assert response.data["api_endpoint_host"] == "api.telegram.org"
-        assert calls == [("getMe", ""), ("setWebhook", "")]
+        assert calls == [
+            ("getMe", ""),
+            ("setWebhook", ""),
+            ("setChatMenuButton", ""),
+            ("setMyCommands", ""),
+        ]
         assert not InstanceConfiguration.objects.filter(key="TELEGRAM_API_ENDPOINT").exists()

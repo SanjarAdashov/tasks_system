@@ -47,6 +47,12 @@ export const coreRoutes: RouteConfigEntry[] = [
   // ALL APP ROUTES
   // ========================================================================
   layout("./(all)/layout.tsx", [
+    // Telegram Mini App: signed bootstrap followed by a workspace-scoped compact UI.
+    route("telegram-app", "./(all)/telegram-app/page.tsx"),
+    layout("./(all)/telegram-app/[workspaceSlug]/layout.tsx", [
+      route("telegram-app/:workspaceSlug", "./(all)/telegram-app/[workspaceSlug]/page.tsx"),
+    ]),
+
     // ======================================================================
     // WORKSPACE-SCOPED ROUTES
     // ======================================================================
