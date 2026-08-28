@@ -10,6 +10,7 @@ import { createPortal } from "react-dom";
 // plane imports
 import type { EditorRefApi } from "@plane/editor";
 import { useLocalStorage } from "@plane/hooks";
+import { useTranslation } from "@plane/i18n";
 import type { TNameDescriptionLoader } from "@plane/types";
 import { EIssueServiceType } from "@plane/types";
 import { cn } from "@plane/utils";
@@ -62,6 +63,7 @@ export const IssueView = observer(function IssueView(props: IIssueView) {
     embedRemoveCurrentNotification,
     issueOperations,
   } = props;
+  const { t } = useTranslation();
   // states
   const [isSubmitting, setIsSubmitting] = useState<TNameDescriptionLoader>("saved");
   const [isDeleteIssueModalOpen, setIsDeleteIssueModalOpen] = useState(false);
@@ -175,15 +177,27 @@ export const IssueView = observer(function IssueView(props: IIssueView) {
 
   const portalContainer = document.getElementById("full-screen-portal") as HTMLElement;
 
+  const peekOverviewBoxShadow =
+    peekMode === "modal"
+      ? "0 28px 80px rgba(0, 0, 0, 0.30), 0 10px 30px rgba(0, 0, 0, 0.20), 0 1px 0 rgba(255, 255, 255, 0.06) inset"
+      : "0px 4px 8px 0px rgba(0, 0, 0, 0.12), 0px 6px 12px 0px rgba(16, 24, 40, 0.12), 0px 1px 16px 0px rgba(16, 24, 40, 0.12)";
+
   const content = (
     <div className="w-full text-body-sm-regular">
+      {!embedIssue && peekMode === "modal" && (
+        <button
+          type="button"
+          className="absolute inset-0 z-[24] cursor-default bg-black/50"
+          onClick={removeRoutePeekId}
+          aria-label={t("common.close_peek_view")}
+        />
+      )}
       {issueId && (
         <div
           ref={issuePeekOverviewRef}
           className={peekOverviewIssueClassName}
           style={{
-            boxShadow:
-              "0px 4px 8px 0px rgba(0, 0, 0, 0.12), 0px 6px 12px 0px rgba(16, 24, 40, 0.12), 0px 1px 16px 0px rgba(16, 24, 40, 0.12)",
+            boxShadow: peekOverviewBoxShadow,
           }}
         >
           {isError ? (
@@ -214,9 +228,9 @@ export const IssueView = observer(function IssueView(props: IIssueView) {
                 embedIssue={embedIssue}
               />
               {/* content */}
-              <div className="vertical-scrollbar relative scrollbar-md h-full w-full overflow-hidden overflow-y-auto">
-                {["side-peek", "modal"].includes(peekMode) ? (
-                  <div className="relative flex flex-col gap-3 space-y-3 px-8 py-5">
+              <div className="relative min-h-0 w-full flex-1 overflow-hidden">
+                {peekMode === "side-peek" ? (
+                  <div className="vertical-scrollbar relative flex scrollbar-md h-full flex-col gap-3 space-y-3 overflow-y-auto px-8 py-5">
                     <PeekOverviewIssueDetails
                       editorRef={editorRef}
                       workspaceSlug={workspaceSlug}
@@ -263,8 +277,13 @@ export const IssueView = observer(function IssueView(props: IIssueView) {
                     />
                   </div>
                 ) : (
-                  <div className="vertical-scrollbar flex h-full w-full overflow-auto">
-                    <div className="relative h-full w-full space-y-6 overflow-auto p-4 py-5">
+                  <div className="flex h-full min-h-0 w-full flex-col overflow-y-auto md:flex-row md:overflow-hidden">
+                    <div
+                      className={cn(
+                        "vertical-scrollbar relative scrollbar-md min-w-0 flex-1 space-y-6 py-5 md:h-full md:overflow-y-auto",
+                        peekMode === "modal" ? "px-8" : "px-4"
+                      )}
+                    >
                       <div className="space-y-3">
                         <PeekOverviewIssueDetails
                           editorRef={editorRef}
@@ -304,8 +323,8 @@ export const IssueView = observer(function IssueView(props: IIssueView) {
                         />
                       </div>
                     </div>
-                    <div
-                      className={`vertical-scrollbar scrollbar-sm h-full !w-[400px] flex-shrink-0 overflow-hidden border-l border-subtle p-4 py-5 ${
+                    <aside
+                      className={`vertical-scrollbar scrollbar-sm w-full flex-shrink-0 border-t border-subtle px-6 py-5 md:h-full md:w-[360px] md:overflow-y-auto md:border-t-0 md:border-l 2xl:w-[400px] ${
                         is_archived ? "pointer-events-none" : ""
                       }`}
                     >
@@ -316,7 +335,7 @@ export const IssueView = observer(function IssueView(props: IIssueView) {
                         issueOperations={issueOperations}
                         disabled={disabled || is_archived}
                       />
-                    </div>
+                    </aside>
                   </div>
                 )}
               </div>
