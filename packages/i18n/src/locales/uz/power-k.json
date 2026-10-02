@@ -174,7 +174,9 @@
       "go_to_advanced_search": "Kengaytirilgan qidiruvga o'ting"
     },
     "footer": {
-      "workspace_level": "Ish maydoni darajasi"
+      "workspace_level": "Ish maydoni darajasi",
+      "search_in_tasks": "Vazifalarda qidirish",
+      "search_in_tasks_description": "Vazifa tavsiflarida ham qidirish. Sarlavhalar va boshqa qidiriladigan maydonlar doimo hisobga olinadi."
     },
     "group_titles": {
       "actions": "Harakatlar",

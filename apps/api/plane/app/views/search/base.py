@@ -93,7 +93,11 @@ class GlobalSearchEndpoint(BaseAPIView):
         )
 
         if query:
-            issues = search_issues(query, issues)
+            issues = search_issues(
+                query,
+                issues,
+                include_description=self.request.query_params.get("search_description", "false").lower() == "true",
+            )
 
         if workspace_search == "false" and project_id:
             issues = issues.filter(project_id=project_id)

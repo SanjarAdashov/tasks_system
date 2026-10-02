@@ -32,6 +32,7 @@ export const TopNavPowerK = observer(() => {
   const [activeCommand, setActiveCommand] = useState<TPowerKCommandConfig | null>(null);
   const [shouldShowContextBasedActions, setShouldShowContextBasedActions] = useState(true);
   const [isWorkspaceLevel, setIsWorkspaceLevel] = useState(false);
+  const [searchDescription, setSearchDescription] = useState(false);
 
   // store hooks
   const { activeContext, setActivePage, activePage, setTopNavInputRef } = usePowerK();
@@ -101,7 +102,7 @@ export const TopNavPowerK = observer(() => {
     return () => {
       setTopNavInputRef(null);
     };
-  }, [setTopNavInputRef]);
+  }, [inputRef, setTopNavInputRef]);
 
   const handleClear = () => {
     setSearchTerm("");
@@ -203,7 +204,7 @@ export const TopNavPowerK = observer(() => {
         return;
       }
     },
-    [searchTerm, activePage, context, shouldShowContextBasedActions, setActivePage, closePanel]
+    [searchTerm, activePage, context, shouldShowContextBasedActions, setActivePage, closePanel, containerRef, isOpen]
   );
 
   return (
@@ -220,10 +221,15 @@ export const TopNavPowerK = observer(() => {
               "bg-layer-1": isOpen,
             }
           )}
-          onClick={() => inputRef.current?.focus()}
-          role="button"
         >
-          <SearchIcon className="mr-2 size-3.5 shrink-0 text-placeholder" />
+          <button
+            type="button"
+            aria-label="Search commands"
+            onClick={() => inputRef.current?.focus()}
+            className="mr-2 shrink-0"
+          >
+            <SearchIcon className="size-3.5 text-placeholder" />
+          </button>
           <input
             ref={inputRef}
             type="text"
@@ -239,7 +245,7 @@ export const TopNavPowerK = observer(() => {
             className="placeholder-text-placeholder min-w-0 flex-1 bg-transparent text-13 text-primary outline-none"
           />
           {searchTerm && (
-            <button type="button" onClick={handleClear} className="ml-2 shrink-0">
+            <button type="button" aria-label="Clear search" onClick={handleClear} className="ml-2 shrink-0">
               <CloseIcon className="size-3.5 text-placeholder hover:text-primary" />
             </button>
           )}
@@ -257,6 +263,8 @@ export const TopNavPowerK = observer(() => {
         {isOpen && (
           <Command
             filter={(i18nValue: string, search: string) => {
+              // Server results can match descriptions or custom fields, not just their displayed title.
+              if (i18nValue.startsWith("search-result:")) return 1;
               if (i18nValue === "no-results") return 1;
               if (i18nValue.toLowerCase().includes(search.toLowerCase())) return 1;
               return 0;
@@ -276,6 +284,7 @@ export const TopNavPowerK = observer(() => {
                 handleCommandSelect={handleCommandSelect}
                 handlePageDataSelection={handlePageDataSelection}
                 isWorkspaceLevel={isWorkspaceLevel}
+                searchDescription={searchDescription}
                 searchTerm={searchTerm}
                 setSearchTerm={setSearchTerm}
                 handleSearchMenuClose={() => closePanel()}
@@ -285,6 +294,8 @@ export const TopNavPowerK = observer(() => {
               isWorkspaceLevel={isWorkspaceLevel}
               projectId={context.params.projectId?.toString()}
               onWorkspaceLevelChange={setIsWorkspaceLevel}
+              searchDescription={searchDescription}
+              onSearchDescriptionChange={setSearchDescription}
             />
           </Command>
         )}

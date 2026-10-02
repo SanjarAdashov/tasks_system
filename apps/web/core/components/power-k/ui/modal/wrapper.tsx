@@ -29,6 +29,7 @@ export const ProjectsAppPowerKModalWrapper = observer(function ProjectsAppPowerK
   // states
   const [searchTerm, setSearchTerm] = useState("");
   const [isWorkspaceLevel, setIsWorkspaceLevel] = useState(false);
+  const [searchDescription, setSearchDescription] = useState(false);
   // store hooks
   const { activePage, setActivePage } = usePowerK();
 
@@ -146,6 +147,8 @@ export const ProjectsAppPowerKModalWrapper = observer(function ProjectsAppPowerK
               <Dialog.Panel className="divide-opacity-10 relative flex w-full max-w-2xl transform flex-col items-center justify-center divide-y divide-subtle-1 rounded-lg bg-surface-1 shadow-raised-200 transition-all">
                 <Command
                   filter={(i18nValue: string, search: string) => {
+                    // Server results can match descriptions or custom fields, not just their displayed title.
+                    if (i18nValue.startsWith("search-result:")) return 1;
                     if (i18nValue === "no-results") return 1;
                     if (i18nValue.toLowerCase().includes(search.toLowerCase())) return 1;
                     return 0;
@@ -167,6 +170,7 @@ export const ProjectsAppPowerKModalWrapper = observer(function ProjectsAppPowerK
                       handleCommandSelect={handleCommandSelect}
                       handlePageDataSelection={handlePageDataSelection}
                       isWorkspaceLevel={isWorkspaceLevel}
+                      searchDescription={searchDescription}
                       searchTerm={searchTerm}
                       setSearchTerm={setSearchTerm}
                     />
@@ -177,6 +181,8 @@ export const ProjectsAppPowerKModalWrapper = observer(function ProjectsAppPowerK
                       isWorkspaceLevel={isWorkspaceLevel}
                       projectId={context.params.projectId?.toString()}
                       onWorkspaceLevelChange={setIsWorkspaceLevel}
+                      searchDescription={searchDescription}
+                      onSearchDescriptionChange={setSearchDescription}
                     />
                   )}
                 </Command>

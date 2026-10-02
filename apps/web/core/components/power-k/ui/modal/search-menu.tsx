@@ -25,13 +25,22 @@ type Props = {
   activePage: TPowerKPageType | null;
   context: TPowerKContext;
   isWorkspaceLevel: boolean;
+  searchDescription: boolean;
   searchTerm: string;
   updateSearchTerm: (value: string) => void;
   handleSearchMenuClose?: () => void;
 };
 
 export function PowerKModalSearchMenu(props: Props) {
-  const { activePage, context, isWorkspaceLevel, searchTerm, updateSearchTerm, handleSearchMenuClose } = props;
+  const {
+    activePage,
+    context,
+    isWorkspaceLevel,
+    searchDescription,
+    searchTerm,
+    updateSearchTerm,
+    handleSearchMenuClose,
+  } = props;
   // states
   const [resultsCount, setResultsCount] = useState(0);
   const [isSearching, setIsSearching] = useState(false);
@@ -44,36 +53,46 @@ export function PowerKModalSearchMenu(props: Props) {
 
   useEffect(() => {
     if (activePage || !workspaceSlug) return;
+    let cancelled = false;
+    const query = debouncedSearchTerm.trim();
+    setResults(WORKSPACE_DEFAULT_SEARCH_RESULT);
+    setResultsCount(0);
+
+    if (!query) {
+      setIsSearching(false);
+      return;
+    }
     setIsSearching(true);
 
-    if (debouncedSearchTerm) {
-      workspaceService
-        .searchWorkspace(workspaceSlug.toString(), {
+    const fetchResults = async () => {
+      try {
+        const searchResults = await workspaceService.searchWorkspace(workspaceSlug.toString(), {
           ...(projectId ? { project_id: projectId.toString() } : {}),
-          search: debouncedSearchTerm,
+          search: query,
           workspace_search: !projectId ? true : isWorkspaceLevel,
-        })
-        // oxlint-disable-next-line no-shadow oxlint-disable-next-line promise/always-return
-        .then((results) => {
-          setResults(results);
-          const count = Object.keys(results.results).reduce(
-            (accumulator, key) => results.results[key as keyof typeof results.results]?.length + accumulator,
-            0
-          );
-          setResultsCount(count);
-        })
-        .catch(() => {
-          setResults(WORKSPACE_DEFAULT_SEARCH_RESULT);
-          setResultsCount(0);
-        })
-        .finally(() => setIsSearching(false));
-    } else {
-      setResults(WORKSPACE_DEFAULT_SEARCH_RESULT);
-      setIsSearching(false);
-    }
-  }, [debouncedSearchTerm, isWorkspaceLevel, projectId, workspaceSlug, activePage]);
+          search_description: searchDescription,
+        });
+        if (cancelled) return;
+        setResults(searchResults);
+        setResultsCount(Object.values(searchResults.results).reduce((count, items) => count + items.length, 0));
+      } catch {
+        if (cancelled) return;
+        setResults(WORKSPACE_DEFAULT_SEARCH_RESULT);
+        setResultsCount(0);
+      } finally {
+        if (!cancelled) setIsSearching(false);
+      }
+    };
+    void fetchResults();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [debouncedSearchTerm, isWorkspaceLevel, searchDescription, projectId, workspaceSlug, activePage]);
 
   if (activePage) return null;
+
+  const hasCurrentQuery = searchTerm.trim() !== "" && searchTerm.trim() === debouncedSearchTerm.trim();
 
   const handleClosePalette = () => {
     handleSearchMenuClose?.();
@@ -101,7 +120,7 @@ export function PowerKModalSearchMenu(props: Props) {
       )}
 
       {/* Show empty state only when not loading and no results */}
-      {!isSearching && resultsCount === 0 && searchTerm.trim() !== "" && debouncedSearchTerm.trim() !== "" && (
+      {!isSearching && resultsCount === 0 && hasCurrentQuery && (
         <PowerKModalNoSearchResultsCommand
           context={context}
           searchTerm={searchTerm}
@@ -109,7 +128,9 @@ export function PowerKModalSearchMenu(props: Props) {
         />
       )}
 
-      {searchTerm.trim() !== "" && <PowerKModalSearchResults closePalette={handleClosePalette} results={results} />}
+      {!isSearching && hasCurrentQuery && (
+        <PowerKModalSearchResults closePalette={handleClosePalette} results={results} />
+      )}
     </>
   );
 }

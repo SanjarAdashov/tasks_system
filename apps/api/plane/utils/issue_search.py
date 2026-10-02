@@ -13,8 +13,10 @@ from django.db.models.functions import Cast
 from plane.db.models import ProjectWorkItemPropertyOption, User, WorkItemSelectSource
 
 
-def search_issues(query, queryset):
+def search_issues(query, queryset, *, include_description=False):
     fields = ["name", "sequence_id", "project__identifier"]
+    if include_description:
+        fields.append("description_stripped")
     q = Q()
     for field in fields:
         if field == "sequence_id" and len(query) <= 20:

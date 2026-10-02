@@ -40,7 +40,7 @@ export const PowerKModalSearchResults = observer(function PowerKModalSearchResul
         return (
           <Command.Group key={key} heading={currentSection.title}>
             {section.map((item) => {
-              let value = `${key}-${item?.id}-${item.name}`;
+              let value = `search-result:${key}-${item?.id}-${item.name}`;
 
               if ("project__identifier" in item) {
                 value = `${value}-${item.project__identifier}`;
