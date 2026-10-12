@@ -57,11 +57,11 @@ export const links: LinksFunction = () => [
   { rel: "icon", type: "image/png", sizes: "32x32", href: favicon32 },
   { rel: "icon", type: "image/png", sizes: "16x16", href: favicon16 },
   { rel: "shortcut icon", href: faviconIco },
-  { rel: "manifest", href: "/site.webmanifest.json?v=gts-v2" },
+  { rel: "manifest", href: "/site.webmanifest.json?v=gts-v3" },
   { rel: "apple-touch-icon", href: icon512 },
   { rel: "apple-touch-icon", sizes: "180x180", href: icon180 },
   { rel: "apple-touch-icon", sizes: "512x512", href: icon512 },
-  { rel: "manifest", href: "/manifest.json?v=gts-v2" },
+  { rel: "manifest", href: "/manifest.json?v=gts-v3" },
   { rel: "stylesheet", href: globalStyles },
   {
     rel: "preload",
