@@ -16,9 +16,12 @@ import globalStyles from "@/styles/globals.css?url";
 import { AppProviders } from "@/providers";
 import type { Route } from "./+types/root";
 // fonts
+// oxlint-disable-next-line import/no-unassigned-import -- Load application-wide font styles.
 import "@fontsource-variable/inter";
 import interVariableWoff2 from "@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url";
+// oxlint-disable-next-line import/no-unassigned-import -- Load the application icon font.
 import "@fontsource/material-symbols-rounded";
+// oxlint-disable-next-line import/no-unassigned-import -- Load the application monospace font.
 import "@fontsource/ibm-plex-mono";
 
 const APP_TITLE = "GTS Task System | Administration";
@@ -30,7 +33,7 @@ export const links: LinksFunction = () => [
   { rel: "icon", type: "image/png", sizes: "32x32", href: favicon32 },
   { rel: "icon", type: "image/png", sizes: "16x16", href: favicon16 },
   { rel: "shortcut icon", href: faviconIco },
-  { rel: "manifest", href: `/site.webmanifest.json` },
+  { rel: "manifest", href: "/god-mode/site.webmanifest.json?v=gts-v2" },
   { rel: "stylesheet", href: globalStyles },
   {
     rel: "preload",

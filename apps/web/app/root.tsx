@@ -30,9 +30,12 @@ import { GlassThemeBackdrop } from "@/components/core/theme/glass-theme-backdrop
 import { CustomErrorComponent } from "./error";
 import { AppProvider } from "./provider";
 // fonts
+// oxlint-disable-next-line import/no-unassigned-import -- Load application-wide font styles.
 import "@fontsource-variable/inter";
 import interVariableWoff2 from "@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url";
+// oxlint-disable-next-line import/no-unassigned-import -- Load the application icon font.
 import "@fontsource/material-symbols-rounded";
+// oxlint-disable-next-line import/no-unassigned-import -- Load the application monospace font.
 import "@fontsource/ibm-plex-mono";
 
 const APP_TITLE = "GTS Task System | Task and project management";
@@ -54,11 +57,11 @@ export const links: LinksFunction = () => [
   { rel: "icon", type: "image/png", sizes: "32x32", href: favicon32 },
   { rel: "icon", type: "image/png", sizes: "16x16", href: favicon16 },
   { rel: "shortcut icon", href: faviconIco },
-  { rel: "manifest", href: "/site.webmanifest.json" },
+  { rel: "manifest", href: "/site.webmanifest.json?v=gts-v2" },
   { rel: "apple-touch-icon", href: icon512 },
   { rel: "apple-touch-icon", sizes: "180x180", href: icon180 },
   { rel: "apple-touch-icon", sizes: "512x512", href: icon512 },
-  { rel: "manifest", href: "/manifest.json" },
+  { rel: "manifest", href: "/manifest.json?v=gts-v2" },
   { rel: "stylesheet", href: globalStyles },
   {
     rel: "preload",

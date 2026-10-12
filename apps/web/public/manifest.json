@@ -4,18 +4,13 @@
   "description": "Manage tasks, projects, workflows, and collaboration in GTS Task System.",
   "icons": [
     {
-      "src": "/icons/icon-192x192.png",
+      "src": "/icons/icon-192x192.png?v=gts-v2",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "/icons/icon-348x348.png",
-      "sizes": "348x348",
-      "type": "image/png"
-    },
-    {
-      "src": "/icons/icon-512x512.png",
+      "src": "/icons/icon-512x512.png?v=gts-v2",
       "sizes": "512x512",
       "type": "image/png"
     }

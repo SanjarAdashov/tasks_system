@@ -3,8 +3,8 @@
   "short_name": "GTS Task System",
   "description": "Public tasks and request forms powered by GTS Task System.",
   "icons": [
-    { "src": "/favicon/android-chrome-192x192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/favicon/android-chrome-512x512.png", "sizes": "512x512", "type": "image/png" }
+    { "src": "/spaces/favicon/android-chrome-192x192.png?v=gts-v2", "sizes": "192x192", "type": "image/png" },
+    { "src": "/spaces/favicon/android-chrome-512x512.png?v=gts-v2", "sizes": "512x512", "type": "image/png" }
   ],
   "theme_color": "#ffffff",
   "background_color": "#ffffff",
