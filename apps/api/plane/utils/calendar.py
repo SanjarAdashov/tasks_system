@@ -116,8 +116,7 @@ def meetings_visible_to(queryset, user, workspace=None):
     if not user or not getattr(user, "is_authenticated", False):
         return queryset.none()
     visible = queryset.filter(
-        Q(organizer_id=user.id)
-        | Q(participants__user_id=user.id, participants__removed_at__isnull=True)
+        Q(organizer_id=user.id) | Q(participants__user_id=user.id, participants__removed_at__isnull=True)
     )
     if workspace is not None:
         visible = visible.filter(workspace=workspace)
@@ -287,6 +286,25 @@ def expand_recurrence(meeting, range_start, range_end, *, limit=500):
             occurrence.update(exception.overrides)
         result.append(occurrence)
     return result
+
+
+def next_recurrence_start(meeting, after):
+    """Find a non-cancelled start strictly after the reminder's current occurrence.
+
+    Calendar range expansion includes ongoing meetings, so it cannot advance a
+    reminder: it would keep returning the occurrence that was just notified.
+    """
+    if not meeting.recurrence_rule:
+        return None
+    cancelled = {item.original_starts_at for item in meeting.recurrence_exceptions.all() if item.action == "CANCELLED"}
+    try:
+        rule = rrulestr(meeting.recurrence_rule, dtstart=meeting.starts_at)
+        for starts_at in rule.xafter(after, inc=False):
+            if starts_at not in cancelled:
+                return starts_at
+    except (ValueError, TypeError, OverflowError):
+        pass
+    return None
 
 
 def user_busy_intervals(user_ids, range_start, range_end, *, exclude_meeting_id=None):

@@ -7,6 +7,7 @@ from copy import copy
 from datetime import timedelta
 from email.mime.base import MIMEBase
 from email import encoders
+from functools import partial
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 # ruff: noqa: E501 -- email clients require deliberately inlined HTML styles
@@ -28,7 +29,7 @@ from plane.db.models import (
 )
 from plane.license.utils.instance_value import get_email_configuration
 from plane.utils.birthday import is_birthday_on, render_birthday_greeting, user_language
-from plane.utils.calendar import expand_recurrence, sign_participant_token
+from plane.utils.calendar import next_recurrence_start, sign_participant_token
 from plane.utils.telegram import (
     application_url,
     enqueue_system_telegram_notification,
@@ -544,17 +545,29 @@ def send_meeting_response_notification(participant_id):
 def process_due_meeting_reminders():
     now = timezone.now()
     reminder_ids = list(
-        MeetingReminder.objects.filter(sent_at__isnull=True, scheduled_for__lte=now, meeting__status="PLANNED")
+        MeetingReminder.objects.filter(
+            sent_at__isnull=True,
+            scheduled_for__lte=now,
+            meeting__status="PLANNED",
+            meeting__deleted_at__isnull=True,
+        )
         .order_by("scheduled_for")
         .values_list("id", flat=True)[:500]
     )
+    processed = 0
     for reminder_id in reminder_ids:
         with transaction.atomic():
             reminder = (
                 MeetingReminder.objects.select_for_update()
                 .select_related("meeting")
                 .prefetch_related("meeting__recurrence_exceptions")
-                .filter(pk=reminder_id, sent_at__isnull=True)
+                .filter(
+                    pk=reminder_id,
+                    sent_at__isnull=True,
+                    scheduled_for__lte=now,
+                    meeting__status="PLANNED",
+                    meeting__deleted_at__isnull=True,
+                )
                 .first()
             )
             if not reminder:
@@ -566,29 +579,28 @@ def process_due_meeting_reminders():
                 action="CANCELLED",
                 deleted_at__isnull=True,
             ).exists()
-            next_occurrence = None
-            if reminder.meeting.recurrence_rule:
-                candidates = expand_recurrence(
-                    reminder.meeting,
-                    now + timedelta(minutes=reminder.minutes_before, seconds=1),
-                    now + timedelta(days=730),
-                    limit=1,
-                )
-                next_occurrence = candidates[0] if candidates else None
-            if next_occurrence:
-                reminder.scheduled_for = next_occurrence["starts_at"] - timedelta(minutes=reminder.minutes_before)
+            next_start = next_recurrence_start(
+                reminder.meeting,
+                after=max(occurrence_start, now + timedelta(minutes=reminder.minutes_before)),
+            )
+            if next_start:
+                reminder.scheduled_for = next_start - timedelta(minutes=reminder.minutes_before)
                 reminder.sent_at = None
                 reminder.save(update_fields=["scheduled_for", "sent_at", "updated_at"])
             else:
                 reminder.sent_at = now
                 reminder.save(update_fields=["sent_at", "updated_at"])
-        if not current_cancelled:
-            participant_ids = [str(reminder.participant_id)] if reminder.participant_id else None
-            send_meeting_notifications.delay(
-                str(reminder.meeting_id),
-                "REMINDER",
-                participant_ids,
-                occurrence_start.isoformat(),
-                occurrence_end.isoformat(),
-            )
-    return {"processed": len(reminder_ids)}
+            processed += 1
+            if not current_cancelled:
+                participant_ids = [str(reminder.participant_id)] if reminder.participant_id else None
+                transaction.on_commit(
+                    partial(
+                        send_meeting_notifications.delay,
+                        str(reminder.meeting_id),
+                        "REMINDER",
+                        participant_ids,
+                        occurrence_start.isoformat(),
+                        occurrence_end.isoformat(),
+                    )
+                )
+    return {"processed": processed}
