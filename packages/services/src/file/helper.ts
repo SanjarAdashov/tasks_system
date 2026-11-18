@@ -85,9 +85,10 @@ const detectMimeTypeFromSignature = async (file: File): Promise<string> => {
  * @description Validate and detect the MIME type of a file using signature detection
  * Also performs basic security checks on filename
  * @param {File} file
+ * @param {string} fallbackMimeType MIME type to use for a valid filename without a recognized signature
  * @returns {Promise<string>} validated and detected MIME type
  */
-const validateAndDetectFileType = async (file: File): Promise<string> => {
+const validateAndDetectFileType = async (file: File, fallbackMimeType = ""): Promise<string> => {
   // Basic filename validation
   const filenameError = validateFilename(file.name);
   if (filenameError) {
@@ -103,17 +104,17 @@ const validateAndDetectFileType = async (file: File): Promise<string> => {
     console.warn("Error detecting file type from signature:", _error);
   }
 
-  // fallback for unknown files
-  return "";
+  return filenameError ? "" : fallbackMimeType;
 };
 
 /**
  * @description returns the necessary file meta data to upload a file
  * @param {File} file
+ * @param {string} [fallbackMimeType] MIME type to use for a valid filename without a recognized signature
  * @returns {Promise<TFileMetaDataLite>} payload with file info
  */
-export const getFileMetaDataForUpload = async (file: File): Promise<TFileMetaDataLite> => {
-  const fileType = await validateAndDetectFileType(file);
+export const getFileMetaDataForUpload = async (file: File, fallbackMimeType?: string): Promise<TFileMetaDataLite> => {
+  const fileType = await validateAndDetectFileType(file, fallbackMimeType);
   return {
     name: file.name,
     size: file.size,

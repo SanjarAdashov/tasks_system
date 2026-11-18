@@ -10,9 +10,19 @@ import { API_BASE_URL } from "@plane/constants";
 import { getFileMetaDataForUpload, generateFileUploadPayload } from "@plane/services";
 import type { TIssueAttachment, TIssueAttachmentUploadResponse, TIssueServiceType } from "@plane/types";
 import { EIssueServiceType } from "@plane/types";
+import { getFileExtension } from "@plane/utils";
 // services
 import { APIService } from "@/services/api.service";
 import { FileUploadService } from "@/services/file-upload.service";
+
+// Plain-text formats have no reliable binary signature and are served as downloads.
+const TASK_ATTACHMENT_TEXT_MIME_TYPES = new Map([
+  ["csv", "text/csv"],
+  ["json", "application/json"],
+  ["markdown", "text/markdown"],
+  ["md", "text/markdown"],
+  ["txt", "text/plain"],
+]);
 
 export class IssueAttachmentService extends APIService {
   private fileUploadService: FileUploadService;
@@ -47,7 +57,8 @@ export class IssueAttachmentService extends APIService {
     file: File,
     uploadProgressHandler?: AxiosRequestConfig["onUploadProgress"]
   ): Promise<TIssueAttachment> {
-    const fileMetaData = await getFileMetaDataForUpload(file);
+    const fallbackMimeType = TASK_ATTACHMENT_TEXT_MIME_TYPES.get(getFileExtension(file.name).toLowerCase());
+    const fileMetaData = await getFileMetaDataForUpload(file, fallbackMimeType);
     return this.post(
       `/api/assets/v2/workspaces/${workspaceSlug}/projects/${projectId}/${this.serviceType}/${issueId}/attachments/`,
       fileMetaData
