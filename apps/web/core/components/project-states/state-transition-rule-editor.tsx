@@ -515,10 +515,9 @@ export function StateTransitionRuleEditor({
   const service = useMemo(() => new ProjectService(), []);
   const [activeSection, setActiveSection] = useState<TEditorSection>("transition");
   const [isSaving, setIsSaving] = useState(false);
-  const initialSourceType = rule?.source_type ?? "EXACT";
   const [payload, setPayload] = useState<TProjectStateTransitionRulePayload>(() => ({
-    source_type: initialSourceType,
-    source_state: initialSourceType === "EXACT" ? (rule?.source_state ?? states[0]?.id ?? null) : null,
+    source_type: rule?.source_type ?? "EXACT",
+    source_state: rule?.source_state ?? states[0]?.id ?? null,
     target_state: rule?.target_state ?? states[1]?.id ?? states[0]?.id ?? "",
     allow_conditions: ensureNodeIds(rule?.allow_conditions ?? EMPTY_TREE()) as TStateTransitionConditionGroup,
     deny_conditions: ensureNodeIds(rule?.deny_conditions ?? EMPTY_TREE()) as TStateTransitionConditionGroup,
@@ -533,15 +532,14 @@ export function StateTransitionRuleEditor({
     validation: countConditions(payload.validation_conditions),
     exceptions: Number(payload.project_admin_bypass) + Number(payload.system_bypass),
   };
-  const isExactTransition = payload.source_type === "EXACT";
-  const sourceState = isExactTransition ? payload.source_state : null;
-  const sourceLabel = isExactTransition
-    ? states.find((state) => state.id === sourceState)?.name
-    : t(
-        payload.source_type === "CREATE"
-          ? "project_settings.state_transitions.create"
-          : "project_settings.state_transitions.any"
-      );
+  const sourceLabel =
+    payload.source_type === "EXACT"
+      ? states.find((state) => state.id === payload.source_state)?.name
+      : t(
+          payload.source_type === "CREATE"
+            ? "project_settings.state_transitions.create"
+            : "project_settings.state_transitions.any"
+        );
   const targetLabel = states.find((state) => state.id === payload.target_state)?.name;
 
   const sections: Array<{ id: TEditorSection; title: string; description: string; count?: number }> = [
@@ -577,7 +575,7 @@ export function StateTransitionRuleEditor({
   ];
 
   const isValid = () => {
-    const validTransition = Boolean(payload.target_state && (!isExactTransition || sourceState));
+    const validTransition = Boolean(payload.target_state && (payload.source_type !== "EXACT" || payload.source_state));
     return (
       validTransition &&
       !hasInvalidCondition(payload.allow_conditions) &&
@@ -604,10 +602,9 @@ export function StateTransitionRuleEditor({
     if (!checkConfiguration()) return;
     setIsSaving(true);
     try {
-      const rulePayload = { ...payload, source_state: sourceState };
       const saved = rule
-        ? await service.updateStateTransitionRule(workspaceSlug, projectId, rule.id, rulePayload)
-        : await service.createStateTransitionRule(workspaceSlug, projectId, rulePayload);
+        ? await service.updateStateTransitionRule(workspaceSlug, projectId, rule.id, payload)
+        : await service.createStateTransitionRule(workspaceSlug, projectId, payload);
       onSaved(saved);
       setToast({
         type: TOAST_TYPE.SUCCESS,
@@ -691,19 +688,16 @@ export function StateTransitionRuleEditor({
               {t("project_settings.state_transitions.source")}
               <select
                 className="h-10 w-full rounded border border-subtle bg-surface-1 px-3 text-13 text-primary disabled:text-tertiary"
-                value={sourceState ?? ""}
-                disabled={!isExactTransition}
+                value={payload.source_state ?? ""}
+                disabled={payload.source_type !== "EXACT"}
                 onChange={(event) => setPayload((current) => ({ ...current, source_state: event.target.value }))}
               >
-                {isExactTransition ? (
-                  states.map((state) => (
-                    <option key={state.id} value={state.id}>
-                      {state.name}
-                    </option>
-                  ))
-                ) : (
-                  <option value="">{sourceLabel}</option>
-                )}
+                {payload.source_type !== "EXACT" && <option value="">{sourceLabel}</option>}
+                {states.map((state) => (
+                  <option key={state.id} value={state.id}>
+                    {state.name}
+                  </option>
+                ))}
               </select>
             </label>
           </div>
