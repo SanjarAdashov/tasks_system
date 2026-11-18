@@ -130,10 +130,14 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
     @allow_permission([ROLE.ADMIN, ROLE.MEMBER, ROLE.GUEST])
     def post(self, request, slug, project_id, issue_id):
         name = sanitize_filename(request.data.get("name")) or "unnamed"
-        type = request.data.get("type", False)
+        mime_type = request.data.get("type")
         size = request.data.get("size")
 
-        if not type or type not in settings.ATTACHMENT_MIME_TYPES:
+        # Keep HTML task attachments download-only, including at the storage origin.
+        if name.lower().endswith((".html", ".htm")):
+            mime_type = "application/octet-stream"
+
+        if not mime_type or mime_type not in settings.ATTACHMENT_MIME_TYPES:
             return Response(
                 {"error": "Invalid file type.", "status": False},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -142,14 +146,14 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
         # Get the workspace
         workspace = Workspace.objects.get(slug=slug)
         project = Project.objects.get(id=project_id, workspace=workspace)
-        size = validate_project_attachment_size(project=project, mime_type=type, filename=name, size=size)
+        size = validate_project_attachment_size(project=project, mime_type=mime_type, filename=name, size=size)
 
         # asset key
         asset_key = f"{workspace.id}/{uuid.uuid4().hex}-{name}"
 
         # Create a File Asset
         asset = FileAsset.objects.create(
-            attributes={"name": name, "type": type, "size": size},
+            attributes={"name": name, "type": mime_type, "size": size},
             asset=asset_key,
             size=size,
             workspace_id=workspace.id,
@@ -163,7 +167,7 @@ class IssueAttachmentV2Endpoint(BaseAPIView):
         storage = S3Storage(request=request)
 
         # Generate a presigned URL to share an S3 object
-        presigned_url = storage.generate_presigned_post(object_name=asset_key, file_type=type, file_size=size)
+        presigned_url = storage.generate_presigned_post(object_name=asset_key, file_type=mime_type, file_size=size)
 
         # Return the presigned URL
         return Response(

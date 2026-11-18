@@ -195,6 +195,80 @@ class TestProjectAttachmentSettings:
         assert response.status_code == status.HTTP_400_BAD_REQUEST
         assert not FileAsset.objects.filter(issue=issue).exists()
 
+    @pytest.mark.parametrize(
+        ("filename", "content_type"),
+        [("report.HTML", ""), ("report.htm", "text/html"), ("report.html", "image/png")],
+    )
+    @patch("plane.app.views.issue.attachment.issue_activity.delay")
+    @patch("plane.app.views.issue.attachment.get_asset_object_metadata.delay")
+    @patch("plane.app.views.issue.attachment.S3Storage")
+    def test_v2_html_attachment_is_signed_and_served_as_download(
+        self, mock_storage, mock_metadata, mock_activity, session_client, workspace, project, filename, content_type
+    ):
+        issue = Issue.objects.create(workspace=workspace, project=project, name="HTML attachment")
+        storage = mock_storage.return_value
+        storage.generate_presigned_post.return_value = {
+            "url": "https://storage.example.test/uploads",
+            "fields": {"Content-Type": "application/octet-stream"},
+        }
+        storage.generate_presigned_url.return_value = "https://storage.example.test/uploads/report"
+
+        response = session_client.post(
+            _attachment_url(workspace, project, issue),
+            {"name": filename, "type": content_type, "size": 12},
+            format="json",
+        )
+
+        assert response.status_code == status.HTTP_200_OK, response.data
+        asset = FileAsset.objects.get(pk=response.data["asset_id"], issue=issue)
+        assert asset.attributes == {"name": filename, "type": "application/octet-stream", "size": 12}
+        assert response.data["upload_data"]["fields"]["Content-Type"] == "application/octet-stream"
+        storage.generate_presigned_post.assert_called_once_with(
+            object_name=asset.asset.name, file_type="application/octet-stream", file_size=12
+        )
+
+        asset_url = _attachment_url(workspace, project, issue, asset)
+        response = session_client.patch(asset_url)
+        assert response.status_code == status.HTTP_204_NO_CONTENT
+        mock_metadata.assert_called_once()
+        mock_activity.assert_called_once()
+
+        response = session_client.get(asset_url, {"disposition": "inline"})
+        assert response.status_code == status.HTTP_302_FOUND
+        storage.generate_presigned_url.assert_called_once_with(
+            object_name=asset.asset.name,
+            disposition="attachment",
+            filename=filename,
+            expiration=None,
+        )
+
+    def test_v2_html_mime_requires_html_extension(self, session_client, workspace, project):
+        issue = Issue.objects.create(workspace=workspace, project=project, name="Unrecognized HTML attachment")
+
+        response = session_client.post(
+            _attachment_url(workspace, project, issue),
+            {"name": "report.txt", "type": "text/html", "size": 12},
+            format="json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.data["error"] == "Invalid file type."
+        assert not FileAsset.objects.filter(issue=issue).exists()
+
+    def test_v2_html_attachment_uses_other_category_limit(self, session_client, workspace, project):
+        issue = Issue.objects.create(workspace=workspace, project=project, name="HTML attachment limit")
+        ProjectAttachmentSettings.objects.create(project=project, image_max_size=10, other_max_size=5)
+
+        response = session_client.post(
+            _attachment_url(workspace, project, issue),
+            {"name": "too-large.html", "type": "image/png", "size": 6},
+            format="json",
+        )
+
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert response.data["category"] == "OTHER"
+        assert not FileAsset.objects.filter(issue=issue).exists()
+
     @patch("plane.app.views.issue.attachment.issue_activity.delay")
     def test_delete_requires_uploader_issue_creator_or_project_admin(
         self,
